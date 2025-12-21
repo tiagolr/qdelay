@@ -6,9 +6,9 @@
 #include "EQDisplay.h"
 
 using namespace globals;
-class REEVRAudioProcessorEditor;
+class QDelayAudioProcessorEditor;
 
-class EQWidget 
+class EQWidget
 	: public juce::Component
 	, private juce::AudioProcessorValueTreeState::Listener
 {
@@ -23,7 +23,7 @@ public:
 
 	TextButton bandBtn;
 
-	EQWidget(REEVRAudioProcessorEditor& e, SVF::EQType type);
+	EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType type);
 	~EQWidget();
 
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
@@ -36,5 +36,5 @@ private:
 	int selband = 0;
 	String prel;
 	SVF::EQType type;
-	REEVRAudioProcessorEditor& editor;
+	QDelayAudioProcessorEditor& editor;
 };

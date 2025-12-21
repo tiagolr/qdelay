@@ -15,14 +15,14 @@
 
 using namespace globals;
 
-class REEVRAudioProcessorEditor
+class QDelayAudioProcessorEditor
 	: public juce::AudioProcessorEditor
 	, private juce::AudioProcessorValueTreeState::Listener
 	, public juce::ChangeListener
 {
 public:
-    REEVRAudioProcessorEditor (REEVRAudioProcessor&);
-    ~REEVRAudioProcessorEditor() override;
+    QDelayAudioProcessorEditor (QDelayAudioProcessor&);
+    ~QDelayAudioProcessorEditor() override;
 
     //==============================================================================
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -31,12 +31,12 @@ public:
     void resized() override;
     void changeListenerCallback(ChangeBroadcaster* source) override;
 
-    REEVRAudioProcessor& audioProcessor;
+    QDelayAudioProcessor& audioProcessor;
 private:
     bool init = false;
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;
     TooltipWindow tooltipWindow;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (REEVRAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (QDelayAudioProcessorEditor)
 };

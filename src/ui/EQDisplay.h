@@ -5,7 +5,7 @@
 #include "../Globals.h"
 
 using namespace globals;
-class REEVRAudioProcessorEditor;
+class QDelayAudioProcessorEditor;
 
 class EQDisplay
 	: public juce::Component
@@ -13,7 +13,7 @@ class EQDisplay
 {
 public:
 
-	EQDisplay(REEVRAudioProcessorEditor& e, SVF::EQType type);
+	EQDisplay(QDelayAudioProcessorEditor& e, SVF::EQType type);
 	~EQDisplay();
 
 	void timerCallback();
@@ -59,5 +59,5 @@ private:
 
 	std::vector<float> magPoints;
 
-	REEVRAudioProcessorEditor& editor;
+	QDelayAudioProcessorEditor& editor;
 };

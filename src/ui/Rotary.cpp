@@ -1,7 +1,7 @@
 #include "Rotary.h"
 #include "../PluginProcessor.h"
 
-Rotary::Rotary(REEVRAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format, bool isSymmetric, unsigned int color, RotaryType type)
+Rotary::Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format, bool isSymmetric, unsigned int color, RotaryType type)
     : juce::SettableTooltipClient()
     , juce::Component()
     , audioProcessor(p)
@@ -22,7 +22,7 @@ Rotary::~Rotary()
     audioProcessor.params.removeParameterListener(paramId, this);
 }
 
-void Rotary::parameterChanged(const juce::String& parameterID, float newValue) 
+void Rotary::parameterChanged(const juce::String& parameterID, float newValue)
 {
     (void)parameterID;
     (void)newValue;
@@ -34,7 +34,7 @@ void Rotary::paint(juce::Graphics& g) {
     auto normValue = param->getValue();
     auto value = param->convertFrom0to1(normValue);
 
-    draw_rotary_slider(g, normValue); 
+    draw_rotary_slider(g, normValue);
     draw_label_value(g, value);
     //g.drawRect(getLocalBounds());
 }
@@ -192,7 +192,7 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
     g.drawText(text, 0, getHeight() - 16, getWidth(), 16, juce::Justification::centred, true);
 }
 
-void Rotary::mouseDown(const juce::MouseEvent& e) 
+void Rotary::mouseDown(const juce::MouseEvent& e)
 {
     if (type != RotaryType::NormalKnob) {
         audioProcessor.setSendEditMode(type == ResKnob);
@@ -219,7 +219,7 @@ void Rotary::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWhee
     auto param = audioProcessor.params.getParameter(paramId);
     param->beginChangeGesture();
     param->setValueNotifyingHost(param->getValue() + slider_change);
-    while (wheel.deltaY > 0.0f && param->getValue() == 0.0f) { // FIX wheel not working when value is zero, first step takes more than 0.05% 
+    while (wheel.deltaY > 0.0f && param->getValue() == 0.0f) { // FIX wheel not working when value is zero, first step takes more than 0.05%
         slider_change += 0.05f;
         param->setValueNotifyingHost(param->getValue() + slider_change);
     }

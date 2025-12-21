@@ -2,16 +2,16 @@
 
 CustomLookAndFeel::CustomLookAndFeel()
 {
-  setColour(ComboBox::backgroundColourId, Colour(COLOR_BG));
+  setColour(ComboBox::backgroundColourId, Colour(COLOR_BACKGROUND));
   setColour(ComboBox::textColourId, Colour(COLOR_ACTIVE));
   setColour(ComboBox::arrowColourId, Colour(COLOR_ACTIVE));
   setColour(ComboBox::outlineColourId, Colour(COLOR_ACTIVE));
-  setColour(TooltipWindow::backgroundColourId, Colour(COLOR_BG).brighter(0.15f));
+  setColour(TooltipWindow::backgroundColourId, Colour(COLOR_BACKGROUND).brighter(0.15f));
   setColour(PopupMenu::backgroundColourId, Colour(COLOR_ACTIVE).darker(0.5f).withAlpha(0.99f));
   setColour(PopupMenu::highlightedBackgroundColourId, Colour(COLOR_ACTIVE).darker(0.8f));
   setColour(TextButton::buttonColourId, Colour(COLOR_ACTIVE));
   setColour(TextButton::buttonOnColourId, Colour(COLOR_ACTIVE));
-  setColour(TextButton::textColourOnId, Colour(COLOR_BG));
+  setColour(TextButton::textColourOnId, Colour(COLOR_BACKGROUND));
   setColour(TextButton::textColourOffId, Colour(COLOR_ACTIVE));
   setColour(BubbleComponent::ColourIds::backgroundColourId, Colour(COLOR_ACTIVE).darker(0.75f));
   setColour(BubbleComponent::ColourIds::outlineColourId, Colours::transparentWhite);
@@ -212,7 +212,7 @@ void CustomLookAndFeel::drawTreeviewPlusMinusBox(Graphics& g, const Rectangle<fl
     (void)backgroundColour;
     (void)isMouseOver;
     Path p;
-    g.setColour(Colour(COLOR_ACTIVE)); 
+    g.setColour(Colour(COLOR_ACTIVE));
     auto c = area.getCentre();
     auto r = 5.f;
 

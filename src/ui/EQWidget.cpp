@@ -3,7 +3,7 @@
 
 // ==============================================================================
 
-EQWidget::EQWidget(REEVRAudioProcessorEditor& e, SVF::EQType _type)
+EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	: editor(e)
 	, type(_type)
 	, prel(_type == SVF::ParamEQ ? "post" : "decay")

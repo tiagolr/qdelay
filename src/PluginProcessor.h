@@ -18,7 +18,7 @@ using namespace globals;
 //==============================================================================
 /**
 */
-class REEVRAudioProcessor
+class QDelayAudioProcessor
     : public AudioProcessor
     , public AudioProcessorParameter::Listener
     , public ChangeBroadcaster
@@ -41,12 +41,13 @@ public:
     size_t fftWriteIndex = 0;
     std::array<float, (1 << EQ_FFT_ORDER) * 2> fftBuffer;
     std::atomic<bool> fftReady = false;
-
+    std::atomic<float> rmsLeft = 0.f;
+    std::atomic<float> rmsRight = 0.f;
 
     static AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     //==============================================================================
-    REEVRAudioProcessor();
-    ~REEVRAudioProcessor() override;
+    QDelayAudioProcessor();
+    ~QDelayAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -100,5 +101,5 @@ private:
     ApplicationProperties settings;
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (REEVRAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (QDelayAudioProcessor)
 };

@@ -1,7 +1,7 @@
 #include "EQDisplay.h"
 #include "../PluginEditor.h"
 
-EQDisplay::EQDisplay(REEVRAudioProcessorEditor& e, SVF::EQType _type)
+EQDisplay::EQDisplay(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	: editor(e)
 	, type(_type)
 	, prel(type == SVF::ParamEQ ? "post" : "decay")
@@ -111,7 +111,7 @@ void EQDisplay::mouseDrag(const MouseEvent& e)
 		editor.audioProcessor.params.getParameter(pre + "_gain")->setValueNotifyingHost(cur_gain_normed_value);
 	}
 
-	if (onMouseDrag) 
+	if (onMouseDrag)
 		onMouseDrag();
 
 	repaint();
@@ -236,7 +236,7 @@ void EQDisplay::paint(juce::Graphics& g)
 		g.setColour(Colours::white.withAlpha(selband == i ? 1.f : 0.5f));
 		if (bypass)
 			g.drawEllipse(bandBounds[i], 2.f);
-		else 
+		else
 			g.fillEllipse(bandBounds[i]);
 	}
 
@@ -381,7 +381,7 @@ void EQDisplay::updateEQCurve()
 				: b == 0 && m > 0 ? SVF::LS
 				: b == EQ_BANDS - 1 && m == 0 ? SVF::LP
 				: b == EQ_BANDS - 1 && m > 0 ? SVF::HS
-				: m == 0 ? SVF::BP : m == 1 ? SVF::PK 
+				: m == 0 ? SVF::BP : m == 1 ? SVF::PK
 				: SVF::BS;
 
 			if (mode == SVF::LP) bandFilters[b].lp((float)srate, cutoff, q);
@@ -433,7 +433,7 @@ void EQDisplay::showBandMenu(int band)
 	menu.showMenuAsync(
 		juce::PopupMenu::Options()
 		.withTargetComponent(*this)
-		.withTargetScreenArea({ mousePos.getX(), mousePos.getY(), 1,1 }), 
+		.withTargetScreenArea({ mousePos.getX(), mousePos.getY(), 1,1 }),
 		[this, pre, bypass](int result)
 		{
 			if (result == 0) return;
