@@ -1,0 +1,104 @@
+/*
+  ==============================================================================
+
+    This file contains the basic framework code for a JUCE plugin processor.
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include <vector>
+#include "Globals.h"
+#include "dsp/SVF.h"
+
+using namespace globals;
+
+//==============================================================================
+/**
+*/
+class REEVRAudioProcessor
+    : public AudioProcessor
+    , public AudioProcessorParameter::Listener
+    , public ChangeBroadcaster
+{
+public:
+
+    // Plugin settings
+    float scale = 1.0f; // UI scale factor
+
+    // PlayHead state
+    double ppqPosition = 0.0;
+    double beatsPerSample = 0.00005;
+    double beatsPerSecond = 1.0;
+    int samplesPerBeat = 44100;
+    double secondsPerBeat = 0.1;
+    double srate = 44100.0;
+    double secondsPerBar = 1.0;
+
+    // UI State
+    size_t fftWriteIndex = 0;
+    std::array<float, (1 << EQ_FFT_ORDER) * 2> fftBuffer;
+    std::atomic<bool> fftReady = false;
+
+
+    static AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    //==============================================================================
+    REEVRAudioProcessor();
+    ~REEVRAudioProcessor() override;
+
+    //==============================================================================
+    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override;
+    void parameterValueChanged (int parameterIndex, float newValue) override;
+    void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override;
+    bool supportsDoublePrecisionProcessing() const override;
+
+   #ifndef JucePlugin_PreferredChannelConfigurations
+    bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
+   #endif
+
+    //==============================================================================
+    void onSlider ();
+    std::vector<SVF::EQBand> getEqualizer(SVF::EQType type) const;
+
+    //==============================================================================
+    void processBlock (AudioBuffer<float>&, MidiBuffer&) override;
+
+    //==============================================================================
+    AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override;
+
+    //==============================================================================
+    const String getName() const override;
+    bool acceptsMidi() const override;
+    bool producesMidi() const override;
+    bool isMidiEffect() const override;
+    double getTailLengthSeconds() const override;
+
+    //==============================================================================
+    int getNumPrograms() override;
+    int getCurrentProgram() override;
+    void setCurrentProgram (int index) override;
+    void loadProgram(int index);
+    const String getProgramName (int index) override;
+    void changeProgramName (int index, const String& newName) override;
+
+    //==============================================================================
+    void getStateInformation (MemoryBlock& destData) override;
+    void setStateInformation (const void* data, int sizeInBytes) override;
+    void exportPatterns();
+    void importPatterns();
+    //=========================================================
+
+    AudioProcessorValueTreeState params;
+    UndoManager undoManager;
+
+private:
+    bool paramChanged = false; // flag that triggers on any param change
+    ApplicationProperties settings;
+
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (REEVRAudioProcessor)
+};
