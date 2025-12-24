@@ -62,7 +62,7 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 		rateSlider.setComponentID("vertical");
 		rateSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
 		rateSlider.setTextBoxStyle(Slider::NoTextBox, false, 80, 20);
-		rateSlider.setColour(Slider::backgroundColourId, Colour(COLOR_BG).brighter(0.1f));
+		rateSlider.setColour(Slider::backgroundColourId, Colour(COLOR_BACKGROUND).brighter(0.1f));
 		rateSlider.setColour(Slider::trackColourId, Colour(COLOR_ACTIVE).darker(0.5f));
 		rateSlider.setColour(Slider::thumbColourId, Colour(COLOR_ACTIVE));
 		rateSliderAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(editor.audioProcessor.params, "irdecayrate", rateSlider);
@@ -116,32 +116,32 @@ void EQWidget::resized()
 
 void EQWidget::paint(Graphics& g)
 {
-	g.fillAll(Colour(COLOR_BG));
+	g.fillAll(Colour(COLOR_BACKGROUND));
 
 	// draw band curve button
 	g.setColour(Colour(COLOR_NEUTRAL));
 	g.drawRoundedRectangle(bandBtn.getBounds().toFloat().reduced(0.5f), 3.f, 1.f);
 	auto mode = eq->bandFilters[selband].mode;
 	if (mode == SVF::PK) {
-		drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
+		UIUtils::drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::LP) {
-		drawLowpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
+		UIUtils::drawLowpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::BP) {
-		drawBandPass(g, bandBtn.getBounds().toFloat().translated(7.5f, 7.5f), Colours::white, 1.2f);
+		UIUtils::drawBandPass(g, bandBtn.getBounds().toFloat().translated(7.5f, 7.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::HP) {
-		drawHighpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
+		UIUtils::drawHighpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::LS) {
-		drawLowShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
+		UIUtils::drawLowShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::HS) {
-		drawHighShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
+		UIUtils::drawHighShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::BS) {
-		drawNotch(g, bandBtn.getBounds().toFloat().translated(4.5f, 11.5f), Colours::white, 1.2f);
+		UIUtils::drawNotch(g, bandBtn.getBounds().toFloat().translated(4.5f, 11.5f), Colours::white, 1.2f);
 	}
 
 	g.setFont(FontOptions(16.f));

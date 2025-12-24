@@ -9,8 +9,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     , audioProcessor (p)
 {
     setResizable(false, false);
-    setResizeLimits(PLUG_WIDTH, PLUG_HEIGHT, MAX_PLUG_WIDTH, MAX_PLUG_HEIGHT);
-    setSize (audioProcessor.plugWidth, audioProcessor.plugHeight);
+    setSize (PLUG_WIDTH, PLUG_HEIGHT);
     setScaleFactor(audioProcessor.scale);
 
     audioProcessor.addChangeListener(this);

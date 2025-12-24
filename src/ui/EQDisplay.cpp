@@ -268,7 +268,7 @@ void EQDisplay::paint(juce::Graphics& g)
 	g.fillPath(p);
 
 	// draw point numbers
-	g.setColour(Colour(COLOR_BG));
+	g.setColour(Colour(COLOR_BACKGROUND));
 	g.setFont(FontOptions(12.f));
 	for (int i = 0; i < bandBounds.size(); ++i) {
 		g.drawText(String(i + 1), bandBounds[i], Justification::centred);
@@ -310,25 +310,25 @@ void EQDisplay::drawWaveform(juce::Graphics& g)
 	g.strokePath(waveformPath, juce::PathStrokeType(1.0f));
 
 	// hide zero values
-	g.setColour(Colour(COLOR_BG));
+	g.setColour(Colour(COLOR_BACKGROUND));
 	g.fillRect(bounds.toFloat().expanded(1.f).withHeight(2.f).withBottomY((float)bounds.getBottom() + 1));
 }
 
 void EQDisplay::recalcFFTMags()
 {
 	auto fftSize = 1 << EQ_FFT_ORDER;
-	auto writeIndex = editor.audioProcessor.eqWriteIndex;
+	auto writeIndex = editor.audioProcessor.eqFFTWriteIndex;
 	auto bufferSize = fftData.size();
 	size_t startIndex = (writeIndex + bufferSize - fftSize) % bufferSize;
 
 	if (startIndex + fftSize <= bufferSize) {
-		std::copy_n(&editor.audioProcessor.eqBuffer[startIndex], fftSize, fftData.data());
+		std::copy_n(&editor.audioProcessor.eqFFTBuffer[startIndex], fftSize, fftData.data());
 	}
 	else {
 		// Wrap-around copy
 		size_t firstPart = bufferSize - startIndex;
-		std::copy_n(&editor.audioProcessor.eqBuffer[startIndex], firstPart, fftData.data());
-		std::copy_n(&editor.audioProcessor.eqBuffer[0], fftSize - firstPart, fftData.data() + firstPart);
+		std::copy_n(&editor.audioProcessor.eqFFTBuffer[startIndex], firstPart, fftData.data());
+		std::copy_n(&editor.audioProcessor.eqFFTBuffer[0], fftSize - firstPart, fftData.data() + firstPart);
 	}
 
 	window.multiplyWithWindowingTable(fftData.data(), fftData.size());

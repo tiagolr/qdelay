@@ -1,11 +1,7 @@
 #include "Follower.h"
 
-void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_, float hold_, float release_, float lowcutfreq, float highcutfreq)
+void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_, float hold_, float release_)
 {
-	lowcutL.hp(srate, lowcutfreq, 0.707f);
-	highcutL.lp(srate, highcutfreq, 0.707f);
-	lowcutR.hp(srate, lowcutfreq, 0.707f);
-	highcutR.lp(srate, highcutfreq, 0.707f);
 	thresh = thresh_;
 	autorel = autorel_;
 	attack = (ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * attack_) / 1000.0f;
@@ -21,13 +17,7 @@ void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_,
 
 float Follower::process(float lsamp, float rsamp)
 {
-	outl = lowcutL.df1(lsamp);
-	outl = highcutL.df1(outl);
-
-	outr = lowcutR.df1(rsamp);
-	outr = highcutR.df1(outr);
-
-	float amp = std::max(std::fabs(outl), std::fabs(outr));
+	float amp = std::max(std::fabs(lsamp), std::fabs(rsamp));
 	float in = std::max(0.0f, amp - thresh);
 
 	if (in > envelope) {
@@ -56,8 +46,4 @@ void Follower::clear()
 	outl = 0.0f;
 	outr = 0.0f;
 	envelope = 0.0f;
-	lowcutL.reset(0.0f);
-	lowcutR.reset(0.0f);
-	highcutL.reset(0.0f);
-	highcutR.reset(0.0f);
 }

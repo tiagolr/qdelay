@@ -9,8 +9,10 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "PluginProcessor.h"
 #include "Globals.h"
 #include "ui/UIUtils.h"
+#include "ui/CustomLookAndFeel.h"
 #include "ui/About.h"
 
 using namespace globals;

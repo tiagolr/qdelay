@@ -3,7 +3,6 @@
 #pragma once
 #include "JuceHeader.h"
 #include "../Globals.h"
-#include "RBJ.h"
 
 using namespace globals;
 
@@ -13,7 +12,7 @@ public:
 	Follower() {};
 	~Follower() {};
 
-	void prepare(float srate, float thresh_, bool autorel_, float attack_, float hold, float release, float lowcutfreq, float highcutfreq);
+	void prepare(float srate, float thresh_, bool autorel_, float attack_, float hold, float release);
 	float process(float lsamp, float rsamp);
 	void clear();
 
@@ -21,10 +20,6 @@ public:
 	float outr = 0.0f;
 
 private:
-	RBJ lowcutL;
-	RBJ highcutL;
-	RBJ lowcutR;
-	RBJ highcutR;
 	int rmswindow = 100;
 	float thresh = 0.0f;
 	bool autorel = false;

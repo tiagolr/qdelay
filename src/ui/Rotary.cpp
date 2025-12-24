@@ -113,10 +113,6 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
             ss << std::fixed << std::setprecision(1) << slider_val << " dB";
             text = ss.str();
         }
-        else if (format == RotaryLabel::audioOffset) {
-            ss << std::fixed << std::setprecision(1) << slider_val * LATENCY_MILLIS << " ms";
-            text = ss.str();
-        }
         else if (format == envatk) {
             auto val = ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * slider_val;
             if (val > 1000) {
@@ -194,9 +190,6 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
 
 void Rotary::mouseDown(const juce::MouseEvent& e)
 {
-    if (type != RotaryType::NormalKnob) {
-        audioProcessor.setSendEditMode(type == ResKnob);
-    }
     e.source.enableUnboundedMouseMovement(true);
     mouse_down = true;
     auto param = audioProcessor.params.getParameter(paramId);

@@ -4,23 +4,35 @@ namespace globals {
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
 
 	// filter consts
-	inline const float F_MIN_FREQ = 20.0f;
-	inline const float F_MAX_FREQ = 20000.0f;
+	constexpr float F_MIN_FREQ = 20.0f;
+	constexpr float F_MAX_FREQ = 20000.0f;
 
-	inline unsigned int COLOR_BACKGROUND = 0xff181818;
-	inline unsigned int COLOR_ACTIVE = 0xff469DDA;
-	inline unsigned int COLOR_NEUTRAL = 0xff666666;
-	inline unsigned int COLOR_KNOB = 0xff272727;
-	inline unsigned int COLOR_BEVEL = 0x00000000;
+	// UI
+	constexpr unsigned int COLOR_BACKGROUND = 0xff181818;
+	constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
+	constexpr unsigned int COLOR_NEUTRAL = 0xff666666;
+	constexpr unsigned int COLOR_KNOB = 0xff272727;
+	constexpr unsigned int COLOR_BEVEL = 0x00000000;
+	constexpr int KNOB_WIDTH = 65;
+	constexpr int KNOB_HEIGHT = 75;
 
-	inline const int EQ_BANDS = 4;
-	inline const float EQ_MAX_GAIN = 24.f;
-	inline const int EQ_FFT_ORDER = 12;
+	// EQ
+	constexpr int EQ_BANDS = 4;
+	constexpr float EQ_MAX_GAIN = 24.f;
+	constexpr int EQ_FFT_ORDER = 12;
+
+	// Envelope follower
+	constexpr float ENV_MIN_ATTACK = 0.01f;
+	constexpr float ENV_MAX_ATTACK = 200.0f;
+	constexpr float ENV_MIN_HOLD = 0.0f;
+	constexpr float ENV_MAX_HOLD = 500.0f;
+	constexpr float ENV_MIN_RELEASE = 10.0f;
+	constexpr float ENV_MAX_RELEASE = 10000.0f;
 
 	// view consts
-	inline const int PLUG_WIDTH = 690;
-	inline const int PLUG_HEIGHT = 650;
-	inline const int MAX_PLUG_WIDTH = 640 * 3;
-	inline const int MAX_PLUG_HEIGHT = 650 * 2;
-	inline const int PLUG_PADDING = 15;
+	constexpr int PLUG_WIDTH = 690;
+	constexpr int PLUG_HEIGHT = 650;
+	constexpr int MAX_PLUG_WIDTH = 640 * 3;
+	constexpr int MAX_PLUG_HEIGHT = 650 * 2;
+	constexpr int PLUG_PADDING = 15;
 };

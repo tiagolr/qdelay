@@ -237,6 +237,7 @@ void QDelayAudioProcessor::changeProgramName (int index, const juce::String& new
 //==============================================================================
 void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    (void)samplesPerBlock;
     srate = sampleRate;
     onSlider();
     sendChangeMessage();
@@ -299,6 +300,7 @@ bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
 
 void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    (void)midiMessages;
     juce::ScopedNoDenormals disableDenormals;
 
     // Get playhead info

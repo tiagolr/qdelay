@@ -43,6 +43,9 @@ public:
     std::atomic<bool> fftReady = false;
     std::atomic<float> rmsLeft = 0.f;
     std::atomic<float> rmsRight = 0.f;
+    size_t eqFFTWriteIndex = 0;
+    std::array<float, (1 << EQ_FFT_ORDER) * 2> eqFFTBuffer;
+    std::atomic<bool> eqFFTReady = false;
 
     static AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     //==============================================================================
@@ -61,6 +64,9 @@ public:
    #endif
 
     //==============================================================================
+    void loadSettings();
+    void saveSettings();
+    void setScale(float scl);
     void onSlider ();
     std::vector<SVF::EQBand> getEqualizer(SVF::EQType type) const;
 
