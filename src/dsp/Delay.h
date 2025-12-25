@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "DelayLine.h"
 #include "Utils.h"
+#include "Diffusor.h"
 
 class QDelayAudioProcessor;
 
@@ -47,5 +48,6 @@ private:
 	DelayLine predelayR{};
 	DelayLine delayL{};
 	DelayLine delayR{};
+	Diffusor diffusor{};
 	float srate = 44100.f;
 };

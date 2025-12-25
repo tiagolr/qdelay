@@ -28,8 +28,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("feel", "Feel", -1.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("accent", "Accent", -1.f, 1.f, 0.0f));
 
-    layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffustion Amt", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffustion Size", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffusion Amt", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("mod_amt", "Modulation Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
@@ -384,14 +384,14 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;
     auto wetmix = mix <= 0.5f ? mix * 2.f : 1.f;
 
-    float panGainCompensation = std::sqrt(2.f); // keep amplitude at 0db when centered, +3dB when hard panned
+    float panCompensation = std::sqrt(2.f); // keep amplitude at 0db when centered, +3dB when hard panned
     auto panDry = params.getRawParameterValue("pan_dry")->load();
-    auto panDryL = Utils::cosHalfPi()(panDry) * panGainCompensation;
-    auto panDryR = Utils::sinHalfPi()(panDry) * panGainCompensation;
+    auto panDryL = Utils::cosHalfPi()(panDry) * panCompensation;
+    auto panDryR = Utils::sinHalfPi()(panDry) * panCompensation;
 
     auto panWet = params.getRawParameterValue("pan_wet")->load();
-    auto panWetL = Utils::cosHalfPi()(panWet) * panGainCompensation;
-    auto panWetR = Utils::sinHalfPi()(panWet) * panGainCompensation;
+    auto panWetL = Utils::cosHalfPi()(panWet) * panCompensation;
+    auto panWetR = Utils::sinHalfPi()(panWet) * panCompensation;
 
     // apply mix + pan
     buffer.applyGain(0, 0, numSamples, drymix * panDryL);

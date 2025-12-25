@@ -42,6 +42,7 @@ void Delay::prepare(float _srate)
     delayR.clear();
     predelayL.clear();
     predelayR.clear();
+    diffusor.prepare(srate);
 }
 
 std::array<int, 2> Delay::getTimeSamples(bool forceSync)
@@ -90,6 +91,16 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float lfactor = pipoWidth > 0.f ? 1.f - pipoWidth : 1.f;
     float rfactor = pipoWidth < 0.f ? 1.f + pipoWidth : 1.f;
 
+    float diffamt = audioProcessor.params.getRawParameterValue("diff_amt")->load();
+    float diffdry = Utils::cosHalfPi()(diffamt);
+    float diffwet = Utils::sinHalfPi()(diffamt);
+
+    if (diffamt > 0.f) {
+        float diffsize = audioProcessor.params.getRawParameterValue("diff_size")->load();
+        diffsize = (0.9f - 0.9f * diffsize);
+        diffusor.setSize(diffsize);
+    }
+
     // balance feedback between left and right delays
     float e = (float)time[0] / (float)time[1];
     if (time[0] < time[1])
@@ -130,6 +141,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         auto v0 = delayL.read3(mode == 2 ? timeRight : timeLeft);
         auto v1 = delayR.read3(timeRight);
+
+        if (diffamt > 0) {
+            diffusor.process(v0, v1, diffdry, diffwet);
+        }
 
         if (mode == Normal)
         {

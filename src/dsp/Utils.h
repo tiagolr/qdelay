@@ -1,5 +1,6 @@
 #pragma once
 
+#include <JuceHeader.h>
 #include <vector>
 #include <cmath>
 #include <functional>
