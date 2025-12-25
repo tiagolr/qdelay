@@ -7,25 +7,40 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 {
     AudioProcessorValueTreeState::ParameterLayout layout;
 
-    //layout.add(std::make_unique<juce::AudioParameterBool>("showviewport", "Show Viewport", true));
-    //layout.add(std::make_unique<juce::AudioParameterBool>("tsenabled", "TrueStereo Enabled", true));
-    //layout.add(std::make_unique<juce::AudioParameterInt>("pattern", "Pattern", 1, 12, 1));
-    //layout.add(std::make_unique<juce::AudioParameterChoice>("patsync", "Pattern Sync", StringArray{ "Off", "1/4 Beat", "1/2 Beat", "1 Beat", "2 Beats", "4 Beats" }, 0));
-    //layout.add(std::make_unique<juce::AudioParameterChoice>("trigger", "Trigger", StringArray{ "Sync", "MIDI", "Audio", "Free" }, 0));
-    //layout.add(std::make_unique<juce::AudioParameterChoice>("sync", "Sync", StringArray{ "Rate Hz", "1/256", "1/128", "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1", "2/1", "4/1", "1/16t", "1/8t", "1/4t", "1/2t", "1/1t", "1/16.", "1/8.", "1/4.", "1/2.", "1/1." }, 9));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("rate", "Rate Hz", juce::NormalisableRange<float>(0.01f, 5000.0f, 0.00001f, 0.2f), 1.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("phase", "Phase", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("min", "Min", 0.0f, 1.0f, 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("max", "Max", 0.0f, 1.0f, 1.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("smooth", "Smooth", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("attack", "Attack", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("release", "Release", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("tension", "Tension", -1.0f, 1.0f, 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("tensionatk", "Attack Tension", -1.0f, 1.0f, 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterFloat>("tensionrel", "Release Tension", -1.0f, 1.0f, 0.0f));
-    //layout.add(std::make_unique<juce::AudioParameterBool>("snap", "Snap", false));
-    //layout.add(std::make_unique<juce::AudioParameterInt>("grid", "Grid", 0, (int)std::size(GRID_SIZES) - 1, 2));
-    //layout.add(std::make_unique<juce::AudioParameterInt>("seqstep", "Sequencer Step", 0, (int)std::size(GRID_SIZES) - 1, 2));
+    layout.add(std::make_unique<AudioParameterChoice>("mode", "Mode", StringArray{ "Normal", "Ping Pong", "Tap" }, 0));
+    layout.add(std::make_unique<AudioParameterBool>("link", "Link", true));
+    layout.add(std::make_unique<AudioParameterChoice>("sync_l", "Sync L", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<AudioParameterChoice>("sync_r", "Sync R", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<AudioParameterFloat>("rate_l", "Rate L", NormalisableRange<float>(0.01f, 10.f, 0.01f, 0.3f), .5f));
+    layout.add(std::make_unique<AudioParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.01f, 10.f, 0.01f, 0.3f), .5f));
+    layout.add(std::make_unique<AudioParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
+    layout.add(std::make_unique<AudioParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
+    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("feedback", "Feedback", 0.f, 1.f, 0.35f));
+    layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", -1.f, 1.f, 0.2f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("pan_dry", "Pan Dry", -1.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("pan_wet", "Pan Wet", -1.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("stereo", "Stereo Width", -1.f, 1.f, 0.0f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("swing", "Swing", -1.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("feel", "Feel", -1.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("accent", "Accent", -1.f, 1.f, 0.0f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffustion Amt", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffustion Size", 0.f, 1.f, 0.0f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("mod_amt", "Modulation Amt", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("dist_fbk", "Distortion Feedbk", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Distortion Post", 0.f, 1.f, 0.0f));
+
+    layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", 0.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("duck_amt", "Duck Amount", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_atk", "Duck Attack", NormalisableRange<float>(0.01f, 200.0f, 0.01f, 0.75f), 10.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_rel", "Duck Release", NormalisableRange<float>(10.f, 10000.0f, 1.f, 0.5f), 100.f));
 
     auto getEQBandFreq = [](int band)
         {
@@ -35,7 +50,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     // Post EQ params
     for (int i = 0; i < EQ_BANDS; ++i) {
         auto paramPrefix = "inputeq_band" + String(i + 1);
-        auto namePrefix = "Post EQ Band" + String(i + 1);
+        auto namePrefix = "Input EQ Band" + String(i + 1);
         layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ"}, 1));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.707f, 8.f, 0.707f));
@@ -85,6 +100,8 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     }
 
     loadSettings();
+
+    delay = std::make_unique<Delay>(*this);
 }
 
 QDelayAudioProcessor::~QDelayAudioProcessor()
@@ -237,8 +254,9 @@ void QDelayAudioProcessor::changeProgramName (int index, const juce::String& new
 //==============================================================================
 void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    (void)samplesPerBlock;
+    wetBuffer.setSize (2, samplesPerBlock);
     srate = sampleRate;
+    delay->prepare((float)srate);
     onSlider();
     sendChangeMessage();
 }
@@ -277,6 +295,11 @@ bool QDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) c
 
 void QDelayAudioProcessor::onSlider()
 {
+    // keep linked delay Left and Right rates in sync
+
+
+
+
     //auto compareEQs = [this](std::vector<SVF::EQBand> e1, std::vector<SVF::EQBand> e2)
    //     {
     //        if (e1.size() != e2.size()) return false;
@@ -325,16 +348,47 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             {
                 secondsPerBar = beatsPerSecond * 4;
             }
+            auto play = pos->getIsPlaying();
+            if (!playing && play) // on play()
+            {
+                delay->clear();
+            }
+            playing = play;
         }
     }
 
-    int inputBusCount = getBusCount(true);
     int audioOutputs = getTotalNumOutputChannels();
-    int audioInputs = inputBusCount > 0 ? getChannelCountOfBus(true, 0) : 0;
+    int numChannels = buffer.getNumChannels();
     int numSamples = buffer.getNumSamples();
 
-    if (!audioInputs || !audioOutputs || !numSamples)
+    if (!numChannels || !audioOutputs || !numSamples)
         return;
+
+    // prepare wet buffer by copying the dry signal into it
+    wetBuffer.setSize (2, numSamples, false, false, true);
+    if (numChannels == 1)
+    {
+        wetBuffer.copyFrom (0, 0, buffer, 0, 0, numSamples);
+        wetBuffer.copyFrom (1, 0, buffer, 0, 0, numSamples);
+    }
+    else
+    {
+        wetBuffer.copyFrom (0, 0, buffer, 0, 0, numSamples);
+        wetBuffer.copyFrom (1, 0, buffer, 1, 0, numSamples);
+    }
+
+    // process the signal into the same buffer
+    delay->processBlock(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), numSamples);
+
+    auto mix = params.getRawParameterValue("mix")->load();
+    auto drymix = Utils::cosHalfPi()(mix);
+    auto wetmix = Utils::sinHalfPi()(mix);
+
+    buffer.applyGain(drymix);
+    wetBuffer.applyGain(wetmix);
+    buffer.addFrom(0, 0, wetBuffer.getReadPointer(0), numSamples);
+    if (numChannels > 1)
+        buffer.addFrom(1, 0, wetBuffer.getReadPointer(1), numSamples);
 }
 
 //==============================================================================
@@ -362,7 +416,8 @@ void QDelayAudioProcessor::setStateInformation (const void* data, int sizeInByte
 {
     std::unique_ptr<juce::XmlElement>xmlState (getXmlFromBinary (data, sizeInBytes));
 
-    if (xmlState == nullptr) { // Fallback to plain text parsing, used for loading programs
+    if (xmlState == nullptr) // Fallback to plain text parsing, used for loading programs
+    {
         auto xmlString = juce::String::fromUTF8(static_cast<const char*>(data), sizeInBytes);
         xmlState = juce::parseXML(xmlString);
     }

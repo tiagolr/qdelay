@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include <vector>
 #include "Globals.h"
+#include "dsp/Delay.h"
 #include "dsp/SVF.h"
 
 using namespace globals;
@@ -24,11 +25,14 @@ class QDelayAudioProcessor
     , public ChangeBroadcaster
 {
 public:
+    std::unique_ptr<Delay> delay;
+    AudioBuffer<float> wetBuffer;
 
     // Plugin settings
     float scale = 1.0f; // UI scale factor
 
     // PlayHead state
+    bool playing = false;
     double ppqPosition = 0.0;
     double beatsPerSample = 0.00005;
     double beatsPerSecond = 1.0;

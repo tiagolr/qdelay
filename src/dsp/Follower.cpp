@@ -5,7 +5,8 @@ void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_,
 	thresh = thresh_;
 	autorel = autorel_;
 	attack = (ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * attack_) / 1000.0f;
-	hold = (ENV_MIN_HOLD + (ENV_MAX_HOLD - ENV_MIN_HOLD) * hold_) / 1000.0f * srate;
+	(void)hold_;
+	hold = 0.f;
 	release = (ENV_MIN_RELEASE + (ENV_MAX_RELEASE - ENV_MIN_RELEASE) * release_) / 1000.0f;
 
 	float targetLevel = 0.2f; // -14dB or something slow

@@ -7,12 +7,16 @@ namespace globals {
 	constexpr float F_MIN_FREQ = 20.0f;
 	constexpr float F_MAX_FREQ = 20000.0f;
 
+	// DELAY
+	constexpr float MAX_HAAS = 25.f;
+
 	// UI
 	constexpr unsigned int COLOR_BACKGROUND = 0xff181818;
 	constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
 	constexpr unsigned int COLOR_NEUTRAL = 0xff666666;
 	constexpr unsigned int COLOR_KNOB = 0xff272727;
 	constexpr unsigned int COLOR_BEVEL = 0x00000000;
+	constexpr float BEVEL_CORNER = 3.f;
 	constexpr int KNOB_WIDTH = 65;
 	constexpr int KNOB_HEIGHT = 75;
 
@@ -24,8 +28,6 @@ namespace globals {
 	// Envelope follower
 	constexpr float ENV_MIN_ATTACK = 0.01f;
 	constexpr float ENV_MAX_ATTACK = 200.0f;
-	constexpr float ENV_MIN_HOLD = 0.0f;
-	constexpr float ENV_MAX_HOLD = 500.0f;
 	constexpr float ENV_MIN_RELEASE = 10.0f;
 	constexpr float ENV_MAX_RELEASE = 10000.0f;
 

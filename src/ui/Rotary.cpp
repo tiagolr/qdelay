@@ -1,7 +1,7 @@
 #include "Rotary.h"
 #include "../PluginProcessor.h"
 
-Rotary::Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format, bool isSymmetric, unsigned int color, RotaryType type)
+Rotary::Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format, bool isSymmetric, unsigned int color)
     : juce::SettableTooltipClient()
     , juce::Component()
     , audioProcessor(p)
@@ -11,7 +11,6 @@ Rotary::Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name,
     , isSymmetric(isSymmetric)
     , isAudioKnob(isAudioKnob)
     , color(color)
-    , type(type)
 {
     setName(name);
     audioProcessor.params.addParameterListener(paramId, this);
@@ -136,16 +135,6 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
             }
             else {
                 ss << std::fixed << std::setprecision(0) << val << " ms";
-            }
-            text = ss.str();
-        }
-        else if (format == envhold) {
-            auto val = ENV_MIN_HOLD + (ENV_MAX_HOLD - ENV_MIN_HOLD) * slider_val;
-            if (val > 100) {
-                ss << std::fixed << std::setprecision(0) << val << " ms";
-            }
-            else {
-                ss << std::fixed << std::setprecision(1) << val << " ms";
             }
             text = ss.str();
         }

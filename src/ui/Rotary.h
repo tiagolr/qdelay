@@ -23,23 +23,20 @@ enum RotaryLabel {
     float1,
     float2,
     float2x100,
-    audioOffset,
     kMillis,
     exp2Range,
     dryWet,
     kChoice,
 };
 
-enum RotaryType {
-    NormalKnob,
-    CutoffKnob,
-    ResKnob
-};
-
-class Rotary : public juce::SettableTooltipClient, public juce::Component, private juce::AudioProcessorValueTreeState::Listener {
+class Rotary
+    : public juce::SettableTooltipClient
+    , public juce::Component
+    , private juce::AudioProcessorValueTreeState::Listener
+{
 public:
     Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format,
-        bool isSymmetric = false, unsigned int color = COLOR_ACTIVE, RotaryType type = RotaryType::NormalKnob
+        bool isSymmetric = false, unsigned int color = COLOR_ACTIVE
     );
     ~Rotary() override;
     void paint(juce::Graphics& g) override;
@@ -61,7 +58,6 @@ protected:
     QDelayAudioProcessor& audioProcessor;
 
 private:
-    RotaryType type;
     unsigned int color = COLOR_ACTIVE;
     bool isSymmetric;
     bool isAudioKnob;

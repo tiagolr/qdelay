@@ -8,36 +8,6 @@
 
 using namespace globals;
 
-class Utils
-{
-public:
-    inline static double normalToFreq(double norm)
-    {
-        return F_MIN_FREQ * std::exp(norm * std::log(F_MAX_FREQ / F_MIN_FREQ));
-    }
-
-    inline static double freqToNormal(double norm)
-    {
-        return std::log(norm / F_MIN_FREQ) / std::log(F_MAX_FREQ / F_MIN_FREQ);
-    }
-
-    inline static double gainTodB(double gain)
-    {
-        return gain == 0 ? -60.0 : 20.0 * std::log10(gain);
-    }
-
-    static float normalToFreqf(float min, float max, float norm)
-    {
-        return min * std::exp(norm * std::log(max / min));
-    }
-
-    static float freqToNormalf(float min, float max, float norm)
-    {
-        return std::log(norm / min) / std::log(max / min);
-    }
-};
-
-
 /*
 * A copy of LookupTableTransform with additional cubic interpolation
 */
@@ -123,4 +93,89 @@ private:
     float scaler = 0.0f;
     float offset = 0.0f;
     size_t size = 0;
+};
+
+class Utils
+{
+public:
+    inline static double normalToFreq(double norm)
+    {
+        return F_MIN_FREQ * std::exp(norm * std::log(F_MAX_FREQ / F_MIN_FREQ));
+    }
+
+    inline static double freqToNormal(double norm)
+    {
+        return std::log(norm / F_MIN_FREQ) / std::log(F_MAX_FREQ / F_MIN_FREQ);
+    }
+
+    inline static double gainTodB(double gain)
+    {
+        return gain == 0 ? -60.0 : 20.0 * std::log10(gain);
+    }
+
+    static float normalToFreqf(float min, float max, float norm)
+    {
+        return min * std::exp(norm * std::log(max / min));
+    }
+
+    static float freqToNormalf(float min, float max, float norm)
+    {
+        return std::log(norm / min) / std::log(max / min);
+    }
+
+    // LUT used to balance mix without losing amplitude
+    static const LookupTable& sinHalfPi()
+    {
+        static LookupTable table = []()
+            {
+                LookupTable t;
+                t.init([](float norm) {
+                    return std::sin(norm * MathConstants<float>::halfPi);
+                    }, 0.0f, 1.0f, 256);
+                return t;
+            }();
+        return table;
+    }
+
+    // LUT used to balance mix without losing amplitude
+    static const LookupTable& cosHalfPi()
+    {
+        static LookupTable table = []()
+            {
+                LookupTable t;
+                t.init([](float norm) {
+                    return std::cos(norm * MathConstants<float>::halfPi);
+                    }, 0.0f, 1.0f, 256);
+                return t;
+            }();
+        return table;
+    }
+};
+
+/**
+ * Used to smooth out params
+ */
+class RCFilter
+{
+public:
+    float r = 1.0f;
+    float state = 0.0f;
+    float output = 0.0f;
+
+    void setup(float resistance, float _srate)
+    {
+        r = 1.0f / (resistance * _srate + 1);
+    }
+
+    float process(float input)
+    {
+        state += r * (input - state);
+        output = state;
+        return output;
+    }
+
+    void reset(float value = 0.0f)
+    {
+        output = state = value;
+    }
 };
