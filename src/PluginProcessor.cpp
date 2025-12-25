@@ -20,9 +20,9 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
     layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", -1.f, 1.f, 0.2f));
 
-    layout.add(std::make_unique<AudioParameterFloat>("pan_dry", "Pan Dry", -1.f, 1.f, 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>("pan_wet", "Pan Wet", -1.f, 1.f, 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>("stereo", "Stereo Width", -1.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("pan_dry", "Pan Dry", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("pan_wet", "Pan Wet", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("stereo", "Stereo Width", 0.f, 2.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("swing", "Swing", -1.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("feel", "Feel", -1.f, 1.f, 0.0f));
@@ -381,11 +381,42 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     delay->processBlock(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), numSamples);
 
     auto mix = params.getRawParameterValue("mix")->load();
-    auto drymix = Utils::cosHalfPi()(mix);
-    auto wetmix = Utils::sinHalfPi()(mix);
+    auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;
+    auto wetmix = mix <= 0.5f ? mix * 2.f : 1.f;
 
-    buffer.applyGain(drymix);
-    wetBuffer.applyGain(wetmix);
+    float panGainCompensation = std::sqrt(2.f); // keep amplitude at 0db when centered, +3dB when hard panned
+    auto panDry = params.getRawParameterValue("pan_dry")->load();
+    auto panDryL = Utils::cosHalfPi()(panDry) * panGainCompensation;
+    auto panDryR = Utils::sinHalfPi()(panDry) * panGainCompensation;
+
+    auto panWet = params.getRawParameterValue("pan_wet")->load();
+    auto panWetL = Utils::cosHalfPi()(panWet) * panGainCompensation;
+    auto panWetR = Utils::sinHalfPi()(panWet) * panGainCompensation;
+
+    // apply mix + pan
+    buffer.applyGain(0, 0, numSamples, drymix * panDryL);
+    if (numChannels > 1)
+        buffer.applyGain(1, 0, numSamples, drymix * panDryR);
+    wetBuffer.applyGain(0, 0, numSamples, wetmix * panWetL);
+    wetBuffer.applyGain(1, 0, numSamples, wetmix * panWetR);
+
+    // apply stereo width
+    auto stereo = params.getRawParameterValue("stereo")->load();
+    if (stereo != 1.f) {
+        auto lchan = wetBuffer.getWritePointer(0);
+        auto rchan = wetBuffer.getWritePointer(1);
+        float norm = 1.0f / (1.0f + stereo);
+        for (int sample = 0; sample < numSamples; ++sample) {
+            auto lsamp = lchan[sample];
+            auto rsamp = rchan[sample];
+            auto mid = (lsamp + rsamp) * 0.5f;
+            auto side = (lsamp - rsamp) * 0.5f;
+            lchan[sample] = (mid + side * stereo) * norm;
+            rchan[sample] = (mid - side * stereo) * norm;
+        }
+    }
+
+    // sum wet and dry signals
     buffer.addFrom(0, 0, wetBuffer.getReadPointer(0), numSamples);
     if (numChannels > 1)
         buffer.addFrom(1, 0, wetBuffer.getReadPointer(1), numSamples);
