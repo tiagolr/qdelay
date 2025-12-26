@@ -120,7 +120,7 @@ void DelayView::paint(Graphics& g)
 		feedbackL = feedback;
 		feedbackR = std::pow(feedback, e);
 	}
-
+	
 	VirtualDelay delayL(timeL - timeL * swing * 0.5f, feedbackL); // swing is inverted because first tap is the dry signal
 	VirtualDelay delayR(timeR - timeR * swing * 0.5f, feedbackR);
 	VirtualDelay swingL(timeL + timeL * swing * 0.5f, feedbackL);
@@ -144,8 +144,8 @@ void DelayView::paint(Graphics& g)
 			auto sr = swingR.read();
 			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
-			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
-				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
+			if ((dr.empty || dr.time > 2) && (dl.empty || dl.time > 2) &&
+				(sr.empty || sr.time > 2) && (sl.empty || sl.time > 2))
 				break;
 
 			delayL.write(sl);
@@ -220,6 +220,19 @@ void DelayView::paint(Graphics& g)
 				tap.time += timeL;
 	}
 
+	// apply feel offset
+	float secsbeat = (float)editor.audioProcessor.secondsPerBeat;
+	if (secsbeat == 0.f) secsbeat = 0.25f;
+	float feelOffset = secsbeat * MAX_FEEL_QN_OFFSET * feel; // max 1/16 note offset
+	float maxFeelOffset = mode == Delay::Tap ? timeR : std::min(timeL, timeR);
+	maxFeelOffset += swing * 0.5f * maxFeelOffset;
+	feelOffset = std::clamp(feelOffset, -maxFeelOffset, maxFeelOffset);
+
+	for (auto& tap : leftTaps)
+		if (tap.time > 0.f) tap.time += feelOffset;
+	for (auto& tap : rightTaps)
+		if (tap.time > 0.f) tap.time += feelOffset;
+
 	// apply haas offset
 	if (mode != Delay::PingPong)
 	{
@@ -266,13 +279,20 @@ void DelayView::paint(Graphics& g)
 		leftTaps.size() ? leftTaps.back().time : 0.f), 
 		rightTaps.size() ? rightTaps.back().time : 0.f
 	);
+
+	g.setColour(Colour(COLOR_NEUTRAL));
+	g.drawVerticalLine((int)b.getCentreX(), b.getY(), b.getY() + 13);
+	String timestr = totalTime / 2 < 1 ? String(std::round(totalTime / 2 * 1000)) + "ms" : String(std::round(totalTime / 2 * 100) / 100) + "s";
+	g.setFont(FontOptions(13.f));
+	g.drawText(timestr, (int)b.getCentreX() + 3, (int)b.getY(), 50, 13, Justification::centredLeft);
+
 	for (int i = 0; i < leftTaps.size(); ++i)
 	{
 		float time = leftTaps[i].time;
 		float gain = leftTaps[i].gain;
 		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(time == 0.f ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY() - h, w, h);
 	}
 
@@ -282,7 +302,7 @@ void DelayView::paint(Graphics& g)
 		float gain = rightTaps[i].gain;
 		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(time == 0.f ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY(), w, h);
 	}
 }

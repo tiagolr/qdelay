@@ -127,9 +127,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float secsbeat = (float)audioProcessor.secondsPerBeat;
     if (secsbeat == 0.f) secsbeat = 0.25f;
     int feelOffset = (int)std::round(secsbeat * MAX_FEEL_QN_OFFSET * feel * srate); // max 1/16 note offset
-    int maxFeelOffset = mode == Tap 
-        ? time[1] 
-        : std::min(time[0], time[1]);
+    int maxFeelOffset = mode == Tap ? time[1] : std::min(time[0], time[1]);
     maxFeelOffset += (int)std::round(swing * 0.5f * maxFeelOffset);
     if (maxFeelOffset > 0) maxFeelOffset -= 1;
     if (maxFeelOffset < 0) maxFeelOffset += 1;
