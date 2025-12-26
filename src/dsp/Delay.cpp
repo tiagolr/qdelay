@@ -36,13 +36,15 @@ void Delay::prepare(float _srate)
     timeR.setup(0.15f, srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
-    delayL.resize((int)(srate * 11));
-    delayR.resize((int)(srate * 11));
+    delayL.resize((int)(srate * 6));
+    delayR.resize((int)(srate * 6));
     delayL.clear();
     delayR.clear();
     predelayL.clear();
     predelayR.clear();
     diffusor.prepare(srate);
+    haasL.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
+    haasR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
 }
 
 std::array<int, 2> Delay::getTimeSamples(bool forceSync)
@@ -94,6 +96,14 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float diffamt = audioProcessor.params.getRawParameterValue("diff_amt")->load();
     float diffdry = Utils::cosHalfPi()(diffamt);
     float diffwet = Utils::sinHalfPi()(diffamt);
+
+    if (mode != PingPong) {
+        float haasWidth = audioProcessor.params.getRawParameterValue("haas_width")->load();
+        int haasLeft = haasWidth < 0.f ? (int)std::ceil(-haasWidth * MAX_HAAS * srate / 1000.f) : 0;
+        int haasRight = haasWidth > 0.f ? (int)std::ceil(haasWidth * MAX_HAAS * srate / 1000.f) : 0;
+        haasL.resize(haasLeft);
+        haasR.resize(haasRight);
+    }
 
     if (diffamt > 0.f) {
         float diffsize = audioProcessor.params.getRawParameterValue("diff_size")->load();
@@ -164,6 +174,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             predelayR.write(right[i]);
             delayL.write(preL + v0 * feedback);
             delayR.write(preR + v1 * feedback);
+        }
+
+        if (mode != PingPong) {
+            haasL.write(v0);
+            haasR.write(v1);
+            v0 = haasL.read(haasL.size - 1);
+            v1 = haasR.read(haasR.size - 1);
         }
 
         left[i] = v0;

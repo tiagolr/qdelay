@@ -18,7 +18,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("feedback", "Feedback", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
-    layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", -1.f, 1.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", NormalisableRange<float>(-1.f, 1.f, 0.0001f, 0.3f, true), 0.f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pan_dry", "Pan Dry", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("pan_wet", "Pan Wet", 0.f, 1.f, 0.5f));

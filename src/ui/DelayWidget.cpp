@@ -91,7 +91,7 @@ void DelayWidget::paint(juce::Graphics& g)
 	g.drawText("L", rateL->getBounds().toFloat().translated(-10.f, 0.f), Justification::centredLeft);
 	g.drawText("R", rateR->getBounds().toFloat().translated(-10.f, 0.f), Justification::centredLeft);
 
-	UIUtils::drawChain(g, linkBtn.getBounds().toFloat().translated(-1.f + 10.f, 18.f), link ? Colour(COLOR_ACTIVE) : Colour(COLOR_NEUTRAL));
+	UIUtils::drawChain(g, linkBtn.getBounds().toFloat().translated(-1.f + 10.f - 2.f, 18.f - 3.f), link ? Colour(COLOR_ACTIVE) : Colour(COLOR_NEUTRAL), 1.2f);
 	UIUtils::drawBevel(g, modeBtn.getBounds().toFloat().expanded(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 
 	g.setColour(Colours::white);

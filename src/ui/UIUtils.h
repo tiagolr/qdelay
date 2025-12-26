@@ -15,7 +15,7 @@ static void drawTriangle(Graphics& g, Rectangle<float> bounds, int direction, Co
 static void drawClock(Graphics& g, Rectangle<float> bounds, Colour color);
 static void drawNote(Graphics& g, Rectangle<float> bounds, int mode, Colour color);
 static void drawGear(Graphics& g, Rectangle<int> bounds, float radius, int segs, Colour color, Colour background);
-static void drawChain(Graphics& g, Rectangle<float> bounds, Colour color);
+static void drawChain(Graphics& g, Rectangle<float> bounds, Colour color, float scale = 1.f);
 static void drawPeak(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);
 static void drawBandPass(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);
 static void drawLowShelf(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);

@@ -117,7 +117,7 @@ void UIUtils::drawGear(Graphics& g, Rectangle<int> bounds, float radius, int seg
     g.fillEllipse(x - iradius, y - iradius, iradius * 2.f, iradius * 2.f);
 }
 
-void UIUtils::drawChain(Graphics& g, Rectangle<float> bounds, Colour color)
+void UIUtils::drawChain(Graphics& g, Rectangle<float> bounds, Colour color, float scale)
 {
     Path p;
 
@@ -140,10 +140,10 @@ void UIUtils::drawChain(Graphics& g, Rectangle<float> bounds, Colour color)
     p.startNewSubPath(4.4996f, 6.4966f);
     p.lineTo(4.4996f, 13.5025f);
 
-
+    p.applyTransform(AffineTransform::scale(scale));
     p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY()));
     g.setColour(color);
-    g.strokePath(p, PathStrokeType(1.0f, PathStrokeType::curved, PathStrokeType::rounded));
+    g.strokePath(p, PathStrokeType(2.0f, PathStrokeType::curved, PathStrokeType::rounded));
 }
 
 void UIUtils::drawPeak(Graphics& g, Rectangle<float> bounds, Colour c, float scale)
