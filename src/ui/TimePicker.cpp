@@ -49,15 +49,15 @@ void TimePicker::paint(juce::Graphics& g)
 	auto value = editor.audioProcessor.params.getRawParameterValue(paramId)->load();
 	auto text = mode > 0
 		? getSyncText(value)
-		: value < 1
+		: value <= 1
 		? String(std::round(value * 1000)) + " ms"
 		: String(std::round(value * 100) / 100.f) + " s";
 
 	g.drawText(text, bounds, Justification::centred, false);
 
 	auto modLane = bounds.withHeight(2.f).withBottomY(bounds.getBottom() - 2).toFloat();
-	auto param = editor.audioProcessor.params.getParameter(paramId);
-	auto normValue = param->getValue();
+	//auto param = editor.audioProcessor.params.getParameter(paramId);
+	//auto normValue = param->getValue();
 
 	g.saveState();
 	Path pp;
@@ -68,7 +68,6 @@ void TimePicker::paint(juce::Graphics& g)
 
 void TimePicker::mouseDown(const juce::MouseEvent& e)
 {
-	auto distY = e.y;
 	mouse_down = true;
 	e.source.enableUnboundedMouseMovement(true);
 	auto param = editor.audioProcessor.params.getParameter(paramId);
@@ -96,14 +95,16 @@ void TimePicker::mouseDrag(const juce::MouseEvent& e)
 	auto change = e.getPosition() - last_mouse_position;
 	last_mouse_position = e.getPosition();
 	auto speed = (e.mods.isShiftDown() ? 40.0f : 4.0f) * pixels_per_percent;
+	if (mode == 0) speed *= 2;
 	auto slider_change = float(change.getX() - change.getY()) / speed;
-	cur_normed_value += mode == 0 ? slider_change : -slider_change;
+	cur_normed_value += slider_change;
 	auto param = editor.audioProcessor.params.getParameter(paramId);
 	param->setValueNotifyingHost(cur_normed_value);
 }
 
 void TimePicker::mouseDoubleClick(const juce::MouseEvent& e)
 {
+	(void)e;
 	auto param = editor.audioProcessor.params.getParameter(paramId);
 	param->setValueNotifyingHost(param->getDefaultValue());
 }

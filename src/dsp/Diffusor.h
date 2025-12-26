@@ -28,8 +28,8 @@ public:
 			dist = apdist;
 			size = (int)(apdist * distance);
 			buf.resize(size, 0.f);
-			offsetSmooth.setup(0.25f, srate);
-			attenuationSmooth.setup(0.25f, srate);
+			offsetSmooth.setup(0.1f, srate);
+			attenuationSmooth.setup(0.1f, srate);
 		}
 
 		void setSizeOffsets(float _size) {

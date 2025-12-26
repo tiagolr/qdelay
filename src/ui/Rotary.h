@@ -7,27 +7,7 @@
 using namespace globals;
 class QDelayAudioProcessor;
 
-enum RotaryLabel {
-    hz,
-    hzLp,
-    hzHp,
-    gainTodB1f,
-    dBfloat1,
-    hz1f,
-    eqDecayGain,
-    percx100,
-    envatk,
-    envrel,
-    envhold,
-    intx100,
-    float1,
-    float2,
-    float2x100,
-    kMillis,
-    exp2Range,
-    dryWet,
-    kChoice,
-};
+
 
 class Rotary
     : public juce::SettableTooltipClient
@@ -35,6 +15,29 @@ class Rotary
     , private juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    enum RotaryLabel {
+        hz,
+        hzLp,
+        hzHp,
+        gainTodB1f,
+        dBfloat1,
+        hz1f,
+        eqDecayGain,
+        percx100,
+        envatk,
+        envrel,
+        envhold,
+        intx100,
+        float1,
+        float2,
+        float2x100,
+        kMillis,
+        exp2Range,
+        dryWet,
+        kChoice,
+        haasWidth,
+    };
+
     Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format,
         bool isSymmetric = false, unsigned int color = COLOR_ACTIVE
     );

@@ -37,10 +37,10 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 		if (i == 0 || i == EQ_BANDS - 1) {
 			editor.audioProcessor.params.addParameterListener(pre + "_mode", this);
 		}
-		auto freq = std::make_unique<Rotary>(editor.audioProcessor, pre + "_freq", "Freq", RotaryLabel::hz);
-		auto q = std::make_unique<Rotary>(editor.audioProcessor, pre + "_q", "Q", RotaryLabel::float1);
+		auto freq = std::make_unique<Rotary>(editor.audioProcessor, pre + "_freq", "Freq", Rotary::hz);
+		auto q = std::make_unique<Rotary>(editor.audioProcessor, pre + "_q", "Q", Rotary::float1);
 		auto gain = std::make_unique<Rotary>(editor.audioProcessor, pre + "_gain", "Gain",
-			type == SVF::DecayEQ ? RotaryLabel::eqDecayGain : RotaryLabel::dBfloat1, true
+			type == SVF::DecayEQ ? Rotary::eqDecayGain : Rotary::dBfloat1, true
 		);
 		addChildComponent(freq.get());
 		addChildComponent(q.get());

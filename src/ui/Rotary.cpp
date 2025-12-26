@@ -108,6 +108,11 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
                 text = "-Inf";
             }
         }
+        else if (format == RotaryLabel::haasWidth) {
+            auto ms = slider_val * MAX_HAAS;
+            ss << std::fixed << std::setprecision(1) << ms << " ms";
+            text = ss.str();
+        }
         else if (format == RotaryLabel::dBfloat1) {
             ss << std::fixed << std::setprecision(1) << slider_val << " dB";
             text = ss.str();
@@ -148,21 +153,6 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
         }
         else if (format == exp2Range) {
             text = std::to_string((int)(std::pow(2, slider_val) * 100)) + " %";
-        }
-        else if (format == dryWet) {
-            float dryGain, wetGain;
-
-            if (slider_val <= 0.5f) {
-                dryGain = 1.0f;
-                wetGain = slider_val * 2.0f;
-            }
-            else {
-                dryGain = (1.0f - slider_val) * 2.0f;
-                wetGain = 1.0f;
-            }
-
-            text = std::to_string((int)std::round(dryGain * 100)) + ":" +
-                std::to_string((int)std::round(wetGain * 100));
         }
         else if (format == kChoice) {
             text = audioProcessor.params.getParameter(paramId)->getCurrentValueAsText();

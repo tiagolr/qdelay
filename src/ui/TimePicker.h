@@ -27,7 +27,7 @@ public:
 
 private:
 	String paramId;
-	float pixels_per_percent{ 300.0f };
+	float pixels_per_percent{ 150.0f };
 	float cur_normed_value{ 0.0f };
 	juce::Point<int> last_mouse_position;
 	juce::Point<int> start_mouse_pos;

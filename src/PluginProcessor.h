@@ -42,6 +42,8 @@ public:
     double secondsPerBar = 1.0;
 
     // UI State
+    int delayTab = 0; // mix, pan, pattern
+    int eqTab = 0; // input, feedback
     size_t fftWriteIndex = 0;
     std::array<float, (1 << EQ_FFT_ORDER) * 2> fftBuffer;
     std::atomic<bool> fftReady = false;
@@ -99,8 +101,6 @@ public:
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    void exportPatterns();
-    void importPatterns();
     //=========================================================
 
     AudioProcessorValueTreeState params;

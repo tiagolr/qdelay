@@ -13,7 +13,11 @@
 #include "Globals.h"
 #include "ui/UIUtils.h"
 #include "ui/CustomLookAndFeel.h"
+#include "ui/DelayWidget.h"
+#include "ui/DelayView.h"
 #include "ui/About.h"
+#include "ui/Rotary.h"
+#include "dsp/Delay.h"
 
 using namespace globals;
 
@@ -23,6 +27,7 @@ class QDelayAudioProcessorEditor
 	, public juce::ChangeListener
 {
 public:
+
     QDelayAudioProcessorEditor (QDelayAudioProcessor&);
     ~QDelayAudioProcessorEditor() override;
 
@@ -36,6 +41,19 @@ public:
     QDelayAudioProcessor& audioProcessor;
 private:
     bool init = false;
+
+    TextButton logo;
+    std::unique_ptr<DelayView> delayView;
+    std::unique_ptr<DelayWidget> delayWidget;
+    TextButton mixTabBtn;
+    TextButton panTabBtn;
+    TextButton patTabBtn;
+    std::unique_ptr<Rotary> mix;
+    std::unique_ptr<Rotary> feedback;
+    std::unique_ptr<Rotary> haasWidth;
+    std::unique_ptr<Rotary> pipoWidth;
+
+
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;
     TooltipWindow tooltipWindow;

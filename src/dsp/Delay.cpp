@@ -32,8 +32,8 @@ void Delay::prepare(float _srate)
 {
     srate = _srate;
     auto time = getTimeSamples();
-    timeL.setup(0.5f, srate);
-    timeR.setup(0.5f, srate);
+    timeL.setup(0.15f, srate);
+    timeR.setup(0.15f, srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 11));

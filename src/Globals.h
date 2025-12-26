@@ -11,13 +11,17 @@ namespace globals {
 	constexpr float MAX_HAAS = 25.f;
 
 	// UI
+	constexpr int HEADER_HEIGHT = 25;
+	constexpr int HSEPARATOR = 10;
+	constexpr int VSEPARATOR = 20;
 	constexpr unsigned int COLOR_BACKGROUND = 0xff181818;
-	constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
+	//constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
+	constexpr unsigned int COLOR_ACTIVE = 0xff96CFF8;
 	constexpr unsigned int COLOR_NEUTRAL = 0xff666666;
 	constexpr unsigned int COLOR_KNOB = 0xff272727;
-	constexpr unsigned int COLOR_BEVEL = 0x00000000;
-	constexpr float BEVEL_CORNER = 3.f;
-	constexpr int KNOB_WIDTH = 65;
+	constexpr unsigned int COLOR_BEVEL = 0xff000000;
+	constexpr float BEVEL_CORNER = 5.f;
+	constexpr int KNOB_WIDTH = 70;
 	constexpr int KNOB_HEIGHT = 75;
 
 	// EQ
@@ -33,7 +37,7 @@ namespace globals {
 
 	// view consts
 	constexpr int PLUG_WIDTH = 690;
-	constexpr int PLUG_HEIGHT = 650;
+	constexpr int PLUG_HEIGHT = 335;
 	constexpr int MAX_PLUG_WIDTH = 640 * 3;
 	constexpr int MAX_PLUG_HEIGHT = 650 * 2;
 	constexpr int PLUG_PADDING = 15;

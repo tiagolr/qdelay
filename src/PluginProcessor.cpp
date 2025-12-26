@@ -11,8 +11,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterBool>("link", "Link", true));
     layout.add(std::make_unique<AudioParameterChoice>("sync_l", "Sync L", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
     layout.add(std::make_unique<AudioParameterChoice>("sync_r", "Sync R", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
-    layout.add(std::make_unique<AudioParameterFloat>("rate_l", "Rate L", NormalisableRange<float>(0.01f, 10.f, 0.01f, 0.3f), .5f));
-    layout.add(std::make_unique<AudioParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.01f, 10.f, 0.01f, 0.3f), .5f));
+    layout.add(std::make_unique<AudioParameterFloat>("rate_l", "Rate L", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
+    layout.add(std::make_unique<AudioParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
     layout.add(std::make_unique<AudioParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<AudioParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
@@ -29,7 +29,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("accent", "Accent", -1.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffusion Amt", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 1.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("mod_amt", "Modulation Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));

@@ -131,7 +131,7 @@ void CustomLookAndFeel::drawButtonBackground (Graphics& g, Button& button, const
 {
     auto tag = button.getComponentID();
     auto bounds = button.getLocalBounds().toFloat();
-    auto cornerSize = 3.0f;
+    auto cornerSize = .0f;
 
     if (tag == "button" || tag == "small" || tag == "button-noborder") {
         g.setColour(backgroundColour);
