@@ -171,8 +171,8 @@ void DelayView::paint(Graphics& g)
 			auto sr = swingR.read();
 			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
-			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
-				(dr.time > 2 && dl.time > 2 && sr.time > 2 && sl.time > 2))
+			if ((dr.empty || dr.time > 2) && (dl.empty || dl.time > 2) &&
+				(sr.empty || sr.time > 2) && (sl.empty || sl.time > 2))
 				break;
 
 			if (dl.dry) dl.gain *= rfactor;
@@ -202,8 +202,8 @@ void DelayView::paint(Graphics& g)
 			auto sr = swingR.read();
 			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
-			if ((dr.empty && dl.empty && sr.empty && sl.empty) ||
-				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
+			if ((dr.empty || dr.time > 2) && (dl.empty || dl.time > 2) &&
+				(sr.empty || sr.time > 2) && (sl.empty || sl.time > 2))
 				break;
 
 			delayL.write(sl);
