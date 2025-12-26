@@ -139,7 +139,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto timeLeft = timeL.process((float)time[0]);
         auto timeRight = timeR.process((float)time[1]);
 
-        auto v0 = delayL.read3(mode == 2 ? timeRight : timeLeft);
+        auto v0 = delayL.read3(mode == Tap ? timeRight : timeLeft);
         auto v1 = delayR.read3(timeRight);
 
         if (diffamt > 0) {

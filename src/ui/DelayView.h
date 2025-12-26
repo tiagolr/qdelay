@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <deque>
 #include "../Globals.h"
 #include "UIUtils.h"
 
@@ -10,19 +11,51 @@ class QDelayAudioProcessorEditor;
 class VirtualDelay
 {
 public:
-	float feedback = 0.f;
-	float duration = 1.f;
-	float value = 0.f;
+    struct Tap
+    {
+        bool empty = false;
+        bool dry = false;
+        float time;
+        float gain;
+    };
 
-	void write(float in)
-	{
-		value = in;
-	}
+    VirtualDelay(float _delay, float _feedback)
+    {
+        delay = _delay;
+        feedback = _feedback;
+    }
 
-	float read() const
-	{
-		return value * feedback;
-	}
+    void seed(float time, float gain)
+    {
+        taps.push_back({ false, true, time, gain });
+    }
+
+    void write(Tap tap)
+    {
+        taps.push_back({ false, false, tap.time + delay, tap.gain * feedback }); // sqrt makes the display more visible
+        std::sort(taps.begin(), taps.end(), [](const Tap& a, const Tap& b) 
+            {
+                return a.time < b.time;
+            });
+    }
+
+    Tap read()
+    {
+        if (taps.size()) {
+            auto e = taps.front();
+            taps.pop_front();
+            if (e.gain < 0.001) 
+                return { true };
+            else
+                return e;
+        }
+        return {true};
+    }
+
+private:
+    float delay = 0.f;
+    float feedback = 0.f;
+    std::deque<Tap> taps;
 };
 
 class DelayView

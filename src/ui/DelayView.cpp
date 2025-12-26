@@ -102,24 +102,7 @@ void DelayView::paint(Graphics& g)
 	float lfactor = pipo_width > 0.f ? 1.f - pipo_width : 1.f;
 	float rfactor = pipo_width < 0.f ? 1.f + pipo_width : 1.f;
 
-	// build feedback replicas
-	std::vector<float> leftTime;
-	std::vector<float> leftGain;
-	std::vector<float> rightTime;
-	std::vector<float> rightGain;
-
-	float dryMix = mix < 0.5 ? 1.f : 1.f - (mix - 0.5f) * 2.f;
-	float wetMix = mix > 0.5 ? 1.f : mix * 2.f;
-	leftTime.push_back(0.f);
-	leftGain.push_back(1.f * dryMix * (pan_dry > 0.5 ? 1.f : pan_dry * 2.f));
-	rightTime.push_back(0.f);
-	rightGain.push_back(1.f * dryMix * (pan_dry < 0.5 ? 1.f : 1.f - (pan_dry - 0.5f) * 2.f));
-
 	auto [timeL, timeR] = getDelayTimes(editor.audioProcessor.secondsPerBeat, sync_l, sync_r, rate_l, rate_r, rate_sync_l, rate_sync_r);
-	float leftAmp = 1.f;
-	float rightAmp = 1.f;
-	float leftDelay = timeL;
-	float rightDelay = timeR;
 
 	// balance feedback between left and right delays
 	float feedbackR, feedbackL;
@@ -136,53 +119,48 @@ void DelayView::paint(Graphics& g)
 		feedbackR = std::pow(feedback, e);
 	}
 
-	float leftPan = (pan_wet < 0.5 ? 1.f : pan_wet * 2.f);
-	float rightPan = (pan_wet > 0.5 ? 1.f : 1.f - (pan_wet - 0.5f) * 2.f);
+	VirtualDelay delayL(timeL, feedbackL);
+	VirtualDelay delayR(timeR, feedbackR);
+	std::vector<VirtualDelay::Tap> leftTaps, rightTaps;
 
-	int j = 0;
-	while ((leftAmp > 1e-3 || rightAmp > 1e-3) && (leftDelay < 2.f || rightDelay < 2.f))
+	if (mode == Delay::Normal)
 	{
-		if (mode == Delay::Normal)
-		{
-			leftTime.push_back(leftDelay);
-			rightTime.push_back(rightDelay);
-			leftGain.push_back(leftAmp * wetMix * leftPan);
-			rightGain.push_back(rightAmp * wetMix * rightPan);
+		delayL.seed(0.f, 1.f);
+		delayR.seed(0.f, 1.f);
 
-			leftDelay += timeL;
-			rightDelay += timeR;
-			leftAmp *= feedbackL;
-			rightAmp *= feedbackR;
-		}
-		else if (mode == Delay::PingPong)
+		while (true)
 		{
-			if (j == 0) {
-				leftAmp = leftAmp * lfactor;
-				rightAmp = rightAmp * rfactor;
-				leftGain.push_back(leftAmp * wetMix * leftPan);
-				rightGain.push_back(rightAmp * wetMix * rightPan);
-				leftTime.push_back(leftDelay);
-				rightTime.push_back(rightDelay);
-			}
-			else {
-				std::swap(leftAmp, rightAmp);
-				leftAmp *= feedbackL;
-				rightAmp *= feedbackR;
-				leftGain.push_back(leftAmp * wetMix * leftPan);
-				rightGain.push_back(rightAmp * wetMix * rightPan);
-				leftTime.push_back(leftDelay);
-				rightTime.push_back(rightDelay);
-			}
-
-			leftDelay += timeL;
-			rightDelay += timeR;
+			auto el = delayL.read();
+			if (!el.empty) leftTaps.push_back(el);
+			auto er = delayR.read();
+			if (!er.empty) rightTaps.push_back(er);
+			if ((er.empty && el.empty) || (er.time > 2 && el.time > 2))
+				break;
+			delayL.write(el);
+			delayR.write(er);
 		}
-		else
+	}
+	else if (mode == Delay::PingPong)
+	{
+		delayL.seed(0.f, 1.f);
+		delayR.seed(0.f, 1.f);
+
+		while (true)
 		{
-			break;
-		}
+			auto el = delayL.read();
+			if (!el.empty) leftTaps.push_back(el);
 
-		j += 1;
+			auto er = delayR.read();
+			if (!er.empty) rightTaps.push_back(er);
+
+			if ((er.empty && el.empty) || (er.time > 2 && el.time > 2))
+				break;
+
+			if (el.dry) el.gain *= rfactor;
+			if (er.dry) er.gain *= lfactor;
+			delayL.write(er);
+			delayR.write(el);
+		}
 	}
 
 	// apply haas offset
@@ -190,39 +168,62 @@ void DelayView::paint(Graphics& g)
 	{
 		if (haas_width > 0.f)
 		{
-			for (int i = 0; i < rightTime.size(); ++i)
+			for (int i = 0; i < rightTaps.size(); ++i)
 			{
-				if (i != 0) rightTime[i] += haas_width;
+				if (i != 0) rightTaps[i].time += haas_width;
 			}
 		}
 		else
 		{
-			for (int i = 0; i < leftTime.size(); ++i)
+			for (int i = 0; i < leftTaps.size(); ++i)
 			{
-				if (i != 0) leftTime[i] -= haas_width;
+				if (i != 0) leftTaps[i].time -= haas_width;
 			}
 		}
 	}
 
-	// paint
-	float totalTime = std::max(std::max(0.25f, leftTime.back()), rightTime.back());
-	for (int i = 0; i < leftTime.size(); ++i)
+	// apply mix and pan
+	float dryMix = mix < 0.5 ? 1.f : 1.f - (mix - 0.5f) * 2.f;
+	float wetMix = mix > 0.5 ? 1.f : mix * 2.f;
+	float rightPan = (pan_wet > 0.5 ? 1.f : pan_wet * 2.f);
+	float leftPan = (pan_wet < 0.5 ? 1.f : 1.f - (pan_wet - 0.5f) * 2.f);
+	for (auto& tap : leftTaps)
 	{
-		float time = leftTime[i];
-		float gain = leftGain[i];
-		float w = 2.f;
+		if (tap.time == 0.f)
+			tap.gain *= dryMix * (pan_dry < 0.5 ? 1.f : 1.f - (pan_dry - 0.5f) * 2.f);
+		else
+			tap.gain *= wetMix * leftPan;
+	}
+	for (auto& tap : rightTaps)
+	{
+		if (tap.time == 0.f)
+			tap.gain *= dryMix * (pan_dry > 0.5 ? 1.f : pan_dry * 2.f);
+		else
+			tap.gain *= wetMix * rightPan;
+	}
+
+	// paint
+	float totalTime = std::max(std::max(0.25f, 
+		leftTaps.size() ? leftTaps.back().time : 0.f), 
+		rightTaps.size() ? rightTaps.back().time : 0.f
+	);
+	for (int i = 0; i < leftTaps.size(); ++i)
+	{
+		float time = leftTaps[i].time;
+		float gain = leftTaps[i].gain;
+		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(time == 0.f ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY() - h, w, h);
 	}
 
-	for (int i = 0; i < rightTime.size(); ++i)
+	for (int i = 0; i < rightTaps.size(); ++i)
 	{
-		float time = rightTime[i];
-		float gain = rightGain[i];
-		float w = 2.f;
+		float time = rightTaps[i].time;
+		float gain = rightTaps[i].gain;
+		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(time == 0.f ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY(), w, h);
 	}
 }
