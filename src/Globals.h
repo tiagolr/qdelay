@@ -9,6 +9,8 @@ namespace globals {
 
 	// DELAY
 	constexpr float MAX_HAAS = 25.f;
+	constexpr float MAX_ACCENT = 0.5f;
+	constexpr float MAX_FEEL_QN_OFFSET = 0.25f; // quarter note max offset
 
 	// UI
 	constexpr int HEADER_HEIGHT = 25;

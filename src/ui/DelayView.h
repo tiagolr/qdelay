@@ -17,6 +17,16 @@ public:
         bool dry = false;
         float time;
         float gain;
+
+        Tap withAccent(float accent) const
+        {
+            Tap t;
+            t.empty = empty;
+            t.dry = dry;
+            t.time = time;
+            t.gain = dry ? gain : gain * accent;
+            return t;
+        }
     };
     float delay = 0.f;
     float feedback = 0.f;

@@ -47,23 +47,23 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
             toggleUIComponents();
         };
 
-    addAndMakeVisible(panTabBtn);
-    panTabBtn.setComponentID("button-noborder");
-    panTabBtn.setButtonText("Pan");
-    panTabBtn.setBounds(col+KNOB_WIDTH, row, KNOB_WIDTH, VSEPARATOR);
-    panTabBtn.onClick = [this]
-        {
-            audioProcessor.delayTab = 1;
-            toggleUIComponents();
-        };
-
     addAndMakeVisible(patTabBtn);
     patTabBtn.setComponentID("button-noborder");
     patTabBtn.setButtonText("Pattern");
-    patTabBtn.setBounds(col + KNOB_WIDTH*2, row, KNOB_WIDTH, VSEPARATOR);
+    patTabBtn.setBounds(col + KNOB_WIDTH, row, KNOB_WIDTH, VSEPARATOR);
     patTabBtn.onClick = [this]
         {
             audioProcessor.delayTab = 2;
+            toggleUIComponents();
+        };
+
+    addAndMakeVisible(panTabBtn);
+    panTabBtn.setComponentID("button-noborder");
+    panTabBtn.setButtonText("Pan");
+    panTabBtn.setBounds(col + KNOB_WIDTH*2, row, KNOB_WIDTH, VSEPARATOR);
+    panTabBtn.onClick = [this]
+        {
+            audioProcessor.delayTab = 1;
             toggleUIComponents();
         };
 

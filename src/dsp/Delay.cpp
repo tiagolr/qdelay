@@ -119,6 +119,21 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float diffwet = Utils::sinHalfPi()(diffamt);
 
     float swing = audioProcessor.params.getRawParameterValue("swing")->load();
+    float accent = audioProcessor.params.getRawParameterValue("accent")->load();
+    float accentDelay = accent < 0 ? 1.f + accent * MAX_ACCENT : 1.f;
+    float accentSwing = accent > 0 ? 1.f - accent * MAX_ACCENT : 1.f;
+
+    float feel = audioProcessor.params.getRawParameterValue("feel")->load();
+    float secsbeat = (float)audioProcessor.secondsPerBeat;
+    if (secsbeat == 0.f) secsbeat = 0.25f;
+    int feelOffset = (int)std::round(secsbeat * MAX_FEEL_QN_OFFSET * feel * srate); // max 1/16 note offset
+    int maxFeelOffset = mode == Tap 
+        ? time[1] 
+        : std::min(time[0], time[1]);
+    maxFeelOffset += (int)std::round(swing * 0.5f * maxFeelOffset);
+    if (maxFeelOffset > 0) maxFeelOffset -= 1;
+    if (maxFeelOffset < 0) maxFeelOffset += 1;
+    feelOffset = std::clamp(feelOffset, -maxFeelOffset, maxFeelOffset);
 
     if (mode != PingPong) {
         float haasWidth = audioProcessor.params.getRawParameterValue("haas_width")->load();
@@ -201,8 +216,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         if (mode == Normal)
         {
-            delayL.write(left[i] + s0 * feedbackL);
-            delayR.write(right[i] + s1 * feedbackR);
+            delayL.writeOffset(left[i], feelOffset, feelOffset < 0);
+            delayR.writeOffset(right[i], feelOffset, feelOffset < 0);
+            delayL.write(s0 * feedbackL, feelOffset >= 0);
+            delayR.write(s1 * feedbackR, feelOffset >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
@@ -236,8 +253,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             s1 = haasSwingR.read(haasSwingR.size - 1);
         }
 
-        left[i] = v0 + s0;
-        right[i] = v1 + s1;
+        left[i] = v0 * accentDelay + s0 * accentSwing;
+        right[i] = v1 * accentDelay + s1 * accentSwing;
     }
 }
 

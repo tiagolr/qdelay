@@ -24,21 +24,30 @@ public:
 		std::fill(buf.begin(), buf.end(), 0.f);
 	}
 
-  	void write(float s, int offset = 0)
+	// writes to buffer with an offset without advancing the read position
+	// used to transpose the whole delay for Feel offset
+	void writeOffset(float s, int offset, bool overdub)
 	{
-		int writepos = pos;
-		if (offset != 0)
-		{
-			writepos = pos + offset;
-			offset %= size;
-			while (writepos < 0) writepos += size;
-			while (writepos >= size) writepos -= size;
-		}
+		int writepos = pos + offset;
+		offset %= size;
+		while (writepos < 0) writepos += size;
+		while (writepos >= size) writepos -= size;
 
-		buf[writepos] = s;
+		if (overdub) buf[writepos] += s;
+		else buf[writepos] = s;
+	}
+
+	// override is a hack used for Feel offset
+	// the input is written at an offset while the feedback is written at standard write position
+	// the most recent write replaces the tape while lagged one adds to it depending on offset pos or neg
+  	void write(float s, bool overdub = false)
+	{
+		if (overdub) buf[pos] += s;
+		else buf[pos] = s;
+
   		pos += 1;
-  		if (pos >= size)
-    		pos -= size;
+  		if (pos >= size) 
+			pos -= size;
 	}
 
 	float read(float delay)

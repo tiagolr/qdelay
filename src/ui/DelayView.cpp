@@ -103,6 +103,8 @@ void DelayView::paint(Graphics& g)
 	float rfactor = pipo_width < 0.f ? 1.f + pipo_width : 1.f;
 
 	auto [timeL, timeR] = getDelayTimes(editor.audioProcessor.secondsPerBeat, sync_l, sync_r, rate_l, rate_r, rate_sync_l, rate_sync_r);
+	float accentSwing = accent < 0 ? 1.f + accent * MAX_ACCENT : 1.f; // accent is inverted because first tap is the dry signal
+	float accentDelay = accent > 0 ? 1.f - accent * MAX_ACCENT : 1.f;
 
 	// balance feedback between left and right delays
 	float feedbackR, feedbackL;
@@ -133,14 +135,14 @@ void DelayView::paint(Graphics& g)
 		while (true)
 		{
 			auto dl = delayL.read();
-			if (!dl.empty) leftTaps.push_back(dl);
+			if (!dl.empty) leftTaps.push_back(dl.withAccent(accentDelay));
 			auto dr = delayR.read();
-			if (!dr.empty) rightTaps.push_back(dr);
+			if (!dr.empty) rightTaps.push_back(dr.withAccent(accentDelay));
 
 			auto sl = swingL.read();
-			if (!sl.empty) leftTaps.push_back(sl);
+			if (!sl.empty) leftTaps.push_back(sl.withAccent(accentSwing));
 			auto sr = swingR.read();
-			if (!sr.empty) rightTaps.push_back(sr);
+			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
 			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
 				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
@@ -160,14 +162,14 @@ void DelayView::paint(Graphics& g)
 		while (true)
 		{
 			auto dl = delayL.read();
-			if (!dl.empty) leftTaps.push_back(dl);
+			if (!dl.empty) leftTaps.push_back(dl.withAccent(accentDelay));
 			auto dr = delayR.read();
-			if (!dr.empty) rightTaps.push_back(dr);
+			if (!dr.empty) rightTaps.push_back(dr.withAccent(accentDelay));
 
 			auto sl = swingL.read();
-			if (!sl.empty) leftTaps.push_back(sl);
+			if (!sl.empty) leftTaps.push_back(sl.withAccent(accentSwing));
 			auto sr = swingR.read();
-			if (!sr.empty) rightTaps.push_back(sr);
+			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
 			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
 				(dr.time > 2 && dl.time > 2 && sr.time > 2 && sl.time > 2))
@@ -191,14 +193,14 @@ void DelayView::paint(Graphics& g)
 		while (true)
 		{
 			auto dl = delayL.read();
-			if (!dl.empty) leftTaps.push_back(dl);
+			if (!dl.empty) leftTaps.push_back(dl.withAccent(accentDelay));
 			auto dr = delayR.read();
-			if (!dr.empty) rightTaps.push_back(dr);
+			if (!dr.empty) rightTaps.push_back(dr.withAccent(accentDelay));
 
 			auto sl = swingL.read();
-			if (!sl.empty) leftTaps.push_back(sl);
+			if (!sl.empty) leftTaps.push_back(sl.withAccent(accentSwing));
 			auto sr = swingR.read();
-			if (!sr.empty) rightTaps.push_back(sr);
+			if (!sr.empty) rightTaps.push_back(sr.withAccent(accentSwing));
 
 			if ((dr.empty && dl.empty && sr.empty && sl.empty) ||
 				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
@@ -211,15 +213,11 @@ void DelayView::paint(Graphics& g)
 		}
 
 		for (auto& tap : leftTaps) 
-		{
 			if (tap.time != 0.f)
 				tap.time += timeL;
-		}
 		for (auto& tap : rightTaps)
-		{
 			if (tap.time != 0.f)
 				tap.time += timeL;
-		}
 	}
 
 	// apply haas offset
