@@ -23,9 +23,17 @@ void Delay::clear()
     predelayR.clear();
     delayL.clear();
     delayR.clear();
+    swingL.clear();
+    swingR.clear();
     auto time = getTimeSamples();
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
+    haasL.clear();
+    haasR.clear();
+    haasSwingL.clear();
+    haasSwingR.clear();
+    diffusor.clear();
+    diffusorSwing.clear();
 }
 
 void Delay::prepare(float _srate)
@@ -38,13 +46,26 @@ void Delay::prepare(float _srate)
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
     delayR.resize((int)(srate * 6));
-    delayL.clear();
-    delayR.clear();
-    predelayL.clear();
-    predelayR.clear();
-    diffusor.prepare(srate);
+    swingL.resize((int)(srate * 6));
+    swingR.resize((int)(srate * 6));
     haasL.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
     haasR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
+    haasSwingL.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
+    haasSwingR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
+    delayL.clear();
+    delayR.clear();
+    swingL.clear();
+    swingR.clear();
+    predelayL.clear();
+    predelayR.clear();
+    haasL.clear();
+    haasR.clear();
+    haasSwingL.clear();
+    haasSwingR.clear();
+    diffusor.prepare(srate);
+    diffusor.clear();
+    diffusorSwing.prepare(srate);
+    diffusorSwing.clear();
 }
 
 std::array<int, 2> Delay::getTimeSamples(bool forceSync)
@@ -97,12 +118,16 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float diffdry = Utils::cosHalfPi()(diffamt);
     float diffwet = Utils::sinHalfPi()(diffamt);
 
+    float swing = audioProcessor.params.getRawParameterValue("swing")->load();
+
     if (mode != PingPong) {
         float haasWidth = audioProcessor.params.getRawParameterValue("haas_width")->load();
         int haasLeft = haasWidth < 0.f ? (int)std::ceil(-haasWidth * MAX_HAAS * srate / 1000.f) : 0;
         int haasRight = haasWidth > 0.f ? (int)std::ceil(haasWidth * MAX_HAAS * srate / 1000.f) : 0;
         haasL.resize(haasLeft);
         haasR.resize(haasRight);
+        haasSwingL.resize(haasLeft);
+        haasSwingR.resize(haasRight);
     }
 
     if (diffamt > 0.f) {
@@ -125,23 +150,27 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         feedbackR = std::pow(feedback, e);
     }
 
-    if (mode == DelayMode::Tap) { // tap delay, first time is the tap length (predelay), second is the delay time
-        if (predelayL.size < (int)time[0])
+    // resize buffers if they are too short for the delay time just in case
+    int sizeL = (int)std::ceil(time[0]);
+    int maxSizeL = (int)std::ceil(time[0] * 1.5); // 1.5 for swing
+    int maxSizeR = (int)std::ceil(time[0] * 1.5);
+    if (mode == DelayMode::Tap) { // tap delay, left time is the tap length (predelay), right is the delay time
+        if (predelayL.size < sizeL)
         {
-            predelayL.resize((int)std::ceil(time[0]));
-            predelayR.resize((int)std::ceil(time[0]));
+            predelayL.resize(sizeL);
+            predelayR.resize(sizeL);
         }
-        if (delayL.size < (int)time[1])
-            delayL.resize((int)std::ceil(time[1]));
-        if (delayR.size < (int)time[1])
-            delayR.resize((int)std::ceil(time[1]));
+        if (delayL.size < maxSizeR) delayL.resize(maxSizeR);
+        if (delayR.size < maxSizeR) delayR.resize(maxSizeR);
+        if (swingL.size < maxSizeR) swingL.resize(maxSizeR);
+        if (swingR.size < maxSizeR) swingR.resize(maxSizeR);
     }
     else
     {
-        if (delayL.size < (int)time[0])
-            delayL.resize((int)std::ceil(time[0]));
-        if (delayR.size < (int)time[1])
-            delayR.resize((int)std::ceil(time[1]));
+        if (delayL.size < maxSizeL) delayL.resize(maxSizeL);
+        if (delayR.size < maxSizeR) delayR.resize(maxSizeR);
+        if (swingL.size < maxSizeL) swingL.resize(maxSizeL);
+        if (swingR.size < maxSizeR) swingR.resize(maxSizeR);
     }
 
     for (int i = 0; i < nsamps; ++i)
@@ -149,22 +178,40 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto timeLeft = timeL.process((float)time[0]);
         auto timeRight = timeR.process((float)time[1]);
 
-        auto v0 = delayL.read3(mode == Tap ? timeRight : timeLeft);
-        auto v1 = delayR.read3(timeRight);
+        auto tap1L = mode == Tap ? timeRight : timeLeft;
+        tap1L += swing * 0.5f * tap1L;
+        auto tap1R = timeRight;
+        tap1R += swing * 0.5f * tap1R;
+
+        auto tap2L = mode == Tap ? timeRight : timeLeft;
+        tap2L -= swing * 0.5f * tap2L;
+        auto tap2R = timeRight;
+        tap2R -= swing * 0.5f * tap2R;
+
+        // two serial delay lines to support swing
+        auto v0 = delayL.read3(tap1L);
+        auto v1 = delayR.read3(tap1R);
+        auto s0 = swingL.read3(tap2L);
+        auto s1 = swingR.read3(tap2R);
 
         if (diffamt > 0) {
             diffusor.process(v0, v1, diffdry, diffwet);
+            diffusorSwing.process(s0, s1, diffdry, diffwet);
         }
 
         if (mode == Normal)
         {
-            delayL.write(left[i] + v0 * feedbackL);
-            delayR.write(right[i] + v1 * feedbackR);
+            delayL.write(left[i] + s0 * feedbackL);
+            delayR.write(right[i] + s1 * feedbackR);
+            swingL.write(v0 * feedbackL);
+            swingR.write(v1 * feedbackR);
         }
         else if (mode == PingPong)
         {
-            delayL.write(left[i] * lfactor + v1 * feedbackL);
-            delayR.write(right[i] * rfactor + v0 * feedbackR);
+            delayL.write(left[i] * lfactor + s1 * feedbackL);
+            delayR.write(right[i] * rfactor + s0 * feedbackR);
+            swingL.write(v1 * feedbackL);
+            swingR.write(v0 * feedbackR);
         }
         else if (mode == Tap)
         {
@@ -172,8 +219,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             float preR = predelayR.read(timeLeft);
             predelayL.write(left[i]);
             predelayR.write(right[i]);
-            delayL.write(preL + v0 * feedback);
-            delayR.write(preR + v1 * feedback);
+            delayL.write(preL + s0 * feedbackL);
+            delayR.write(preR + s1 * feedbackR);
+            swingL.write(v0 * feedbackL);
+            swingR.write(v1 * feedbackR);
         }
 
         if (mode != PingPong) {
@@ -181,10 +230,14 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             haasR.write(v1);
             v0 = haasL.read(haasL.size - 1);
             v1 = haasR.read(haasR.size - 1);
+            haasSwingL.write(s0);
+            haasSwingR.write(s1);
+            s0 = haasSwingL.read(haasSwingL.size - 1);
+            s1 = haasSwingR.read(haasSwingR.size - 1);
         }
 
-        left[i] = v0;
-        right[i] = v1;
+        left[i] = v0 + s0;
+        right[i] = v1 + s1;
     }
 }
 

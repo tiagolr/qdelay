@@ -48,8 +48,13 @@ private:
 	DelayLine predelayR{};
 	DelayLine delayL{};
 	DelayLine delayR{};
+	DelayLine swingL{};
+	DelayLine swingR{};
 	DelayLine haasL{};
 	DelayLine haasR{};
+	DelayLine haasSwingL{};
+	DelayLine haasSwingR{};
 	Diffusor diffusor{};
+	Diffusor diffusorSwing{};
 	float srate = 44100.f;
 };

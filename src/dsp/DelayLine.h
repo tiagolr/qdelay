@@ -13,9 +13,7 @@ public:
 
 		if (newSize > (int)buf.size())
 		{
-			size_t oldBufSize = buf.size();
 			buf.resize(newSize, 0.0f);
-			std::fill(buf.begin() + oldBufSize, buf.end(), 0.0f);
 		}
 
 		pos %= size;

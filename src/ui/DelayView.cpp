@@ -53,7 +53,7 @@ void DelayView::parameterChanged(const juce::String& parameterID, float newValue
 static std::array<float, 2> getDelayTimes(
 	double secondsPerBeat, Delay::SyncMode syncL, Delay::SyncMode syncR, 
 	float rate_l, float rate_r,
-	float rate_sync_l, float rate_sync_r
+	int rate_sync_l, int rate_sync_r
 )
 {
 	if (secondsPerBeat == 0.f) secondsPerBeat = 0.25f;
@@ -89,8 +89,8 @@ void DelayView::paint(Graphics& g)
 	auto sync_r = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_r")->load();
 	auto rate_l = editor.audioProcessor.params.getRawParameterValue("rate_l")->load();
 	auto rate_r = editor.audioProcessor.params.getRawParameterValue("rate_r")->load();
-	auto rate_sync_l = editor.audioProcessor.params.getRawParameterValue("rate_sync_l")->load();
-	auto rate_sync_r = editor.audioProcessor.params.getRawParameterValue("rate_sync_r")->load();
+	auto rate_sync_l = (int)editor.audioProcessor.params.getRawParameterValue("rate_sync_l")->load();
+	auto rate_sync_r = (int)editor.audioProcessor.params.getRawParameterValue("rate_sync_r")->load();
 	auto mix = editor.audioProcessor.params.getRawParameterValue("mix")->load();
 	auto pan_dry = editor.audioProcessor.params.getRawParameterValue("pan_dry")->load();
 	auto pan_wet = editor.audioProcessor.params.getRawParameterValue("pan_wet")->load();
