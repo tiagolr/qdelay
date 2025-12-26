@@ -18,6 +18,8 @@ public:
         float time;
         float gain;
     };
+    float delay = 0.f;
+    float feedback = 0.f;
 
     VirtualDelay(float _delay, float _feedback)
     {
@@ -53,8 +55,6 @@ public:
     }
 
 private:
-    float delay = 0.f;
-    float feedback = 0.f;
     std::deque<Tap> taps;
 };
 

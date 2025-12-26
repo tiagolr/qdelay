@@ -101,7 +101,7 @@ std::array<int, 2> Delay::getTimeSamples(bool forceSync)
         ? (int)(std::ceil(audioProcessor.params.getRawParameterValue("rate_r")->load() * srate))
         : getSamplesSync((int)audioProcessor.params.getRawParameterValue("rate_sync_r")->load(), syncR);
 
-    return { tl, tr };
+    return { std::max(1, tl), std::max(1, tr) };
 }
 
 void Delay::processBlock(float* left, float* right, int nsamps)
@@ -137,7 +137,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     }
 
     // balance feedback between left and right delays
-    float e = (float)time[0] / (float)time[1];
+    float e = mode == Tap ? 1.f : (float)time[0] / (float)time[1];
     if (time[0] < time[1])
     {
         feedbackR = feedback;

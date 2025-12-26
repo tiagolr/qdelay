@@ -74,7 +74,7 @@ static std::array<float, 2> getDelayTimes(
 
 	auto tl = syncL == 0 ? rate_l : getSamplesSync(rate_sync_l, syncL);
 	auto tr = syncR == 0 ? rate_r : getSamplesSync(rate_sync_r, syncR);
-	return { (float)tl, (float)tr };
+	return { std::max(1e-4f, (float)tl), std::max(1e-4f,(float)tr) };
 }
 
 void DelayView::paint(Graphics& g)
@@ -106,7 +106,7 @@ void DelayView::paint(Graphics& g)
 
 	// balance feedback between left and right delays
 	float feedbackR, feedbackL;
-	float e = (float)timeL / (float)timeR;
+	float e = mode == Delay::Tap ? 1.f : (float)timeL / (float)timeR;
 	if (timeL < timeR)
 	{
 		feedbackR = feedback;
@@ -119,8 +119,10 @@ void DelayView::paint(Graphics& g)
 		feedbackR = std::pow(feedback, e);
 	}
 
-	VirtualDelay delayL(timeL, feedbackL);
-	VirtualDelay delayR(timeR, feedbackR);
+	VirtualDelay delayL(timeL - timeL * swing * 0.5f, feedbackL); // swing is inverted because first tap is the dry signal
+	VirtualDelay delayR(timeR - timeR * swing * 0.5f, feedbackR);
+	VirtualDelay swingL(timeL + timeL * swing * 0.5f, feedbackL);
+	VirtualDelay swingR(timeR + timeR * swing * 0.5f, feedbackR);
 	std::vector<VirtualDelay::Tap> leftTaps, rightTaps;
 
 	if (mode == Delay::Normal)
@@ -130,14 +132,24 @@ void DelayView::paint(Graphics& g)
 
 		while (true)
 		{
-			auto el = delayL.read();
-			if (!el.empty) leftTaps.push_back(el);
-			auto er = delayR.read();
-			if (!er.empty) rightTaps.push_back(er);
-			if ((er.empty && el.empty) || (er.time > 2 && el.time > 2))
+			auto dl = delayL.read();
+			if (!dl.empty) leftTaps.push_back(dl);
+			auto dr = delayR.read();
+			if (!dr.empty) rightTaps.push_back(dr);
+
+			auto sl = swingL.read();
+			if (!sl.empty) leftTaps.push_back(sl);
+			auto sr = swingR.read();
+			if (!sr.empty) rightTaps.push_back(sr);
+
+			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
+				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
 				break;
-			delayL.write(el);
-			delayR.write(er);
+
+			delayL.write(sl);
+			delayR.write(sr);
+			swingL.write(dl);
+			swingR.write(dr);
 		}
 	}
 	else if (mode == Delay::PingPong)
@@ -147,19 +159,66 @@ void DelayView::paint(Graphics& g)
 
 		while (true)
 		{
-			auto el = delayL.read();
-			if (!el.empty) leftTaps.push_back(el);
+			auto dl = delayL.read();
+			if (!dl.empty) leftTaps.push_back(dl);
+			auto dr = delayR.read();
+			if (!dr.empty) rightTaps.push_back(dr);
 
-			auto er = delayR.read();
-			if (!er.empty) rightTaps.push_back(er);
+			auto sl = swingL.read();
+			if (!sl.empty) leftTaps.push_back(sl);
+			auto sr = swingR.read();
+			if (!sr.empty) rightTaps.push_back(sr);
 
-			if ((er.empty && el.empty) || (er.time > 2 && el.time > 2))
+			if ((dr.empty && dl.empty && sr.empty && sl.empty) || 
+				(dr.time > 2 && dl.time > 2 && sr.time > 2 && sl.time > 2))
 				break;
 
-			if (el.dry) el.gain *= rfactor;
-			if (er.dry) er.gain *= lfactor;
-			delayL.write(er);
-			delayR.write(el);
+			if (dl.dry) dl.gain *= rfactor;
+			if (dr.dry) dr.gain *= lfactor;
+			delayL.write(sr);
+			delayR.write(sl);
+			swingL.write(dr);
+			swingR.write(dl);
+		}
+	}
+	else if (mode == Delay::Tap)
+	{
+		delayL.delay = delayR.delay;
+		swingL.delay = swingR.delay;
+		delayL.seed(0.f, 1.f);
+		delayR.seed(0.f, 1.f);
+
+		while (true)
+		{
+			auto dl = delayL.read();
+			if (!dl.empty) leftTaps.push_back(dl);
+			auto dr = delayR.read();
+			if (!dr.empty) rightTaps.push_back(dr);
+
+			auto sl = swingL.read();
+			if (!sl.empty) leftTaps.push_back(sl);
+			auto sr = swingR.read();
+			if (!sr.empty) rightTaps.push_back(sr);
+
+			if ((dr.empty && dl.empty && sr.empty && sl.empty) ||
+				(dr.time > 2 && dl.time > 2 && sl.time > 2 && sr.time > 2))
+				break;
+
+			delayL.write(sl);
+			delayR.write(sr);
+			swingL.write(dl);
+			swingR.write(dr);
+		}
+
+		for (auto& tap : leftTaps) 
+		{
+			if (tap.time != 0.f)
+				tap.time += timeL;
+		}
+		for (auto& tap : rightTaps)
+		{
+			if (tap.time != 0.f)
+				tap.time += timeL;
 		}
 	}
 
@@ -170,14 +229,16 @@ void DelayView::paint(Graphics& g)
 		{
 			for (int i = 0; i < rightTaps.size(); ++i)
 			{
-				if (i != 0) rightTaps[i].time += haas_width;
+				if (i != 0) 
+					rightTaps[i].time += haas_width;
 			}
 		}
 		else
 		{
 			for (int i = 0; i < leftTaps.size(); ++i)
 			{
-				if (i != 0) leftTaps[i].time -= haas_width;
+				if (i != 0) 
+					leftTaps[i].time -= haas_width;
 			}
 		}
 	}
