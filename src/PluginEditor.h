@@ -52,7 +52,12 @@ private:
     std::unique_ptr<Rotary> feedback;
     std::unique_ptr<Rotary> haasWidth;
     std::unique_ptr<Rotary> pipoWidth;
-
+    std::unique_ptr<Rotary> panDry;
+    std::unique_ptr<Rotary> panWet;
+    std::unique_ptr<Rotary> stereo;
+    std::unique_ptr<Rotary> swing;
+    std::unique_ptr<Rotary> feel;
+    std::unique_ptr<Rotary> accent;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;

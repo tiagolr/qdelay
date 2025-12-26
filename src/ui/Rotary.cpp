@@ -113,6 +113,18 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
             ss << std::fixed << std::setprecision(1) << ms << " ms";
             text = ss.str();
         }
+        else if (format == RotaryLabel::pan) {
+            slider_val = slider_val * 2 - 1.f;
+            if (std::fabs(slider_val) < 1) {
+                text = "C";
+            }
+            else if (slider_val > 0) {
+                text = String(std::round(slider_val * 100.f)) + "% R";
+            }
+            else {
+                text = String(std::round(slider_val * -100.f)) + "% L";
+            }
+        }
         else if (format == RotaryLabel::dBfloat1) {
             ss << std::fixed << std::setprecision(1) << slider_val << " dB";
             text = ss.str();

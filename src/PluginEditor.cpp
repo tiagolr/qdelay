@@ -85,6 +85,30 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(pipoWidth.get());
     pipoWidth->setBounds(col + KNOB_WIDTH*2, row, KNOB_WIDTH, KNOB_HEIGHT);
 
+    panDry = std::make_unique<Rotary>(audioProcessor, "pan_dry", "Pan Dry", Rotary::pan, true);
+    addChildComponent(panDry.get());
+    panDry->setBounds(mix->getBounds());
+
+    panWet = std::make_unique<Rotary>(audioProcessor, "pan_wet", "Pan Wet", Rotary::pan, true);
+    addChildComponent(panWet.get());
+    panWet->setBounds(feedback->getBounds());
+
+    stereo = std::make_unique<Rotary>(audioProcessor, "stereo", "Stereo", Rotary::percx100, true);
+    addChildComponent(stereo.get());
+    stereo->setBounds(haasWidth->getBounds());
+
+    swing = std::make_unique<Rotary>(audioProcessor, "swing", "Swing", Rotary::percx100, true);
+    addChildComponent(swing.get());
+    swing->setBounds(mix->getBounds());
+
+    feel = std::make_unique<Rotary>(audioProcessor, "feel", "Feel", Rotary::percx100, true);
+    addChildComponent(feel.get());
+    feel->setBounds(feedback->getBounds());
+
+    accent = std::make_unique<Rotary>(audioProcessor, "accent", "Accent", Rotary::percx100, true);
+    addChildComponent(accent.get());
+    accent->setBounds(haasWidth->getBounds());
+
     // ABOUT
     about = std::make_unique<About>();
     addChildComponent(*about);
@@ -130,6 +154,12 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     feedback->setVisible(audioProcessor.delayTab == 0);
     haasWidth->setVisible(audioProcessor.delayTab == 0 && mode != Delay::PingPong);
     pipoWidth->setVisible(audioProcessor.delayTab == 0 && mode == Delay::PingPong);
+    panDry->setVisible(audioProcessor.delayTab == 1);
+    panWet->setVisible(audioProcessor.delayTab == 1);
+    stereo->setVisible(audioProcessor.delayTab == 1);
+    swing->setVisible(audioProcessor.delayTab == 2);
+    feel->setVisible(audioProcessor.delayTab == 2);
+    accent->setVisible(audioProcessor.delayTab == 2);
 
     MessageManager::callAsync([this] { repaint(); });
 }

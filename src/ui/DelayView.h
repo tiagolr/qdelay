@@ -7,6 +7,24 @@
 using namespace globals;
 class QDelayAudioProcessorEditor;
 
+class VirtualDelay
+{
+public:
+	float feedback = 0.f;
+	float duration = 1.f;
+	float value = 0.f;
+
+	void write(float in)
+	{
+		value = in;
+	}
+
+	float read() const
+	{
+		return value * feedback;
+	}
+};
+
 class DelayView
 	: public juce::Component
 	, private juce::AudioProcessorValueTreeState::Listener

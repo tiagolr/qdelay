@@ -24,6 +24,7 @@ public:
         hz1f,
         eqDecayGain,
         percx100,
+        pan,
         envatk,
         envrel,
         envhold,
