@@ -225,8 +225,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
         else if (mode == PingPong)
         {
-            delayL.write(left[i] * lfactor + s1 * feedbackL);
-            delayR.write(right[i] * rfactor + s0 * feedbackR);
+            delayL.writeOffset(left[i] * lfactor, feelOffset, feelOffset < 0);
+            delayR.writeOffset(right[i] * rfactor, feelOffset, feelOffset < 0);
+            delayL.write(s1 * feedbackL, feelOffset >= 0);
+            delayR.write(s0 * feedbackR, feelOffset >= 0);
             swingL.write(v1 * feedbackL);
             swingR.write(v0 * feedbackR);
         }
@@ -236,12 +238,15 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             float preR = predelayR.read(timeLeft);
             predelayL.write(left[i]);
             predelayR.write(right[i]);
-            delayL.write(preL + s0 * feedbackL);
-            delayR.write(preR + s1 * feedbackR);
+            delayL.writeOffset(preL, feelOffset, feelOffset < 0);
+            delayR.writeOffset(preR, feelOffset, feelOffset < 0);
+            delayL.write(s0 * feedbackL, feelOffset >= 0);
+            delayR.write(s1 * feedbackR, feelOffset >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
 
+        // apply haas
         if (mode != PingPong) {
             haasL.write(v0);
             haasR.write(v1);
