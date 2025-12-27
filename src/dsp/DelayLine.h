@@ -39,7 +39,7 @@ public:
 
 	// overdub is a hack used for Feel offset to shift the whole delay back or forth
 	// the input is written at an offset while the feedback is written at standard write position
-	// the most recent write (input or feedback) replaces the tape while lagged one adds to it depending on offset
+	// the leading write (input or feedback) replaces the tape while lagging write adds to the tape
   	void write(float s, bool overdub = false)
 	{
 		if (overdub) buf[pos] += s;

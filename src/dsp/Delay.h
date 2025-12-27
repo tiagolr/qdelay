@@ -57,4 +57,6 @@ private:
 	Diffusor diffusor{};
 	Diffusor diffusorSwing{};
 	float srate = 44100.f;
+	float israte = 1.f / 44100.f;
+	float modPhase = 0.f;
 };

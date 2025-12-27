@@ -9,17 +9,12 @@ public:
 	static constexpr int NUM_ALLPASS = 8;
 
 	struct AllPass {
-		float rawsize = -1.f;
 		float srate = 0.f;
 		int size = 0;
 		float dist = 0.f;
 		std::vector<float> buf{};
 		RCFilter offsetSmooth{};
-		RCFilter attenuationSmooth{};
 		float offset = 0.f;
-		float attenuation = 1.f;
-		float offset_targ = 0.f;
-		float attenuation_targ = 0.f;
 		int pos = 0;
 
 		void init(float _srate, float apdist, float distance) {
@@ -29,16 +24,10 @@ public:
 			size = (int)(apdist * distance);
 			buf.resize(size, 0.f);
 			offsetSmooth.setup(0.1f, srate);
-			attenuationSmooth.setup(0.1f, srate);
 		}
 
 		void setSizeOffsets(float _size) {
-			if (rawsize != _size) {
-				auto mult = _size * 1.11111f;
-				attenuation_targ = std::pow(10.f, -(0.2f * dist * mult) * 0.05f);
-				offset_targ = (int)buf.size() * _size;
-			}
-			rawsize = _size;
+			offset = (int)buf.size() * _size;
 		}
 
 		inline float allPass(float in, float feedback) {
@@ -51,9 +40,7 @@ public:
 			buf[pos] = in + out * feedback;
 			pos = (pos+1)%size;
 
-			attenuation = attenuationSmooth.process(attenuation_targ);
-			offset = offsetSmooth.process(offset_targ);
-			return out * attenuation;
+			return out;
 		}
 
 		void clear() {

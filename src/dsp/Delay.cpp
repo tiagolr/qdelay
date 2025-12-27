@@ -39,6 +39,7 @@ void Delay::clear()
 void Delay::prepare(float _srate)
 {
     srate = _srate;
+    israte = 1.f / srate;
     auto time = getTimeSamples();
     timeL.setup(0.15f, srate);
     timeR.setup(0.15f, srate);
@@ -186,8 +187,29 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         if (swingR.size < maxSizeR) swingR.resize(maxSizeR);
     }
 
+    // modulation
+    float modDepth = audioProcessor.params.getRawParameterValue("mod_depth")->load();
+    float modRate = audioProcessor.params.getRawParameterValue("mod_rate")->load();
+    float maxDepth = mode == Tap
+        ? time[1] - std::fabs(swing) * 0.5f * time[1]
+        : std::min(
+            time[0] - std::fabs(swing) * 0.5f * time[0],
+            time[1] - std::fabs(swing) * 0.5f * time[1]
+        );
+    maxDepth *= 0.5f;
+    modDepth = modDepth * std::min(srate / 250.f, maxDepth);
+
     for (int i = 0; i < nsamps; ++i)
     {
+        float mod = 0.f;
+        if (modDepth > 0.f) 
+        { 
+            modPhase += modRate * israte;
+            if (modPhase > 1.f) modPhase -= 1.f;
+            mod = std::sin(modPhase * MathConstants<float>::twoPi);
+        }
+        mod *= modDepth;
+
         auto timeLeft = timeL.process((float)time[0]);
         auto timeRight = timeR.process((float)time[1]);
 
@@ -202,10 +224,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         tap2R -= swing * 0.5f * tap2R;
 
         // two serial delay lines to support swing
-        auto v0 = delayL.read3(tap1L);
-        auto v1 = delayR.read3(tap1R);
-        auto s0 = swingL.read3(tap2L);
-        auto s1 = swingR.read3(tap2R);
+        auto v0 = delayL.read3(tap1L + mod);
+        auto v1 = delayR.read3(tap1R + mod);
+        auto s0 = swingL.read3(tap2L + mod);
+        auto s1 = swingR.read3(tap2R + mod);
 
         if (diffamt > 0) {
             diffusor.process(v0, v1, diffdry, diffwet);
