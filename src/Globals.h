@@ -18,7 +18,7 @@ namespace globals {
 	constexpr int VSEPARATOR = 20;
 	constexpr unsigned int COLOR_BACKGROUND = 0xff181818;
 	//constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
-	constexpr unsigned int COLOR_ACTIVE = 0xff96CFF8;
+	constexpr unsigned int COLOR_ACTIVE = 0xffFF8080;
 	constexpr unsigned int COLOR_NEUTRAL = 0xff666666;
 	constexpr unsigned int COLOR_KNOB = 0xff272727;
 	constexpr unsigned int COLOR_BEVEL = 0xff000000;

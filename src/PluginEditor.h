@@ -17,6 +17,7 @@
 #include "ui/DelayView.h"
 #include "ui/About.h"
 #include "ui/Rotary.h"
+#include "ui/EQWidget.h"
 #include "dsp/Delay.h"
 
 using namespace globals;
@@ -37,6 +38,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void changeListenerCallback(ChangeBroadcaster* source) override;
+    void setEQTab(bool feedbackOrInput);
 
     QDelayAudioProcessor& audioProcessor;
 private:
@@ -68,6 +70,9 @@ private:
     std::unique_ptr<Rotary> duckThres;
     std::unique_ptr<Rotary> duckAmt;
     std::unique_ptr<Rotary> duckRel;
+
+    std::unique_ptr<EQWidget> eqInput;
+    std::unique_ptr<EQWidget> eqFeedbk;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;

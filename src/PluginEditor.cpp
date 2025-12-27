@@ -35,7 +35,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(delayWidget.get());
     delayWidget->setBounds(col, row+5, KNOB_WIDTH * 3, KNOB_HEIGHT);
 
-    row += KNOB_HEIGHT + 10;
+    row += KNOB_HEIGHT + 15;
 
     addAndMakeVisible(mixTabBtn);
     mixTabBtn.setComponentID("button-noborder");
@@ -67,7 +67,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
             toggleUIComponents();
         };
 
-    row += VSEPARATOR + 10;
+    row += VSEPARATOR + 5;
 
     mix = std::make_unique<Rotary>(audioProcessor, "mix", "Mix", Rotary::percx100, true);
     addChildComponent(mix.get());
@@ -151,6 +151,20 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(duckRel.get());
     duckRel->setBounds(col + KNOB_WIDTH * 2, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
 
+    // RIGHT SECTION
+    row = PLUG_PADDING;
+    col = PLUG_PADDING + KNOB_WIDTH * 6 + HSEPARATOR * 2;
+
+    eqInput = std::make_unique<EQWidget>(*this, SVF::ParamEQ);
+    addChildComponent(eqInput.get());
+    eqInput->setBounds(col, row, KNOB_WIDTH * 3, getHeight() - row - PLUG_PADDING);
+
+    eqFeedbk = std::make_unique<EQWidget>(*this, SVF::DecayEQ);
+    addChildComponent(eqFeedbk.get());
+    eqFeedbk->setBounds(col, row, KNOB_WIDTH * 3, getHeight() - row - PLUG_PADDING);
+
+    row += HEADER_HEIGHT + 10;
+
     // ABOUT
     about = std::make_unique<About>();
     addChildComponent(*about);
@@ -203,6 +217,9 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     feel->setVisible(audioProcessor.delayTab == 2);
     accent->setVisible(audioProcessor.delayTab == 2);
 
+    eqInput->setVisible(audioProcessor.eqTab == 0 && audioProcessor.rightTab == 0);
+    eqFeedbk->setVisible(audioProcessor.eqTab == 1 && audioProcessor.rightTab == 0);
+
     MessageManager::callAsync([this] { repaint(); });
 }
 
@@ -226,4 +243,10 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
 void QDelayAudioProcessorEditor::resized()
 {
     if (!init) return; // defer resized() call during constructor
+}
+
+void QDelayAudioProcessorEditor::setEQTab(bool feedbackOrInput)
+{
+    audioProcessor.eqTab = (int)feedbackOrInput;
+    toggleUIComponents();
 }

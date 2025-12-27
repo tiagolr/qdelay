@@ -449,6 +449,17 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     buffer.addFrom(0, 0, wetBuffer.getReadPointer(0), numSamples);
     if (numChannels > 1)
         buffer.addFrom(1, 0, wetBuffer.getReadPointer(1), numSamples);
+
+    // prepare FFT buffer and RMS
+    auto ch0 = buffer.getReadPointer(0);
+    auto ch1 = buffer.getReadPointer(numChannels > 1 ? 1 : 0);
+    for (int i = 0; i < numSamples; ++i) {
+        eqFFTBuffer[eqFFTWriteIndex++] = 0.5f * (ch0[i] + ch1[i]);
+        eqFFTWriteIndex %= eqFFTBuffer.size();
+    }
+    eqFFTReady.store(true, std::memory_order_release);
+    rmsLeft.store(buffer.getRMSLevel(0, 0, numSamples));
+    rmsRight.store(buffer.getRMSLevel(numChannels > 1 ? 1 : 0, 0, numSamples));
 }
 
 //==============================================================================

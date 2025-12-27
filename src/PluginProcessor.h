@@ -46,14 +46,12 @@ public:
     // UI State
     int delayTab = 0; // mix, pan, pattern
     int eqTab = 0; // input, feedback
-    size_t fftWriteIndex = 0;
-    std::array<float, (1 << EQ_FFT_ORDER) * 2> fftBuffer;
-    std::atomic<bool> fftReady = false;
-    std::atomic<float> rmsLeft = 0.f;
-    std::atomic<float> rmsRight = 0.f;
+    int rightTab = 0; // EQ, Dist, Pitch
     size_t eqFFTWriteIndex = 0;
     std::array<float, (1 << EQ_FFT_ORDER) * 2> eqFFTBuffer;
     std::atomic<bool> eqFFTReady = false;
+    std::atomic<float> rmsLeft = 0.f;
+    std::atomic<float> rmsRight = 0.f;
 
     static AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     //==============================================================================

@@ -18,8 +18,10 @@ public:
 	std::vector<std::unique_ptr<Rotary>> qknobs;
 	std::vector<std::unique_ptr<Rotary>> gainknobs;
 
-	Slider rateSlider;
 	std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateSliderAttachment;
+
+	TextButton inputBtn;
+	TextButton feedbkBtn;
 
 	TextButton bandBtn;
 

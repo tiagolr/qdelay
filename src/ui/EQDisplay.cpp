@@ -4,7 +4,7 @@
 EQDisplay::EQDisplay(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	: editor(e)
 	, type(_type)
-	, prel(type == SVF::ParamEQ ? "post" : "decay")
+	, prel(type == SVF::ParamEQ ? "input" : "decay")
 {
 	startTimerHz(30);
 	updateEQCurve();
@@ -17,8 +17,7 @@ EQDisplay::~EQDisplay()
 void EQDisplay::timerCallback()
 {
 	if (isShowing()) {
-		if (editor.audioProcessor.eqFFTReady.load(std::memory_order_acquire)) {
-			editor.audioProcessor.eqFFTReady.store(false, std::memory_order_release);
+		if (editor.audioProcessor.eqFFTReady.exchange(false, std::memory_order_acquire)) {
 			recalcFFTMags();
 		}
 
@@ -176,17 +175,17 @@ void EQDisplay::paint(juce::Graphics& g)
 		auto yy = viewBounds.getY() + (i + 1) * viewBounds.getHeight() / 8;
 		g.setColour(Colour(COLOR_NEUTRAL));
 		if (i == 0)
-			g.drawText(type == SVF::ParamEQ ? "+18" : "+75", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("+18", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 		else if (i == 1)
-			g.drawText(type == SVF::ParamEQ ? "+12" : "+50", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("+12", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 		else if (i == 2)
-			g.drawText(type == SVF::ParamEQ ? "+6" : "+25", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("+6", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 		else if (i == 4)
-			g.drawText(type == SVF::ParamEQ ? "-6" : "-25", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("-6", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 		else if (i == 5)
-			g.drawText(type == SVF::ParamEQ ? "-12" : "-50", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("-12", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 		else if (i == 6)
-			g.drawText(type == SVF::ParamEQ ? "-18" : "-75", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
+			g.drawText("-18", Rectangle<float>(viewBounds.getX() + 1, yy - 10 - 1, 20, 20), Justification::centred);
 
 		g.setColour(Colour(COLOR_NEUTRAL).withAlpha(0.25f));
 		g.drawHorizontalLine((int)yy, expBounds.getX() + 25, expBounds.getRight());
@@ -228,7 +227,7 @@ void EQDisplay::paint(juce::Graphics& g)
 		auto xnorm = (std::log(freq) - logMin) * logScale;
 		auto ynorm = (gain + EQ_MAX_GAIN) / (EQ_MAX_GAIN * 2.f);
 
-		auto r = 6.f;
+		auto r = 7.f;
 		auto x = viewBounds.getX() + viewBounds.getWidth() * xnorm;
 		auto y = viewBounds.getBottom() - viewBounds.getHeight() * ynorm;
 
@@ -269,7 +268,7 @@ void EQDisplay::paint(juce::Graphics& g)
 
 	// draw point numbers
 	g.setColour(Colour(COLOR_BACKGROUND));
-	g.setFont(FontOptions(12.f));
+	g.setFont(FontOptions(13.f));
 	for (int i = 0; i < bandBounds.size(); ++i) {
 		g.drawText(String(i + 1), bandBounds[i], Justification::centred);
 	}
@@ -291,6 +290,8 @@ void EQDisplay::drawWaveform(juce::Graphics& g)
 	const float maxFreq = 20000.f;
 	const float srate = static_cast<float>(editor.audioProcessor.srate);
 
+	waveformPath.startNewSubPath(bounds.getX(), bounds.getBottom());
+
 	for (size_t i = 0; i < size; ++i) {
 		float freq = (i * srate) / (2.0f * (size - 1));
 		freq = std::max(freq, minFreq);
@@ -300,14 +301,13 @@ void EQDisplay::drawWaveform(juce::Graphics& g)
 		float magnitudeDB = juce::Decibels::gainToDecibels(fftMagnitudes[i], minDB);
 		float y = juce::jmap(magnitudeDB, minDB, maxDB, bounds.getBottom(), bounds.getY());
 
-		if (i == 0)
-			waveformPath.startNewSubPath(x, y);
-		else
-			waveformPath.lineTo(x, y);
+		waveformPath.lineTo(x, y);
 	}
 
-	g.setColour(Colour(COLOR_ACTIVE));
-	g.strokePath(waveformPath, juce::PathStrokeType(1.0f));
+	waveformPath.lineTo(bounds.getX() + bounds.getWidth(), bounds.getBottom());
+
+	g.setColour(Colour(COLOR_ACTIVE).withAlpha(0.5f));
+	g.fillPath(waveformPath);
 
 	// hide zero values
 	g.setColour(Colour(COLOR_BACKGROUND));
@@ -403,30 +403,23 @@ void EQDisplay::showBandMenu(int band)
 {
 	PopupMenu menu;
 	auto pre = prel + "eq_band" + String(band + 1);
+	
+	auto mode = (int)editor.audioProcessor.params.getRawParameterValue(pre + "_mode")->load();
+	if (band == 0) {
+		menu.addItem(1, "Low Shelf", true, mode == 0);
+		menu.addItem(2, "Low Cut", true, mode == 1);
+	}
+	else if (band == EQ_BANDS - 1) {
+		menu.addItem(3, "High Shelf", true, mode == 0);
+		menu.addItem(4, "High Cut", true, mode == 1);
+	}
+	else {
+		menu.addItem(5, "Peak", true, mode == 0);
+		menu.addItem(6, "Band Pass", true, mode == 1);
+	}
+
 	bool bypass = (bool)editor.audioProcessor.params.getRawParameterValue(pre + "_bypass")->load();
 	menu.addItem(100, "Bypass", true, bypass);
-
-	auto mode = (int)editor.audioProcessor.params.getRawParameterValue(pre + "_mode")->load();
-	if (band == 0 && mode == 0)
-		menu.addItem(1, "Low Shelf");
-	else if (band == 0 && mode > 0)
-		menu.addItem(2, "Low Cut");
-	else if (band == EQ_BANDS - 1 && mode == 0)
-		menu.addItem(3, "High Shelf");
-	else if (band == EQ_BANDS - 1 && mode > 0)
-		menu.addItem(4, "High Cut");
-	else if (mode == 0) {
-		menu.addItem(5, "Peak");
-		menu.addItem(7, "Notch");
-	}
-	else if (mode == 1) {
-		menu.addItem(6, "Band Pass");
-		menu.addItem(7, "Notch");
-	}
-	else if (mode == 2) {
-		menu.addItem(5, "Peak");
-		menu.addItem(6, "Band Pass");
-	}
 
 
 	auto mousePos = localPointToGlobal(bandBounds[band].getBottomLeft().toInt());
@@ -442,10 +435,7 @@ void EQDisplay::showBandMenu(int band)
 				param->setValueNotifyingHost(0.f);
 			}
 			if (result == 1 || result == 3 || result == 5) {
-				param->setValueNotifyingHost(param->convertTo0to1(1.f));
-			}
-			if (result == 7) {
-				param->setValueNotifyingHost(param->convertTo0to1(2.f));
+				param->setValueNotifyingHost(1.f);
 			}
 			if (result == 100) {
 				auto p = editor.audioProcessor.params.getParameter(pre + "_bypass");

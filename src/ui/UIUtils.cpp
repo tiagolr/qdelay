@@ -173,12 +173,16 @@ void UIUtils::drawBandPass(Graphics& g, Rectangle<float> bounds, Colour c, float
 void UIUtils::drawLowShelf(Graphics& g, Rectangle<float> bounds, Colour c, float scale)
 {
 	Path p;
-	p.startNewSubPath(0.0f, 13.0f);
-	p.cubicTo(1.0f, 13.0f, 5.0f, 13.0f, 5.0f, 13.0f);
-	p.cubicTo(9.0f, 13.0f, 9.0f, 0.f, 13.0f, 0.f);
-	p.cubicTo(17.0f, 0.f, 18.0f, 0.f, 18.0f, 0.f);
+    p.startNewSubPath(0.0f, 6.5f);
+    p.cubicTo(1.0f, 6.5f, 5.0f, 6.5f, 5.0f, 6.5f);
+    p.cubicTo(9.0f, 6.5f, 9.0f, 0.5f, 13.0f, 0.5f);
+    p.cubicTo(17.0f, 0.5f, 18.0f, 0.5f, 18.0f, 0.5f);
+    p.startNewSubPath(0.0f, 6.5f);
+    p.cubicTo(1.0f, 6.5f, 5.0f, 6.5f, 5.0f, 6.5f);
+    p.cubicTo(9.0f, 6.5f, 9.0f, 12.5f, 13.0f, 12.5f);
+    p.cubicTo(17.0f, 12.5f, 18.0f, 12.5f, 18.0f, 12.5f);
 	p.applyTransform(AffineTransform::scale(scale));
-	p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY()));
+	p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY() + 1));
 	g.setColour(c);
 	g.strokePath(p, PathStrokeType(1.0f, PathStrokeType::curved));
 }
@@ -198,12 +202,16 @@ void UIUtils::drawNotch(Graphics& g, Rectangle<float> bounds, Colour c, float sc
 void UIUtils::drawHighShelf(Graphics& g, Rectangle<float> bounds, Colour c, float scale)
 {
 	Path p;
-	p.startNewSubPath(18.0f, 13.0f);
-	p.cubicTo(17.0f, 13.0f, 13.0f, 13.0f, 13.0f, 13.0f);
-	p.cubicTo(9.0f, 13.0f, 9.0f, 0.f, 5.0f, 0.f);
-	p.cubicTo(1.0f, 0.f, 0.0f, 0.f, 0.0f, 0.f);
+    p.startNewSubPath(18.0f, 6.5f);
+    p.cubicTo(17.0f, 6.5f, 13.0f, 6.5f, 13.0f, 6.5f);
+    p.cubicTo(9.0f, 6.5f, 9.0f, 0.5f, 5.0f, 0.5f);
+    p.cubicTo(1.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.5f);
+    p.startNewSubPath(18.0f, 6.5f);
+    p.cubicTo(17.0f, 6.5f, 13.0f, 6.5f, 13.0f, 6.5f);
+    p.cubicTo(9.0f, 6.5f, 9.0f, 12.5f, 5.0f, 12.5f);
+    p.cubicTo(1.0f, 12.5f, 0.0f, 12.5f, 0.0f, 12.5f);
 	p.applyTransform(AffineTransform::scale(scale));
-	p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY()));
+	p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY() + 1));
 	g.setColour(c);
 	g.strokePath(p, PathStrokeType(1.0f, PathStrokeType::curved));
 }

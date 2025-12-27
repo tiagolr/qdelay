@@ -6,7 +6,7 @@
 EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	: editor(e)
 	, type(_type)
-	, prel(_type == SVF::ParamEQ ? "post" : "decay")
+	, prel(_type == SVF::ParamEQ ? "input" : "decay")
 {
 	eq = std::make_unique<EQDisplay>(editor, type);
 	addAndMakeVisible(eq.get());
@@ -39,9 +39,7 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 		}
 		auto freq = std::make_unique<Rotary>(editor.audioProcessor, pre + "_freq", "Freq", Rotary::hz);
 		auto q = std::make_unique<Rotary>(editor.audioProcessor, pre + "_q", "Q", Rotary::float1);
-		auto gain = std::make_unique<Rotary>(editor.audioProcessor, pre + "_gain", "Gain",
-			type == SVF::DecayEQ ? Rotary::eqDecayGain : Rotary::dBfloat1, true
-		);
+		auto gain = std::make_unique<Rotary>(editor.audioProcessor, pre + "_gain", "Gain", Rotary::dBfloat1, true);
 		addChildComponent(freq.get());
 		addChildComponent(q.get());
 		addChildComponent(gain.get());
@@ -57,20 +55,23 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 			showBandModeMenu();
 		};
 
-	if (type == SVF::DecayEQ) {
-		addAndMakeVisible(rateSlider);
-		rateSlider.setComponentID("vertical");
-		rateSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
-		rateSlider.setTextBoxStyle(Slider::NoTextBox, false, 80, 20);
-		rateSlider.setColour(Slider::backgroundColourId, Colour(COLOR_BACKGROUND).brighter(0.1f));
-		rateSlider.setColour(Slider::trackColourId, Colour(COLOR_ACTIVE).darker(0.5f));
-		rateSlider.setColour(Slider::thumbColourId, Colour(COLOR_ACTIVE));
-		rateSliderAttachment = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(editor.audioProcessor.params, "irdecayrate", rateSlider);
-		rateSlider.textFromValueFunction = [](double v)
-			{
-				return "Decay Rate: " + juce::String(std::round(v * 100), 0) + " %";
-			};
-	}
+	addAndMakeVisible(inputBtn);
+	inputBtn.setComponentID("button-noborder");
+	inputBtn.setToggleState(_type == SVF::ParamEQ, dontSendNotification);
+	inputBtn.setButtonText("Input");
+	inputBtn.onClick = [this]
+		{
+			editor.setEQTab(false);
+		};
+
+	addAndMakeVisible(feedbkBtn);
+	feedbkBtn.setComponentID("button-noborder");
+	feedbkBtn.setButtonText("Feedback");
+	feedbkBtn.setToggleState(_type == SVF::DecayEQ, dontSendNotification);
+	feedbkBtn.onClick = [this]
+		{
+			editor.setEQTab(true);
+		};
 }
 
 EQWidget::~EQWidget()
@@ -93,23 +94,21 @@ void EQWidget::parameterChanged(const juce::String& parameterID, float newValue)
 void EQWidget::resized()
 {
 	auto b = getLocalBounds();
-	eq->setBounds(Rectangle<int>(b.getX(), b.getY(), 173, 103).translated(4,8));
+	eq->setBounds(Rectangle<int>(b.getX(), b.getY() + HEADER_HEIGHT + 10, KNOB_WIDTH*3, KNOB_HEIGHT*2)
+		.withTrimmedTop(10));
 
 	for (int i = 0; i < EQ_BANDS; ++i) {
-		qknobs[i]->setBounds(b.getRight() - 80, b.getY(), 80, 65);
-		freqknobs[i]->setBounds(qknobs[i]->getBounds().translated(-75, 75));
-		gainknobs[i]->setBounds(freqknobs[i]->getBounds().translated(75,0));
+		freqknobs[i]->setBounds(b.getX(), b.getBottom() - KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
+		gainknobs[i]->setBounds(freqknobs[i]->getBounds().translated(KNOB_WIDTH,0));
+		qknobs[i]->setBounds(freqknobs[i]->getBounds().translated(KNOB_WIDTH*2, 0));
 	}
 
 	bandBtn.setBounds(Rectangle<int>(30, 30)
-		.withX(freqknobs[0]->getBounds().getCentreX() - 30/2)
-		.withY(qknobs[0]->getY() + 10));
+		.withX(b.getRight() - 30)
+		.withY(b.getY() + 10));
 
-	if (type == SVF::DecayEQ) {
-		rateSlider.setPopupDisplayEnabled(true, true, getParentComponent());
-		auto eqb = eq->getBounds();
-		rateSlider.setBounds(eqb.getRight() + 16, eqb.getY() - 8, 20, 120);
-	}
+	inputBtn.setBounds(b.getX(), eq->getBottom() + 15, eq->getWidth() / 2, VSEPARATOR);
+	feedbkBtn.setBounds(inputBtn.getBounds().translated(inputBtn.getWidth(), 0));
 
 	toggleUIComponents();
 }
@@ -140,13 +139,11 @@ void EQWidget::paint(Graphics& g)
 	else if (mode == SVF::HS) {
 		UIUtils::drawHighShelf(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
 	}
-	else if (mode == SVF::BS) {
-		UIUtils::drawNotch(g, bandBtn.getBounds().toFloat().translated(4.5f, 11.5f), Colours::white, 1.2f);
-	}
 
 	g.setFont(FontOptions(16.f));
-	g.setColour(Colours::white);
-	g.drawText("Band " + String(selband + 1), bandBtn.getBounds().withHeight(16).translated(0, 40).expanded(20, 0), Justification::centred);
+	g.setColour(Colour(COLOR_NEUTRAL));
+	g.drawText("Band " + String(selband + 1), bandBtn.getBounds().withWidth(50)
+		.translated(-60,0), Justification::centredRight);
 }
 
 void EQWidget::toggleUIComponents()
@@ -184,7 +181,6 @@ void EQWidget::showBandModeMenu()
 	else {
 		menu.addItem(5, "Band pass", true, mode == SVF::BP);
 		menu.addItem(6, "Peak", true, mode == SVF::PK);
-		menu.addItem(7, "Notch", true, mode == SVF::BS);
 	}
 
 	auto menuPos = localPointToGlobal(bandBtn.getBounds().getBottomLeft());
@@ -205,7 +201,7 @@ void EQWidget::showBandModeMenu()
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}
-			else if (result == 5 || result == 6 || result == 7) {
+			else if (result == 5 || result == 6) {
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband+1) + "_mode");
 				param->setValueNotifyingHost(param->convertTo0to1((float)result - 5));
 				eq->updateEQCurve();
