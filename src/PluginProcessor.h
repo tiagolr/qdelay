@@ -13,6 +13,7 @@
 #include "Globals.h"
 #include "dsp/Delay.h"
 #include "dsp/SVF.h"
+#include "dsp/Follower.h"
 
 using namespace globals;
 
@@ -27,6 +28,7 @@ class QDelayAudioProcessor
 public:
     std::unique_ptr<Delay> delay;
     AudioBuffer<float> wetBuffer;
+    Follower follower;
 
     // Plugin settings
     float scale = 1.0f; // UI scale factor

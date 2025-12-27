@@ -12,7 +12,7 @@ public:
 	Follower() {};
 	~Follower() {};
 
-	void prepare(float srate, float thresh_, bool autorel_, float attack_, float hold, float release);
+	void prepare(float srate, float thresh_, bool autorel_, float attack_, float hold, float release, bool detectorOnly);
 	float process(float lsamp, float rsamp);
 	void clear();
 
@@ -31,4 +31,6 @@ private:
 	float releasecoeff = .1f;
 	float minreleasecoeff = .1f;
 	float envelope = 0.0f;
+	float amount = 0.f;
+	bool detectorOnly = false;
 };

@@ -86,7 +86,7 @@ void DelayWidget::paint(juce::Graphics& g)
 	else
 		UIUtils::drawNote(g, syncModeRBtn.getBounds().reduced(6).toFloat(), modeR - 1, Colours::white);
 
-	g.setColour(Colours::white);
+	g.setColour(Colour(COLOR_NEUTRAL));
 	g.setFont(FontOptions(14.f));
 	g.drawText("L", rateL->getBounds().toFloat().translated(-10.f, 0.f), Justification::centredLeft);
 	g.drawText("R", rateR->getBounds().toFloat().translated(-10.f, 0.f), Justification::centredLeft);
@@ -95,7 +95,7 @@ void DelayWidget::paint(juce::Graphics& g)
 	UIUtils::drawBevel(g, modeBtn.getBounds().toFloat().expanded(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 
 	g.setColour(Colours::white);
-	g.setFont(FontOptions(15.f));
+	g.setFont(FontOptions(16.f));
 	g.drawText(mode == Delay::Normal ? "Normal"
 		: mode == Delay::PingPong ? "PiPo"
 		: "Tap", modeBtn.getBounds(), Justification::centred);

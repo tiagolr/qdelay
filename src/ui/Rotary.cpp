@@ -38,147 +38,6 @@ void Rotary::paint(juce::Graphics& g) {
     //g.drawRect(getLocalBounds());
 }
 
-void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
-{
-    auto text = String(name);
-    std::stringstream ss;
-
-    if (mouse_down || forceLabelShowValue) {
-        if (format == RotaryLabel::percx100) text = std::to_string((int)std::round((slider_val * 100))) + " %";
-        if (format == RotaryLabel::intx100) text = std::to_string((int)std::round((slider_val * 100)));
-        else if (format == RotaryLabel::hz) {
-            if (slider_val < 1000) {
-                ss << std::fixed << std::setprecision(0) << slider_val << " Hz";
-            } else {
-                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
-            }
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::hzLp) {
-            if (slider_val >= 20000) {
-                ss << "Off";
-            }
-            else if (slider_val < 1000) {
-                ss << std::fixed << std::setprecision(0) << (int)slider_val << " Hz";
-            }
-            else {
-                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
-            }
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::hzHp) {
-            if (slider_val <= 20) {
-                ss << "Off";
-            }
-            else if (slider_val < 1000) {
-                ss << std::fixed << std::setprecision(0) << (int)slider_val << " Hz";
-            }
-            else {
-                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
-            }
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::hz1f) {
-            if (slider_val < 1000) {
-                ss << std::fixed << std::setprecision(1) << slider_val << " Hz";
-            }
-            else {
-                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
-            }
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::float1) {
-            ss << std::fixed << std::setprecision(1) << slider_val;
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::float2) {
-            ss << std::fixed << std::setprecision(2) << slider_val;
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::float2x100) {
-            ss << std::fixed << std::setprecision(2) << slider_val * 100;
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::gainTodB1f) {
-            if (slider_val > 0.0f) {
-                ss << std::fixed << std::setprecision(1) << 20.0f * std::log10(slider_val) << " dB";
-                text = ss.str();
-            }
-            else {
-                text = "-Inf";
-            }
-        }
-        else if (format == RotaryLabel::haasWidth) {
-            auto ms = slider_val * MAX_HAAS;
-            ss << std::fixed << std::setprecision(1) << ms << " ms";
-            text = ss.str();
-        }
-        else if (format == RotaryLabel::pan) {
-            slider_val = slider_val * 2 - 1.f;
-            if (std::fabs(slider_val) < 0.01) {
-                text = "C";
-            }
-            else if (slider_val > 0) {
-                text = String(std::round(slider_val * 100.f)) + "R";
-            }
-            else {
-                text = String(std::round(slider_val * -100.f)) + "L";
-            }
-        }
-        else if (format == RotaryLabel::dBfloat1) {
-            ss << std::fixed << std::setprecision(1) << slider_val << " dB";
-            text = ss.str();
-        }
-        else if (format == envatk) {
-            auto val = ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * slider_val;
-            if (val > 1000) {
-                ss << std::fixed << std::setprecision(1) << val << " s";
-            }
-            else if (val < 1) {
-                ss << std::fixed << std::setprecision(2) << val << " ms";
-            }
-            else {
-                ss << std::fixed << std::setprecision(0) << val << " ms";
-            }
-            text = ss.str();
-        }
-        else if (format == envrel) {
-            auto val = ENV_MIN_RELEASE + (ENV_MAX_RELEASE - ENV_MIN_RELEASE) * slider_val;
-            if (val > 1000) {
-                ss << std::fixed << std::setprecision(1) << val / 1000.0 << " s";
-            }
-            else if (val < 1) {
-                ss << std::fixed << std::setprecision(2) << val << " ms";
-            }
-            else {
-                ss << std::fixed << std::setprecision(0) << val << " ms";
-            }
-            text = ss.str();
-        }
-        else if (format == kMillis) {
-            if (slider_val > 1000) {
-                text = String((int)std::round(slider_val / 10000) / 10.f) + " s";
-            }
-            else {
-                text = std::to_string((int)std::round(slider_val)) + " ms";
-            }
-        }
-        else if (format == exp2Range) {
-            text = std::to_string((int)(std::pow(2, slider_val) * 100)) + " %";
-        }
-        else if (format == kChoice) {
-            text = audioProcessor.params.getParameter(paramId)->getCurrentValueAsText();
-        }
-        else if (format == eqDecayGain) {
-            text = String(std::round(slider_val / EQ_MAX_GAIN * 100.f)) + " %";
-        }
-    }
-
-    g.setColour(Colours::white);
-    g.setFont(16.0f);
-    g.drawText(text, 0, getHeight() - 16, getWidth(), 16, juce::Justification::centred, true);
-}
-
 void Rotary::mouseDown(const juce::MouseEvent& e)
 {
     e.source.enableUnboundedMouseMovement(true);
@@ -240,7 +99,8 @@ void Rotary::draw_rotary_slider(juce::Graphics& g, float slider_pos) {
     auto bounds = getBounds();
     const float radius = 16.0f;
     const float angle = -deg130 + slider_pos * (deg130 - -deg130);
-    auto kbounds = Rectangle<float>(bounds.getWidth()/2.0f-radius, bounds.getHeight()/2.0f-radius-8.0f, radius*2.0f, radius*2.0f);
+    constexpr float yoffset = -4.f;
+    auto kbounds = Rectangle<float>(bounds.getWidth()/2.0f-radius, bounds.getHeight()/2.0f-radius+yoffset, radius*2.0f, radius*2.0f);
 
     g.setColour(Colour(COLOR_KNOB).brighter(0.f));
     g.fillEllipse(kbounds);
@@ -249,13 +109,13 @@ void Rotary::draw_rotary_slider(juce::Graphics& g, float slider_pos) {
 
     g.setColour(Colour(COLOR_KNOB));
     juce::Path arcKnob;
-    arcKnob.addCentredArc(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f - 8.0f, radius + 5.0f, radius + 5.0f, 0,-deg130, deg130, true);
+    arcKnob.addCentredArc(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f + yoffset, radius + 5.0f, radius + 5.0f, 0,-deg130, deg130, true);
     g.strokePath(arcKnob, PathStrokeType(3.0, PathStrokeType::JointStyle::curved, PathStrokeType::rounded));
 
     g.setColour(Colour(color));
     if ((isSymmetric && slider_pos != 0.5f) || (!isSymmetric && slider_pos)) {
         juce::Path arcActive;
-        arcActive.addCentredArc(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f - 8.0f, radius + 5.0f, radius + 5.0f, 0, isSymmetric ? 0 : -deg130, angle, true);
+        arcActive.addCentredArc(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f + yoffset, radius + 5.0f, radius + 5.0f, 0, isSymmetric ? 0 : -deg130, angle, true);
         g.strokePath(arcActive, PathStrokeType(3.0, PathStrokeType::JointStyle::curved, PathStrokeType::rounded));
     }
 
@@ -263,5 +123,157 @@ void Rotary::draw_rotary_slider(juce::Graphics& g, float slider_pos) {
     juce::Path p;
     p.addLineSegment (juce::Line<float>(0.0f, -5.0f, 0.0f, -radius + 5.0f), 0.1f);
     juce::PathStrokeType(3.0f, PathStrokeType::JointStyle::curved, PathStrokeType::rounded).createStrokedPath(p, p);
-    g.fillPath (p, juce::AffineTransform::rotation (angle).translated(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f - 8.0f));
+    g.fillPath (p, juce::AffineTransform::rotation (angle).translated(bounds.getWidth() / 2.0f, bounds.getHeight() / 2.0f + yoffset));
+}
+
+void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
+{
+    auto text = String(name);
+    std::stringstream ss;
+
+    if (mouse_down || forceLabelShowValue) {
+        if (format == RotaryLabel::percx100) text = std::to_string((int)std::round((slider_val * 100))) + " %";
+        if (format == RotaryLabel::intx100) text = std::to_string((int)std::round((slider_val * 100)));
+        else if (format == RotaryLabel::hz) {
+            if (slider_val < 1000) {
+                ss << std::fixed << std::setprecision(0) << slider_val << " Hz";
+            }
+            else {
+                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
+            }
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::hzLp) {
+            if (slider_val >= 20000) {
+                ss << "Off";
+            }
+            else if (slider_val < 1000) {
+                ss << std::fixed << std::setprecision(0) << (int)slider_val << " Hz";
+            }
+            else {
+                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
+            }
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::hzHp) {
+            if (slider_val <= 20) {
+                ss << "Off";
+            }
+            else if (slider_val < 1000) {
+                ss << std::fixed << std::setprecision(0) << (int)slider_val << " Hz";
+            }
+            else {
+                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
+            }
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::hz1f) {
+            if (slider_val < 1000) {
+                ss << std::fixed << std::setprecision(1) << slider_val << " Hz";
+            }
+            else {
+                ss << std::fixed << std::setprecision(1) << slider_val / 1000.0 << " kHz";
+            }
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::float1) {
+            ss << std::fixed << std::setprecision(1) << slider_val;
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::float2) {
+            ss << std::fixed << std::setprecision(2) << slider_val;
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::float2x100) {
+            ss << std::fixed << std::setprecision(2) << slider_val * 100;
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::gainTodB1f) {
+            if (slider_val > 0.0f) {
+                ss << std::fixed << std::setprecision(1) << 20.0f * std::log10(slider_val) << " dB";
+                text = ss.str();
+            }
+            else {
+                text = "-Inf";
+            }
+        }
+        else if (format == RotaryLabel::gainTodB1fInv) {
+            slider_val = 1.f - slider_val;
+            if (slider_val > 0.0f) {
+                ss << std::fixed << std::setprecision(1) << 20.0f * std::log10(slider_val) << " dB";
+                text = ss.str();
+            }
+            else {
+                text = "-Inf";
+            }
+        }
+        else if (format == RotaryLabel::haasWidth) {
+            auto ms = slider_val * MAX_HAAS;
+            ss << std::fixed << std::setprecision(1) << ms << " ms";
+            text = ss.str();
+        }
+        else if (format == RotaryLabel::pan) {
+            slider_val = slider_val * 2 - 1.f;
+            if (std::fabs(slider_val) < 0.01) {
+                text = "C";
+            }
+            else if (slider_val > 0) {
+                text = String(std::round(slider_val * 100.f)) + "R";
+            }
+            else {
+                text = String(std::round(slider_val * -100.f)) + "L";
+            }
+        }
+        else if (format == RotaryLabel::dBfloat1) {
+            ss << std::fixed << std::setprecision(1) << slider_val << " dB";
+            text = ss.str();
+        }
+        else if (format == envatk) {
+            auto val = ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * slider_val;
+            if (val > 1000) {
+                ss << std::fixed << std::setprecision(1) << val << " s";
+            }
+            else if (val < 1) {
+                ss << std::fixed << std::setprecision(2) << val << " ms";
+            }
+            else {
+                ss << std::fixed << std::setprecision(0) << val << " ms";
+            }
+            text = ss.str();
+        }
+        else if (format == envrel) {
+            auto val = ENV_MIN_RELEASE + (ENV_MAX_RELEASE - ENV_MIN_RELEASE) * slider_val;
+            if (val > 1000) {
+                ss << std::fixed << std::setprecision(1) << val / 1000.0 << " s";
+            }
+            else if (val < 1) {
+                ss << std::fixed << std::setprecision(2) << val << " ms";
+            }
+            else {
+                ss << std::fixed << std::setprecision(0) << val << " ms";
+            }
+            text = ss.str();
+        }
+        else if (format == kMillis) {
+            if (slider_val >= 1000) {
+                text = String((int)std::round(slider_val / 1000 * 100) / 100.f) + " s";
+            }
+            else {
+                text = std::to_string((int)std::round(slider_val)) + " ms";
+            }
+        }
+        else if (format == exp2Range) {
+            text = std::to_string((int)(std::pow(2, slider_val) * 100)) + " %";
+        }
+        else if (format == kChoice) {
+            text = audioProcessor.params.getParameter(paramId)->getCurrentValueAsText();
+        }
+        else if (format == eqDecayGain) {
+            text = String(std::round(slider_val / EQ_MAX_GAIN * 100.f)) + " %";
+        }
+    }
+
+    g.setColour(Colours::white);
+    g.setFont(16.0f);
+    g.drawText(text, 0, getHeight() - 16, getWidth(), 16, juce::Justification::centred, true);
 }

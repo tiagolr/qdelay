@@ -281,9 +281,9 @@ void DelayView::paint(Graphics& g)
 	);
 
 	g.setColour(Colour(COLOR_NEUTRAL));
+	g.setFont(FontOptions(13.f));
 	g.drawVerticalLine((int)b.getCentreX(), b.getY(), b.getY() + 13);
 	String timestr = totalTime / 2 < 1 ? String(std::round(totalTime / 2 * 1000)) + "ms" : String(std::round(totalTime / 2 * 100) / 100) + "s";
-	g.setFont(FontOptions(13.f));
 	g.drawText(timestr, (int)b.getCentreX() + 3, (int)b.getY(), 50, 13, Justification::centredLeft);
 
 	for (int i = 0; i < leftTaps.size(); ++i)

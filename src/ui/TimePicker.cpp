@@ -44,7 +44,7 @@ void TimePicker::paint(juce::Graphics& g)
 	UIUtils::drawBevel(g, bounds, BEVEL_CORNER, Colour(COLOR_BEVEL));
 
 	g.setColour(Colours::white);
-	g.setFont(FontOptions(15.f));
+	g.setFont(FontOptions(16.f));
 
 	auto value = editor.audioProcessor.params.getRawParameterValue(paramId)->load();
 	auto text = mode > 0

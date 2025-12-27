@@ -20,6 +20,7 @@ public:
         hzLp,
         hzHp,
         gainTodB1f,
+        gainTodB1fInv,
         dBfloat1,
         hz1f,
         eqDecayGain,

@@ -1,13 +1,13 @@
 #include "Follower.h"
 
-void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_, float hold_, float release_)
+void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_, float hold_, float release_, bool detectorOnly_)
 {
 	thresh = thresh_;
 	autorel = autorel_;
-	attack = (ENV_MIN_ATTACK + (ENV_MAX_ATTACK - ENV_MIN_ATTACK) * attack_) / 1000.0f;
-	(void)hold_;
-	hold = 0.f;
-	release = (ENV_MIN_RELEASE + (ENV_MAX_RELEASE - ENV_MIN_RELEASE) * release_) / 1000.0f;
+	detectorOnly = detectorOnly_;
+	attack = attack_ / 1000.f;
+	hold = hold_ / 1000.f;
+	release = release_ / 1000.f;
 
 	float targetLevel = 0.2f; // -14dB or something slow
 	attackcoeff = std::exp(std::log(targetLevel) / (attack * srate));
@@ -19,7 +19,9 @@ void Follower::prepare(float srate, float thresh_, bool autorel_, float attack_,
 float Follower::process(float lsamp, float rsamp)
 {
 	float amp = std::max(std::fabs(lsamp), std::fabs(rsamp));
-	float in = std::max(0.0f, amp - thresh);
+	float in = detectorOnly 
+		? amp > thresh ? 1.f : 0.f
+		: std::max(0.0f, amp - thresh);
 
 	if (in > envelope) {
 		envelope = attackcoeff * envelope + (1.0f - attackcoeff) * in;
@@ -44,7 +46,5 @@ float Follower::process(float lsamp, float rsamp)
 
 void Follower::clear()
 {
-	outl = 0.0f;
-	outr = 0.0f;
 	envelope = 0.0f;
 }

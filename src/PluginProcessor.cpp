@@ -31,16 +31,17 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffusion Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 0.0f));
 
-    layout.add(std::make_unique<AudioParameterFloat>("mod_amt", "Modulation Amt", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("mod_depth", "Modulation Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("dist_fbk", "Distortion Feedbk", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Distortion Post", 0.f, 1.f, 0.0f));
 
-    layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", 0.f, 1.f, 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>("duck_amt", "Duck Amount", 0.f, 1.f, 0.5f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_atk", "Duck Attack", NormalisableRange<float>(0.01f, 200.0f, 0.01f, 0.75f), 10.f));
-    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_rel", "Duck Release", NormalisableRange<float>(10.f, 10000.0f, 1.f, 0.5f), 100.f));
+    layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", NormalisableRange<float>(0.0f, 1.f-0.001f, 0.001f, 3.f), 1.f-0.001f));
+    layout.add(std::make_unique<AudioParameterFloat>("duck_amt", "Duck Amount", NormalisableRange<float>(0.f, 1.f - 0.001f, 0.001f, 3.f), 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_atk", "Duck Attack", NormalisableRange<float>(0.01f, 200.0f, 0.01f, 0.75f), 5.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_hld", "Duck Hold", NormalisableRange<float>(0.0f, 1000.0f), 0.f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("duck_rel", "Duck Release", NormalisableRange<float>(10.f, 5000.0f, 1.f, 0.5f), 500.f));
 
     auto getEQBandFreq = [](int band)
         {
@@ -295,10 +296,11 @@ bool QDelayAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) c
 
 void QDelayAudioProcessor::onSlider()
 {
-    // keep linked delay Left and Right rates in sync
-
-
-
+    float thresh = 1.f - params.getRawParameterValue("duck_thres")->load();
+    float attack = params.getRawParameterValue("duck_atk")->load();
+    float hold = params.getRawParameterValue("duck_hld")->load();
+    float release = params.getRawParameterValue("duck_rel")->load();
+    follower.prepare((float)srate, thresh, false, attack, hold, release, true);
 
     //auto compareEQs = [this](std::vector<SVF::EQBand> e1, std::vector<SVF::EQBand> e2)
    //     {
@@ -364,6 +366,12 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     if (!numChannels || !audioOutputs || !numSamples)
         return;
 
+    if (paramChanged)
+    {
+        paramChanged = false;
+        onSlider();
+    }
+
     // prepare wet buffer by copying the dry signal into it
     wetBuffer.setSize (2, numSamples, false, false, true);
     if (numChannels == 1)
@@ -414,6 +422,27 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             lchan[sample] = (mid + side * stereo) * norm;
             rchan[sample] = (mid - side * stereo) * norm;
         }
+    }
+
+    // apply ducking
+    float duck = params.getRawParameterValue("duck_amt")->load();
+    if (duck > 0.f) 
+    {
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float env = follower.process(
+                buffer.getSample(0, i), 
+                buffer.getSample(numChannels > 1 ? 1 : 0, i)
+            );
+
+            float gain = 1.f - env * duck;
+            wetBuffer.setSample(0, i, wetBuffer.getSample(0, i) * gain);
+            wetBuffer.setSample(1, i, wetBuffer.getSample(1, i) * gain);
+        }
+    }
+    else
+    {
+        follower.clear();
     }
 
     // sum wet and dry signals
