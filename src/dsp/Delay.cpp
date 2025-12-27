@@ -26,8 +26,11 @@ void Delay::clear()
     swingL.clear();
     swingR.clear();
     auto time = getTimeSamples();
+    auto swing = audioProcessor.params.getRawParameterValue("swing")->load();
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
+    feelSmooth.reset((float)getFeelOffset(time[0], time[1], swing));
+    swingSmooth.reset(swing);
     haasL.clear();
     haasR.clear();
     haasSwingL.clear();
@@ -41,8 +44,13 @@ void Delay::prepare(float _srate)
     srate = _srate;
     israte = 1.f / srate;
     auto time = getTimeSamples();
+    float swing = audioProcessor.params.getRawParameterValue("swing")->load();
     timeL.setup(0.15f, srate);
     timeR.setup(0.15f, srate);
+    feelSmooth.setup(0.15f, srate);
+    swingSmooth.setup(0.15f, srate);
+    feelSmooth.reset((float)getFeelOffset(time[0], time[1], swing));
+    swingSmooth.reset(swing);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -105,6 +113,21 @@ std::array<int, 2> Delay::getTimeSamples(bool forceSync)
     return { std::max(1, tl), std::max(1, tr) };
 }
 
+int Delay::getFeelOffset(int tl, int tr, float swing)
+{
+    auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
+    float feel = audioProcessor.params.getRawParameterValue("feel")->load();
+    
+    float secsbeat = (float)audioProcessor.secondsPerBeat;
+    if (secsbeat == 0.f) secsbeat = 0.25f;
+    int feelOffset = (int)std::round(secsbeat * MAX_FEEL_QN_OFFSET * feel * srate); // max 1/16 note offset
+    int maxFeelOffset = mode == Tap ? tr : std::min(tl, tr);
+    maxFeelOffset += (int)std::round(swing * 0.5f * maxFeelOffset);
+    if (maxFeelOffset > 0) maxFeelOffset -= 1;
+    if (maxFeelOffset < 0) maxFeelOffset += 1;
+    return std::clamp(feelOffset, -maxFeelOffset, maxFeelOffset);
+}
+
 void Delay::processBlock(float* left, float* right, int nsamps)
 {
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
@@ -124,15 +147,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float accentDelay = accent < 0 ? 1.f + accent * MAX_ACCENT : 1.f;
     float accentSwing = accent > 0 ? 1.f - accent * MAX_ACCENT : 1.f;
 
-    float feel = audioProcessor.params.getRawParameterValue("feel")->load();
-    float secsbeat = (float)audioProcessor.secondsPerBeat;
-    if (secsbeat == 0.f) secsbeat = 0.25f;
-    int feelOffset = (int)std::round(secsbeat * MAX_FEEL_QN_OFFSET * feel * srate); // max 1/16 note offset
-    int maxFeelOffset = mode == Tap ? time[1] : std::min(time[0], time[1]);
-    maxFeelOffset += (int)std::round(swing * 0.5f * maxFeelOffset);
-    if (maxFeelOffset > 0) maxFeelOffset -= 1;
-    if (maxFeelOffset < 0) maxFeelOffset += 1;
-    feelOffset = std::clamp(feelOffset, -maxFeelOffset, maxFeelOffset);
+    float feelOffset = (float)getFeelOffset(time[0], time[1], swing);
 
     if (mode != PingPong) {
         float haasWidth = audioProcessor.params.getRawParameterValue("haas_width")->load();
@@ -199,6 +214,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     maxDepth *= 0.5f;
     modDepth = modDepth * std::min(srate / 250.f, maxDepth);
 
+    // Process samples
     for (int i = 0; i < nsamps; ++i)
     {
         float mod = 0.f;
@@ -210,18 +226,21 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
         mod *= modDepth;
 
+        // smoothed params
         auto timeLeft = timeL.process((float)time[0]);
         auto timeRight = timeR.process((float)time[1]);
+        auto swingEff = swingSmooth.process(swing);
+        auto feelEff = (int)std::round(feelSmooth.process(feelOffset));
 
         auto tap1L = mode == Tap ? timeRight : timeLeft;
-        tap1L += swing * 0.5f * tap1L;
+        tap1L += swingEff * 0.5f * tap1L;
         auto tap1R = timeRight;
-        tap1R += swing * 0.5f * tap1R;
+        tap1R += swingEff * 0.5f * tap1R;
 
         auto tap2L = mode == Tap ? timeRight : timeLeft;
-        tap2L -= swing * 0.5f * tap2L;
+        tap2L -= swingEff * 0.5f * tap2L;
         auto tap2R = timeRight;
-        tap2R -= swing * 0.5f * tap2R;
+        tap2R -= swingEff * 0.5f * tap2R;
 
         // two serial delay lines to support swing
         auto v0 = delayL.read3(tap1L + mod);
@@ -236,19 +255,19 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         if (mode == Normal)
         {
-            delayL.writeOffset(left[i], feelOffset, feelOffset < 0);
-            delayR.writeOffset(right[i], feelOffset, feelOffset < 0);
-            delayL.write(s0 * feedbackL, feelOffset >= 0);
-            delayR.write(s1 * feedbackR, feelOffset >= 0);
+            delayL.writeOffset(left[i], feelEff, feelEff < 0);
+            delayR.writeOffset(right[i], feelEff, feelEff < 0);
+            delayL.write(s0 * feedbackL, feelEff >= 0);
+            delayR.write(s1 * feedbackR, feelEff >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
         else if (mode == PingPong)
         {
-            delayL.writeOffset(left[i] * lfactor, feelOffset, feelOffset < 0);
-            delayR.writeOffset(right[i] * rfactor, feelOffset, feelOffset < 0);
-            delayL.write(s1 * feedbackL, feelOffset >= 0);
-            delayR.write(s0 * feedbackR, feelOffset >= 0);
+            delayL.writeOffset(left[i] * lfactor, feelEff, feelEff < 0);
+            delayR.writeOffset(right[i] * rfactor, feelEff, feelEff < 0);
+            delayL.write(s1 * feedbackL, feelEff >= 0);
+            delayR.write(s0 * feedbackR, feelEff >= 0);
             swingL.write(v1 * feedbackL);
             swingR.write(v0 * feedbackR);
         }
@@ -258,10 +277,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             float preR = predelayR.read(timeLeft);
             predelayL.write(left[i]);
             predelayR.write(right[i]);
-            delayL.writeOffset(preL, feelOffset, feelOffset < 0);
-            delayR.writeOffset(preR, feelOffset, feelOffset < 0);
-            delayL.write(s0 * feedbackL, feelOffset >= 0);
-            delayR.write(s1 * feedbackR, feelOffset >= 0);
+            delayL.writeOffset(preL, feelEff, feelEff < 0);
+            delayR.writeOffset(preR, feelEff, feelEff < 0);
+            delayL.write(s0 * feedbackL, feelEff >= 0);
+            delayR.write(s1 * feedbackR, feelEff >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
