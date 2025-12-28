@@ -427,6 +427,27 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     auto panWetL = Utils::cosHalfPi()(panWet) * panCompensation;
     auto panWetR = Utils::sinHalfPi()(panWet) * panCompensation;
 
+    // apply ducking
+    float duck = params.getRawParameterValue("duck_amt")->load();
+    if (duck > 0.f)
+    {
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float env = follower.process(
+                buffer.getSample(0, i),
+                buffer.getSample(numChannels > 1 ? 1 : 0, i)
+            );
+
+            float gain = 1.f - env * duck;
+            wetBuffer.setSample(0, i, wetBuffer.getSample(0, i) * gain);
+            wetBuffer.setSample(1, i, wetBuffer.getSample(1, i) * gain);
+        }
+    }
+    else
+    {
+        follower.clear();
+    }
+
     // apply mix + pan
     buffer.applyGain(0, 0, numSamples, drymix * panDryL);
     if (numChannels > 1)
@@ -448,27 +469,6 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             lchan[sample] = (mid + side * stereo) * norm;
             rchan[sample] = (mid - side * stereo) * norm;
         }
-    }
-
-    // apply ducking
-    float duck = params.getRawParameterValue("duck_amt")->load();
-    if (duck > 0.f) 
-    {
-        for (int i = 0; i < numSamples; ++i)
-        {
-            float env = follower.process(
-                buffer.getSample(0, i), 
-                buffer.getSample(numChannels > 1 ? 1 : 0, i)
-            );
-
-            float gain = 1.f - env * duck;
-            wetBuffer.setSample(0, i, wetBuffer.getSample(0, i) * gain);
-            wetBuffer.setSample(1, i, wetBuffer.getSample(1, i) * gain);
-        }
-    }
-    else
-    {
-        follower.clear();
     }
 
     // sum wet and dry signals
