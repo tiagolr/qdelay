@@ -29,6 +29,9 @@ public:
     std::unique_ptr<Delay> delay;
     AudioBuffer<float> wetBuffer;
     Follower follower;
+    std::vector<SVF::EQBand> eqBands;
+    std::vector<SVF> eqL;
+    std::vector<SVF> eqR;
 
     // Plugin settings
     float scale = 1.0f; // UI scale factor
@@ -40,7 +43,8 @@ public:
     double beatsPerSecond = 1.0;
     int samplesPerBeat = 44100;
     double secondsPerBeat = 0.1;
-    double srate = 44100.0;
+    double srate = 44100.0; // oversampled srate
+    int oversampling = 1;
     double secondsPerBar = 1.0;
 
     // UI State

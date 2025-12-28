@@ -43,6 +43,7 @@ public:
 	void clear(float input);
 	float process(float input);
 	void processBlock(float* buf, int nsamples, int blockoffset, int blocksize, float tfreq, float tq, float tgain = 1.f);
+	void copyFrom(SVF svf);
 	float getMagnitude(float freq);
 
 	Mode mode = LP;
@@ -51,6 +52,18 @@ public:
 	float gain = 1.f;
 	float q = 0.0f;
 
+	// coeffs
+	float g = 0.0f;
+	float r2 = 0.0f;
+	float a1 = 0.0f;
+	float a2 = 0.0f;
+	float a3 = 0.0f;
+
+	// output
+	float cl = 1.0f; // low-pass
+	float cb = 0.0f; // band-pass
+	float ch = 0.0f; // high-pass
+
 private:
 	void setup(float srate, float freq, float q, float resfactor = 1.f);
 
@@ -58,12 +71,7 @@ private:
     float s1 = 0.0f;
     float s2 = 0.0f;
 
-    // coeffs
-	float g = 0.0f;
-	float r2 = 0.0f;
-    float a1 = 0.0f;
-    float a2 = 0.0f;
-    float a3 = 0.0f;
+	// interpolation
 	float a1_step = 0.0f;
 	float a2_step = 0.0f;
 	float a3_step = 0.0f;
@@ -71,9 +79,5 @@ private:
 	float cl_step = 0.0f;
 	float cb_step = 0.0f;
 	float ch_step = 0.0f;
-
-    // output
-    float cl = 1.0f; // low-pass
-    float cb = 0.0f; // band-pass
-    float ch = 0.0f; // high-pass
+	
 };

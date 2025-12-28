@@ -37,6 +37,14 @@ void Delay::clear()
     haasSwingR.clear();
     diffusor.clear();
     diffusorSwing.clear();
+
+    for (int i = 0; i < eqBands.size(); ++i)
+    {
+        eqL[i].clear(0.f);
+        eqR[i].clear(0.f);
+        eqSwingL[i].clear(0.f);
+        eqSwingR[i].clear(0.f);
+    }
 }
 
 void Delay::prepare(float _srate)
@@ -44,13 +52,12 @@ void Delay::prepare(float _srate)
     srate = _srate;
     israte = 1.f / srate;
     auto time = getTimeSamples();
-    float swing = audioProcessor.params.getRawParameterValue("swing")->load();
     timeL.setup(0.15f, srate);
     timeR.setup(0.15f, srate);
     feelSmooth.setup(0.15f, srate);
     swingSmooth.setup(0.15f, srate);
-    feelSmooth.reset((float)getFeelOffset(time[0], time[1], swing));
-    swingSmooth.reset(swing);
+    diffusor.prepare(srate);
+    diffusorSwing.prepare(srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -61,20 +68,7 @@ void Delay::prepare(float _srate)
     haasR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
     haasSwingL.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
     haasSwingR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
-    delayL.clear();
-    delayR.clear();
-    swingL.clear();
-    swingR.clear();
-    predelayL.clear();
-    predelayR.clear();
-    haasL.clear();
-    haasR.clear();
-    haasSwingL.clear();
-    haasSwingR.clear();
-    diffusor.prepare(srate);
-    diffusor.clear();
-    diffusorSwing.prepare(srate);
-    diffusorSwing.clear();
+    clear();
 }
 
 std::array<int, 2> Delay::getTimeSamples(bool forceSync)
@@ -248,10 +242,28 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto s0 = swingL.read3(tap2L + mod);
         auto s1 = swingR.read3(tap2R + mod);
 
-        if (diffamt > 0) {
+        // process diffusion
+        if (diffamt > 0) 
+        {
             diffusor.process(v0, v1, diffdry, diffwet);
             diffusorSwing.process(s0, s1, diffdry, diffwet);
         }
+
+        // process EQ
+        for (int j = 0; j < EQ_BANDS; ++j)
+        {
+            v0 = eqL[j].process(v0);
+            v1 = eqR[j].process(v1);
+            s0 = eqSwingL[j].process(s0);
+            s1 = eqSwingR[j].process(s1);
+        }
+
+        // EQ on the feedback path can be quite dangerous
+        // clamp the feedback
+        v0 = std::clamp(v0, -1.f, 1.f);
+        v1 = std::clamp(v1, -1.f, 1.f);
+        s0 = std::clamp(s0, -1.f, 1.f);
+        s1 = std::clamp(s1, -1.f, 1.f);
 
         if (mode == Normal)
         {
@@ -299,6 +311,42 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         left[i] = v0 * accentDelay + s0 * accentSwing;
         right[i] = v1 * accentDelay + s1 * accentSwing;
+    }
+}
+
+void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
+{
+    eqBands = bands;
+    for (int i = 0; i < EQ_BANDS; ++i)
+    {
+        if (eqL.size() < EQ_BANDS)
+        {
+            eqL.push_back({});
+            eqR.push_back({});
+            eqSwingL.push_back({});
+            eqSwingR.push_back({});
+            eqL[i].mode = SVF::Off;
+        }
+
+        auto& band = eqBands[i];
+
+        // Feedback eq can boost frequencies quite a lot
+        // Reduce gain if positive
+        if (band.gain > 1.f)
+            band.gain = 1.f + (band.gain - 1.f) / 4.f;
+
+        auto mode = band.mode;
+        if (mode == SVF::LP) eqL[i].lp(srate, band.freq, band.q);
+        else if (mode == SVF::LS) eqL[i].ls(srate, band.freq, band.q, band.gain);
+        else if (mode == SVF::HP) eqL[i].hp(srate, band.freq, band.q);
+        else if (mode == SVF::HS) eqL[i].hs(srate, band.freq, band.q, band.gain);
+        else if (mode == SVF::PK) eqL[i].pk(srate, band.freq, band.q, band.gain);
+        else if (mode == SVF::BP) eqL[i].bp(srate, band.freq, band.q);
+        else eqL[i].mode = SVF::Off;
+
+        eqR[i].copyFrom(eqL[i]);
+        eqSwingL[i].copyFrom(eqL[i]);
+        eqSwingR[i].copyFrom(eqL[i]);
     }
 }
 

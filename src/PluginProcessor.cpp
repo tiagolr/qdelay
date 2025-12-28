@@ -140,18 +140,15 @@ std::vector<SVF::EQBand> QDelayAudioProcessor::getEqualizer(SVF::EQType type) co
         else if (filterOrShelf == 0) band.mode = SVF::BP;
 
         band.freq = params.getRawParameterValue(pre + "band" + String(i + 1) + "_freq")->load();
-        band.gain = params.getRawParameterValue(pre + "band" + String(i + 1) + "_gain")->load();
-        band.gain = std::exp(band.gain * DB2LOG);
+        float gain = params.getRawParameterValue(pre + "band" + String(i + 1) + "_gain")->load();
+        band.gain = std::exp(gain * DB2LOG);
         band.q = params.getRawParameterValue(pre + "band" + String(i + 1) + "_q")->load();
         bool bypass = params.getRawParameterValue(pre + "band" + String(i + 1) + "_bypass")->load();
-        if (bypass) continue;
 
-        if (band.mode == SVF::LP || band.mode == SVF::HP ||
-            band.mode == SVF::BP || band.mode == SVF::BS ||
-            std::fabs(band.gain - 1.f) > 1e-6f)
-        {
-            bands.push_back(band);
-        }
+        if (bypass || (filterOrShelf == 1 && std::fabs(gain) < 1e-4f))
+            band.mode = SVF::Off;
+
+        bands.push_back(band);
     }
 
     return bands;
@@ -302,20 +299,39 @@ void QDelayAudioProcessor::onSlider()
     float release = params.getRawParameterValue("duck_rel")->load();
     follower.prepare((float)srate, thresh, false, attack, hold, release, true);
 
-    //auto compareEQs = [this](std::vector<SVF::EQBand> e1, std::vector<SVF::EQBand> e2)
-   //     {
-    //        if (e1.size() != e2.size()) return false;
-    //        for (int i = 0; i < e1.size(); ++i) {
-    //            if (e1[i].mode != e2[i].mode
-    //                || std::fabs(e1[i].freq - e2[i].freq) > 1e-6
-    //                || std::fabs(e1[i].gain - e2[i].gain) > 1e-6
-    //                || std::fabs(e1[i].q - e2[i].q) > 1e-6
-    //                ) {
-    //                return false;
-    //            }
-    //        }
-    //        return true;
-    //    };
+    // prepare input EQ
+    eqBands = getEqualizer(SVF::EQType::ParamEQ);
+    for (int i = 0; i < EQ_BANDS; ++i) 
+    {
+        if (eqL.size() < EQ_BANDS) 
+        {
+            eqL.push_back({});
+            eqR.push_back({});
+            eqL[i].mode = SVF::Off;
+        }
+
+        // only bands that change mode need to be reset
+        // otherwise the frequency,gain and q are interpolated during SVF::processBlock
+        auto rate = (float)srate / oversampling;
+        bool rateChanged = eqL[i].srate != rate;
+        auto& band = eqBands[i];
+        if (band.mode != eqL[i].mode || rateChanged)
+        {
+            auto mode = band.mode; 
+            if (mode == SVF::LP) eqL[i].lp(rate, band.freq, band.q);
+            else if (mode == SVF::LS) eqL[i].ls(rate, band.freq, band.q, band.gain);
+            else if (mode == SVF::HP) eqL[i].hp(rate, band.freq, band.q);
+            else if (mode == SVF::HS) eqL[i].hs(rate, band.freq, band.q, band.gain);
+            else if (mode == SVF::PK) eqL[i].pk(rate, band.freq, band.q, band.gain);
+            else if (mode == SVF::BP) eqL[i].bp(rate, band.freq, band.q);
+            else eqL[i].mode = SVF::Off;
+        }
+
+        eqR[i].copyFrom(eqL[i]);
+    }
+
+    // prepare feedback EQ
+    delay->setEqualizer(getEqualizer(SVF::EQType::DecayEQ));
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -383,6 +399,16 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     {
         wetBuffer.copyFrom (0, 0, buffer, 0, 0, numSamples);
         wetBuffer.copyFrom (1, 0, buffer, 1, 0, numSamples);
+    }
+
+    // process wetBuffer (input) through input EQ
+    for (int i = 0; i < EQ_BANDS; ++i)
+    {
+        auto& svfL = eqL[i];
+        auto& svfR = eqR[i];
+        auto& band = eqBands[i];
+        svfL.processBlock(wetBuffer.getWritePointer(0), numSamples, 0, numSamples, band.freq, band.q, band.gain);
+        svfR.processBlock(wetBuffer.getWritePointer(1), numSamples, 1, numSamples, band.freq, band.q, band.gain);
     }
 
     // process the signal into the same buffer

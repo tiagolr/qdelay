@@ -406,16 +406,16 @@ void EQDisplay::showBandMenu(int band)
 	
 	auto mode = (int)editor.audioProcessor.params.getRawParameterValue(pre + "_mode")->load();
 	if (band == 0) {
-		menu.addItem(1, "Low Shelf", true, mode == 0);
-		menu.addItem(2, "Low Cut", true, mode == 1);
+		menu.addItem(1, "Low Shelf", true, mode == 1);
+		menu.addItem(2, "Low Cut", true, mode == 0);
 	}
 	else if (band == EQ_BANDS - 1) {
-		menu.addItem(3, "High Shelf", true, mode == 0);
-		menu.addItem(4, "High Cut", true, mode == 1);
+		menu.addItem(3, "High Shelf", true, mode == 1);
+		menu.addItem(4, "High Cut", true, mode == 0);
 	}
 	else {
-		menu.addItem(5, "Peak", true, mode == 0);
-		menu.addItem(6, "Band Pass", true, mode == 1);
+		menu.addItem(5, "Peak", true, mode == 1);
+		menu.addItem(6, "Band Pass", true, mode == 0);
 	}
 
 	bool bypass = (bool)editor.audioProcessor.params.getRawParameterValue(pre + "_bypass")->load();

@@ -4,6 +4,7 @@
 #include "DelayLine.h"
 #include "Utils.h"
 #include "Diffusor.h"
+#include "SVF.h"
 
 class QDelayAudioProcessor;
 
@@ -38,10 +39,16 @@ public:
 	int getFeelOffset(int timeL, int timeR, float swing);
 	void processBlock(float* left, float* right, int nsamps);
 	void clear();
+	void setEqualizer(std::vector<SVF::EQBand> bands);
 
 	void parameterChanged(const String& paramId, float value) override;
 
 private:
+	std::vector<SVF::EQBand> eqBands;
+	std::vector<SVF> eqL;
+	std::vector<SVF> eqSwingL;
+	std::vector<SVF> eqR;
+	std::vector<SVF> eqSwingR;
 	QDelayAudioProcessor& audioProcessor;
 	RCFilter timeL{};
 	RCFilter timeR{};

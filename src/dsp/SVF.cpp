@@ -94,6 +94,9 @@ void SVF::pk(float _srate, float _freq, float _q, float _gain)
 
 float SVF::process(float sample)
 {
+	if (mode == SVF::Off)
+		return sample;
+
     float v3 = sample - s2;
     float v1 = a1 * s1 + a2 * v3; // band
     float v2 = s2 + a2 * s1 + a3 * v3; // low
@@ -106,8 +109,7 @@ float SVF::process(float sample)
 
 void SVF::processBlock(float* buf, int nsamples, int blockoffset, int blocksize, float tfreq, float tq, float tgain)
 {
-	(void)blocksize;
-	if (mode == SVF::Off)
+	if (mode == SVF::Off) 
 		return;
 
 	// current values
@@ -146,6 +148,9 @@ void SVF::processBlock(float* buf, int nsamples, int blockoffset, int blocksize,
 		}
 	}
 
+	if (nsamples == 0) 
+		return; // prepare only
+
 	for (int n = 0; n < nsamples; ++n) {
 		auto sample = buf[n];
 		float v3 = sample - s2;
@@ -176,6 +181,25 @@ void SVF::clear(float input)
 	s1 = 0.f;
 	s2 = input;
 };
+
+void SVF::copyFrom(SVF svf)
+{
+	mode = svf.mode;
+	srate = svf.srate;
+	freq = svf.freq;
+	gain = svf.gain;
+	q = svf.q;
+
+	g = svf.g;
+	r2 = svf.r2;
+	a1 = svf.a1;
+	a2 = svf.a2;
+	a3 = svf.a3;
+
+	cl = svf.cl;
+	cb = svf.cb;
+	ch = svf.ch;
+}
 
 float SVF::getMagnitude(float _freq)
 {
