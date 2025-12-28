@@ -167,8 +167,8 @@ void EQDisplay::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheel
 void EQDisplay::paint(juce::Graphics& g)
 {
 	g.setColour(Colour(COLOR_NEUTRAL));
-	auto expBounds = viewBounds.toFloat().expanded(2.f);
-	g.drawRect(expBounds, 1.f);
+	auto expBounds = viewBounds.toFloat().expanded(1.f);
+	UIUtils::drawBevel(g, expBounds.expanded(3.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 
 	g.setFont(10.f);
 	for (int i = 0; i < 8; ++i) {
@@ -267,7 +267,7 @@ void EQDisplay::paint(juce::Graphics& g)
 	g.fillPath(p);
 
 	// draw point numbers
-	g.setColour(Colour(COLOR_BACKGROUND));
+	g.setColour(Colour(COLOR_BEVEL));
 	g.setFont(FontOptions(13.f));
 	for (int i = 0; i < bandBounds.size(); ++i) {
 		g.drawText(String(i + 1), bandBounds[i], Justification::centred);
@@ -310,7 +310,7 @@ void EQDisplay::drawWaveform(juce::Graphics& g)
 	g.fillPath(waveformPath);
 
 	// hide zero values
-	g.setColour(Colour(COLOR_BACKGROUND));
+	g.setColour(Colour(COLOR_BEVEL));
 	g.fillRect(bounds.toFloat().expanded(1.f).withHeight(2.f).withBottomY((float)bounds.getBottom() + 1));
 }
 
@@ -343,7 +343,7 @@ void EQDisplay::recalcFFTMags()
 void EQDisplay::resized()
 {
 	auto b = getLocalBounds();
-	viewBounds = b.reduced(2).toFloat();
+	viewBounds = b.reduced(5).toFloat();
 	toggleUIComponents();
 }
 
@@ -403,19 +403,19 @@ void EQDisplay::showBandMenu(int band)
 {
 	PopupMenu menu;
 	auto pre = prel + "eq_band" + String(band + 1);
-	
+
 	auto mode = (int)editor.audioProcessor.params.getRawParameterValue(pre + "_mode")->load();
 	if (band == 0) {
-		menu.addItem(1, "Low Shelf", true, mode == 1);
-		menu.addItem(2, "Low Cut", true, mode == 0);
+		menu.addItem(1, "Low Cut", true, mode == 0);
+		menu.addItem(2, "Low Shelf", true, mode == 1);
 	}
 	else if (band == EQ_BANDS - 1) {
-		menu.addItem(3, "High Shelf", true, mode == 1);
-		menu.addItem(4, "High Cut", true, mode == 0);
+		menu.addItem(3, "High Cut", true, mode == 0);
+		menu.addItem(4, "High Shelf", true, mode == 1);
 	}
 	else {
-		menu.addItem(5, "Peak", true, mode == 1);
-		menu.addItem(6, "Band Pass", true, mode == 0);
+		menu.addItem(5, "Band Pass", true, mode == 0);
+		menu.addItem(6, "Peak", true, mode == 1);
 	}
 
 	bool bypass = (bool)editor.audioProcessor.params.getRawParameterValue(pre + "_bypass")->load();
@@ -431,10 +431,10 @@ void EQDisplay::showBandMenu(int band)
 		{
 			if (result == 0) return;
 			auto param = editor.audioProcessor.params.getParameter(pre + "_mode");
-			if (result == 2 || result == 4 || result == 6) {
+			if (result == 1 || result == 3 || result == 5) {
 				param->setValueNotifyingHost(0.f);
 			}
-			if (result == 1 || result == 3 || result == 5) {
+			if (result == 2 || result == 4 || result == 6) {
 				param->setValueNotifyingHost(1.f);
 			}
 			if (result == 100) {

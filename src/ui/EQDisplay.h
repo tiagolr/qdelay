@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "../dsp/SVF.h"
 #include "../Globals.h"
+#include "UIUtils.h"
 
 using namespace globals;
 class QDelayAudioProcessorEditor;

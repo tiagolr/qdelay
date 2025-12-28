@@ -104,7 +104,7 @@ void EQWidget::resized()
 	}
 
 	bandBtn.setBounds(Rectangle<int>(30, 30)
-		.withX(b.getRight() - 30)
+		.withX(b.getRight() - 31)
 		.withY(b.getY() + 10));
 
 	inputBtn.setBounds(b.getX(), eq->getBottom() + 15, eq->getWidth() / 2, VSEPARATOR);
@@ -119,7 +119,7 @@ void EQWidget::paint(Graphics& g)
 
 	// draw band curve button
 	g.setColour(Colour(COLOR_NEUTRAL));
-	g.drawRoundedRectangle(bandBtn.getBounds().toFloat().reduced(0.5f), 3.f, 1.f);
+	UIUtils::drawBevel(g, bandBtn.getBounds().toFloat().expanded(.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 	auto mode = eq->bandFilters[selband].mode;
 	if (mode == SVF::PK) {
 		UIUtils::drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
@@ -179,7 +179,7 @@ void EQWidget::showBandModeMenu()
 		menu.addItem(4, "High Shelf", true, mode == SVF::HS);
 	}
 	else {
-		menu.addItem(5, "Band pass", true, mode == SVF::BP);
+		menu.addItem(5, "Band Pass", true, mode == SVF::BP);
 		menu.addItem(6, "Peak", true, mode == SVF::PK);
 	}
 

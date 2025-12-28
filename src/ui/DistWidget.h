@@ -2,39 +2,32 @@
 
 #include <JuceHeader.h>
 #include "../Globals.h"
+#include "UIUtils.h"
 #include "Rotary.h"
-#include "EQDisplay.h"
 
 using namespace globals;
 class QDelayAudioProcessorEditor;
 
-class EQWidget
+class DistWidget
 	: public juce::Component
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-	std::unique_ptr<EQDisplay> eq;
-	std::vector<std::unique_ptr<Rotary>> freqknobs;
-	std::vector<std::unique_ptr<Rotary>> qknobs;
-	std::vector<std::unique_ptr<Rotary>> gainknobs;
 
-	TextButton inputBtn;
-	TextButton feedbkBtn;
+	TextButton modeBtn;
+	std::unique_ptr<Rotary> color;
+	std::unique_ptr<Rotary> drive;
+	std::unique_ptr<Rotary> trim;
+	std::unique_ptr<Rotary> bias;
 
-	TextButton bandBtn;
-
-	EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType type);
-	~EQWidget();
+	DistWidget(QDelayAudioProcessorEditor& e);
+	~DistWidget();
 
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void paint(Graphics& g) override;
 	void resized() override;
 	void toggleUIComponents();
-	void showBandModeMenu();
 
 private:
-	int selband = 0;
-	String prel;
-	SVF::EQType type;
 	QDelayAudioProcessorEditor& editor;
 };

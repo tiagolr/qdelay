@@ -80,7 +80,7 @@ static std::array<float, 2> getDelayTimes(
 void DelayView::paint(Graphics& g)
 {
 	auto b = getLocalBounds().toFloat();
-	UIUtils::drawBevel(g, b, BEVEL_CORNER, Colour(COLOR_BEVEL));
+	UIUtils::drawBevel(g, b.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 	b = b.reduced(8.f);
 
 	auto mode = (Delay::DelayMode)editor.audioProcessor.params.getRawParameterValue("mode")->load();

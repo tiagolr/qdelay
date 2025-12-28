@@ -18,6 +18,7 @@
 #include "ui/About.h"
 #include "ui/Rotary.h"
 #include "ui/EQWidget.h"
+#include "ui/Meter.h"
 #include "dsp/Delay.h"
 
 using namespace globals;
@@ -73,6 +74,7 @@ private:
 
     std::unique_ptr<EQWidget> eqInput;
     std::unique_ptr<EQWidget> eqFeedbk;
+    std::unique_ptr<Meter> meter;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;

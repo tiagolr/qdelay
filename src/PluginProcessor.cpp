@@ -484,8 +484,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         eqFFTWriteIndex %= eqFFTBuffer.size();
     }
     eqFFTReady.store(true, std::memory_order_release);
-    rmsLeft.store(buffer.getRMSLevel(0, 0, numSamples));
-    rmsRight.store(buffer.getRMSLevel(numChannels > 1 ? 1 : 0, 0, numSamples));
+    rmsLeft.store(buffer.getMagnitude(0, 0, numSamples));
+    rmsRight.store(buffer.getMagnitude(numChannels > 1 ? 1 : 0, 0, numSamples));
 }
 
 //==============================================================================

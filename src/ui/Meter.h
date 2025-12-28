@@ -10,14 +10,18 @@ class QDelayAudioProcessor;
 class Meter : public juce::Component, private juce::Timer
 {
 public:
-    Meter(QDelayAudioProcessor& p, int _source);
+    Meter(QDelayAudioProcessor& p);
     ~Meter() override;
     void timerCallback() override;
 
     void paint(juce::Graphics& g) override;
 
 private:
-    int source = 0; // Master, Layer1, Layer2
     QDelayAudioProcessor& audioProcessor;
-    float zeroMeter = 0.0f;
+    float db6 = 0.f;
+    float db18 = 0.f;
+    float db30 = 0.f;
+    float db42 = 0.f;
+    float rmsSmoothedL = 0.f;
+    float rmsSmoothedR = 0.f;
 };

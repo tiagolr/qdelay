@@ -164,6 +164,11 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     eqFeedbk->setBounds(col, row, KNOB_WIDTH * 3, getHeight() - row - PLUG_PADDING);
 
     row += HEADER_HEIGHT + 10;
+    meter = std::make_unique<Meter>(audioProcessor);
+    addAndMakeVisible(meter.get());
+    meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 20)
+        .withRightX(getWidth() - PLUG_PADDING)
+        .withTrimmedTop(10));
 
     // ABOUT
     about = std::make_unique<About>();
