@@ -69,18 +69,18 @@ void Distortion::onSlider()
 float Distortion::saturate(float x, float& dc) const
 {
 	x += bias * drift;
-	x *= driveGain;
 	float y;
 
 	if (mode == Tape) 
 	{
+		x *= driveGain;
 		if (x < -1.f) y = -1.f;
 		else if (x > 1.f) y = 1.f;
 		else y = x * 1.5f - x * x * x * 0.5f;
 	}
 	else
 	{
-		y = std::tanh(x);
+		y = std::tanh(driveGain * x);
 	}
 
 	// DC blocker (1-pole HP)

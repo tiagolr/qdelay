@@ -248,13 +248,6 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto s0 = swingL.read3(tap2L + mod);
         auto s1 = swingR.read3(tap2R + mod);
 
-        // process diffusion
-        if (diffamt > 0) 
-        {
-            diffusor.process(v0, v1, diffdry, diffwet);
-            diffusorSwing.process(s0, s1, diffdry, diffwet);
-        }
-
         // process distortion
         if (distWet > 0.f)
         {
@@ -324,6 +317,12 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         left[i] = v0 * accentDelay + s0 * accentSwing;
         right[i] = v1 * accentDelay + s1 * accentSwing;
+
+        // process diffusion
+        if (diffamt > 0)
+        {
+            diffusor.process(left[i], right[i], diffdry, diffwet);
+        }
     }
 }
 

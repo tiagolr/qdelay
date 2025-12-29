@@ -59,7 +59,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
         auto namePrefix = "Input EQ Band" + String(i + 1);
         layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ"}, 1));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
-        layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.707f, 8.f, 0.707f));
+        layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.2f, 8.f, 0.707f));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_gain", namePrefix + " Gain", -EQ_MAX_GAIN, EQ_MAX_GAIN, 0.f));
         layout.add(std::make_unique<AudioParameterBool>(paramPrefix + "_bypass", namePrefix + " Bypass", false));
     }
@@ -70,7 +70,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
         auto namePrefix = "Decay EQ Band" + String(i + 1);
         layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ"}, 1));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
-        layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.707f, 8.f, 0.707f));
+        layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.2f, 8.f, 0.707f));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_gain", namePrefix + " Gain", -EQ_MAX_GAIN, EQ_MAX_GAIN, 0.f));
         layout.add(std::make_unique<AudioParameterBool>(paramPrefix + "_bypass", namePrefix + " Bypass", false));
     }

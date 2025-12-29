@@ -163,12 +163,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(eqFeedbk.get());
     eqFeedbk->setBounds(col, row, KNOB_WIDTH * 3, getHeight() - row - PLUG_PADDING);
 
-    row += HEADER_HEIGHT + 10;
     meter = std::make_unique<Meter>(audioProcessor);
     addAndMakeVisible(meter.get());
-    meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 20)
-        .withRightX(getWidth() - PLUG_PADDING)
-        .withTrimmedTop(10));
+    meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 30 + HEADER_HEIGHT)
+        .withRightX(getWidth() - PLUG_PADDING));
 
     // ABOUT
     about = std::make_unique<About>();
@@ -239,9 +237,9 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour(Colour(COLOR_NEUTRAL));
     g.setFont(FontOptions(16.f));
-    g.drawText("DIFF", diffAmt->getX(), diffAmt->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
-    g.drawText("MOD", modDepth->getX(), modDepth->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
-    g.drawText("SAT", distFeedbk->getX(), distFeedbk->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
+    g.drawText("DIFF", diffAmt->getX(), diffAmt->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
+    g.drawText("MOD", modDepth->getX(), modDepth->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
+    g.drawText("SAT", distFeedbk->getX(), distFeedbk->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("DUCK", duckThres->getX(), duckThres->getY() - 10 - HSEPARATOR, KNOB_WIDTH, HSEPARATOR, Justification::centred);
 }
 
