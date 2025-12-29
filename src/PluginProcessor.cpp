@@ -113,6 +113,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
 
     delay = std::make_unique<Delay>(*this);
     dist = std::make_unique<Distortion>(*this);
+    diffusor = std::make_unique<Diffusor>();
 }
 
 QDelayAudioProcessor::~QDelayAudioProcessor()
@@ -266,6 +267,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     srate = sampleRate;
     delay->prepare((float)srate);
     dist->prepare((float)srate);
+    diffusor->prepare((float)srate);
     onSlider();
     sendChangeMessage();
 }
@@ -347,6 +349,10 @@ void QDelayAudioProcessor::onSlider()
 
     // update distortion
     dist->onSlider();
+
+    // diffusor
+    float diffsize = params.getRawParameterValue("diff_size")->load();
+    diffusor->setSize(diffsize);
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -382,10 +388,11 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
                 secondsPerBar = beatsPerSecond * 4;
             }
             auto play = pos->getIsPlaying();
-            if (!playing && play) // on play()
+            if (!playing && play) // onplay()
             {
                 delay->clear();
                 dist->clear();
+                diffusor->clear();
             }
             playing = play;
         }
@@ -427,8 +434,23 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         svfR.processBlock(wetBuffer.getWritePointer(1), numSamples, 1, numSamples, band.freq, band.q, band.gain);
     }
 
+    float diffamt = params.getRawParameterValue("diff_amt")->load();
+    if (diffamt > 0.f) {
+        float diffdry = Utils::cosHalfPi()(diffamt);
+        float diffwet = Utils::sinHalfPi()(diffamt);
+        diffusor->processBlock(
+            wetBuffer.getWritePointer(0),
+            wetBuffer.getWritePointer(1),
+            numSamples, diffdry, diffwet
+        );
+    }
+
     // process the signal into the same buffer
-    delay->processBlock(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), numSamples);
+    delay->processBlock(
+        wetBuffer.getWritePointer(0), 
+        wetBuffer.getWritePointer(1),
+        numSamples
+    );
 
     auto dist_post = params.getRawParameterValue("dist_post")->load();
     if (dist_post > 0.f) 

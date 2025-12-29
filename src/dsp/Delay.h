@@ -3,8 +3,6 @@
 #include <JuceHeader.h>
 #include "DelayLine.h"
 #include "Utils.h"
-#include "Diffusor.h"
-#include "Distortion.h"
 #include "SVF.h"
 
 class QDelayAudioProcessor;
@@ -51,8 +49,6 @@ private:
 	std::vector<SVF> eqSwingL;
 	std::vector<SVF> eqR;
 	std::vector<SVF> eqSwingR;
-	std::unique_ptr<Distortion> dist;
-	std::unique_ptr<Distortion> distSwing;
 	QDelayAudioProcessor& audioProcessor;
 	RCFilter timeL{};
 	RCFilter timeR{};
@@ -68,8 +64,6 @@ private:
 	DelayLine haasR{};
 	DelayLine haasSwingL{};
 	DelayLine haasSwingR{};
-	Diffusor diffusor{};
-	Diffusor diffusorSwing{};
 
 	float srate = 44100.f;
 	float israte = 1.f / 44100.f;

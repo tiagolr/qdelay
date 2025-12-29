@@ -4,8 +4,6 @@
 Delay::Delay(QDelayAudioProcessor& p)
 	: audioProcessor(p)
 {
-    dist = std::make_unique<Distortion>(audioProcessor);
-    distSwing = std::make_unique<Distortion>(audioProcessor);
 	audioProcessor.params.addParameterListener("link", this);
 	audioProcessor.params.addParameterListener("sync_l", this);
 	audioProcessor.params.addParameterListener("sync_r", this);
@@ -37,10 +35,6 @@ void Delay::clear()
     haasR.clear();
     haasSwingL.clear();
     haasSwingR.clear();
-    diffusor.clear();
-    diffusorSwing.clear();
-    dist->clear();
-    distSwing->clear();
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -60,10 +54,6 @@ void Delay::prepare(float _srate)
     timeR.setup(0.15f, srate);
     feelSmooth.setup(0.15f, srate);
     swingSmooth.setup(0.15f, srate);
-    diffusor.prepare(srate);
-    diffusorSwing.prepare(srate);
-    dist->prepare(srate);
-    distSwing->prepare(srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -138,10 +128,6 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float lfactor = pipoWidth > 0.f ? 1.f - pipoWidth : 1.f;
     float rfactor = pipoWidth < 0.f ? 1.f + pipoWidth : 1.f;
 
-    float diffamt = audioProcessor.params.getRawParameterValue("diff_amt")->load();
-    float diffdry = Utils::cosHalfPi()(diffamt);
-    float diffwet = Utils::sinHalfPi()(diffamt);
-
     float swing = audioProcessor.params.getRawParameterValue("swing")->load();
     float accent = audioProcessor.params.getRawParameterValue("accent")->load();
     float accentDelay = accent < 0 ? 1.f + accent * MAX_ACCENT : 1.f;
@@ -157,12 +143,6 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         haasR.resize(haasRight);
         haasSwingL.resize(haasLeft);
         haasSwingR.resize(haasRight);
-    }
-
-    if (diffamt > 0.f) {
-        float diffsize = audioProcessor.params.getRawParameterValue("diff_size")->load();
-        diffsize = (0.9f - 0.9f * diffsize);
-        diffusor.setSize(diffsize);
     }
 
     // balance feedback between left and right delays
@@ -248,13 +228,6 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto s0 = swingL.read3(tap2L + mod);
         auto s1 = swingR.read3(tap2R + mod);
 
-        // process distortion
-        if (distWet > 0.f)
-        {
-            dist->process(v0, v1, distDry, distWet);
-            distSwing->process(s0, s1, distDry, distWet);
-        }
-
         // process EQ
         for (int j = 0; j < EQ_BANDS; ++j)
         {
@@ -317,12 +290,6 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         left[i] = v0 * accentDelay + s0 * accentSwing;
         right[i] = v1 * accentDelay + s1 * accentSwing;
-
-        // process diffusion
-        if (diffamt > 0)
-        {
-            diffusor.process(left[i], right[i], diffdry, diffwet);
-        }
     }
 }
 
@@ -367,9 +334,6 @@ void Delay::onSlider()
     float distfbk = audioProcessor.params.getRawParameterValue("dist_pre")->load();
     distDry = Utils::cosHalfPi()(distfbk);
     distWet = Utils::sinHalfPi()(distfbk);
-
-    dist->onSlider();
-    distSwing->onSlider();
 }
 
 void Delay::parameterChanged(const String& paramId, float value)

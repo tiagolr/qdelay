@@ -54,6 +54,7 @@ public:
 	void prepare(float _srate);
 	void setSize(float size);
 	void process(float& left, float& right, float drymix, float wetmix);
+	void processBlock(float* left, float* right, int nsamps, float drymix, float wetmix);
 	void clear();
 
 private:

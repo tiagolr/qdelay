@@ -26,6 +26,7 @@ void Diffusor::prepare(float _srate)
 
 void Diffusor::setSize(float size)
 {
+	size = (0.9f - 0.9f * size);
 	for (int i = 0; i < NUM_ALLPASS; ++i) 
 	{
 		allpassL[i].setSizeOffsets(size);
@@ -45,4 +46,21 @@ void Diffusor::process(float& left, float& right, float drymix, float wetmix)
 
 	left = left * drymix + spl0 * wetmix;
 	right = right * drymix + spl1 * wetmix;
+}
+
+void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix, float wetmix)
+{
+	for (int sample = 0; sample < nsamps; ++sample) {
+
+		float spl0 = left[sample];
+		float spl1 = right[sample];
+
+		for (int i = 0; i < NUM_ALLPASS; ++i) {
+			spl0 = allpassL[i].allPass(spl0, smear);
+			spl1 = allpassR[i].allPass(spl1, smear);
+		}
+
+		left[sample] = left[sample] * drymix + spl0 * wetmix;
+		right[sample] = right[sample] * drymix + spl1 * wetmix;
+	}
 }

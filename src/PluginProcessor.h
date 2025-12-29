@@ -15,6 +15,7 @@
 #include "dsp/SVF.h"
 #include "dsp/Follower.h"
 #include "dsp/Distortion.h"
+#include "dsp/Diffusor.h"
 
 using namespace globals;
 
@@ -29,6 +30,7 @@ class QDelayAudioProcessor
 public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> dist;
+    std::unique_ptr<Diffusor> diffusor;
     AudioBuffer<float> wetBuffer;
     Follower follower;
     std::vector<SVF::EQBand> eqBands;
