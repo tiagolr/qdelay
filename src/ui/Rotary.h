@@ -38,6 +38,7 @@ public:
         dryWet,
         kChoice,
         haasWidth,
+        pitchSemis,
     };
 
     Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format,

@@ -68,8 +68,11 @@ private:
     std::unique_ptr<Rotary> modRate;
     std::unique_ptr<Rotary> distFeedbk;
     std::unique_ptr<Rotary> distPost;
+    std::unique_ptr<Rotary> tapeAmt;
+    std::unique_ptr<Rotary> pitchShift;
     std::unique_ptr<Rotary> duckThres;
     std::unique_ptr<Rotary> duckAmt;
+    std::unique_ptr<Rotary> duckAtk;
     std::unique_ptr<Rotary> duckRel;
 
     std::unique_ptr<EQWidget> eqInput;

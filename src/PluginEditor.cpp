@@ -131,13 +131,21 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(modRate.get());
     modRate->setBounds(col+KNOB_WIDTH, row+KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
 
-    distFeedbk = std::make_unique<Rotary>(audioProcessor, "dist_fbk", "Feedbk", Rotary::percx100);
+    distFeedbk = std::make_unique<Rotary>(audioProcessor, "dist_pre", "Pre", Rotary::percx100);
     addAndMakeVisible(distFeedbk.get());
     distFeedbk->setBounds(col+KNOB_WIDTH*2, row, KNOB_WIDTH, KNOB_HEIGHT);
 
     distPost = std::make_unique<Rotary>(audioProcessor, "dist_post", "Post", Rotary::percx100);
     addAndMakeVisible(distPost.get());
     distPost->setBounds(col+KNOB_WIDTH*2, row+KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
+
+    tapeAmt = std::make_unique<Rotary>(audioProcessor, "tape_amt", "Tape", Rotary::percx100);
+    addAndMakeVisible(tapeAmt.get());
+    tapeAmt->setBounds(col + KNOB_WIDTH * 3, row, KNOB_WIDTH, KNOB_HEIGHT);
+
+    pitchShift = std::make_unique<Rotary>(audioProcessor, "pitch_shift", "Pitch", Rotary::pitchSemis, true);
+    addAndMakeVisible(pitchShift.get());
+    pitchShift->setBounds(col + KNOB_WIDTH * 3, row + KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
 
     duckThres = std::make_unique<Rotary>(audioProcessor, "duck_thres", "Thresh", Rotary::gainTodB1fInv);
     addAndMakeVisible(duckThres.get());
@@ -147,13 +155,17 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(duckAmt.get());
     duckAmt->setBounds(col+KNOB_WIDTH, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
 
+    duckAtk = std::make_unique<Rotary>(audioProcessor, "duck_atk", "Atk", Rotary::kMillis);
+    addAndMakeVisible(duckAtk.get());
+    duckAtk->setBounds(col + KNOB_WIDTH * 2, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
+
     duckRel = std::make_unique<Rotary>(audioProcessor, "duck_rel", "Rel", Rotary::kMillis);
     addAndMakeVisible(duckRel.get());
-    duckRel->setBounds(col + KNOB_WIDTH * 2, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
+    duckRel->setBounds(col + KNOB_WIDTH * 3, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
 
     // RIGHT SECTION
     row = PLUG_PADDING;
-    col = PLUG_PADDING + KNOB_WIDTH * 6 + HSEPARATOR * 2;
+    col = PLUG_PADDING + KNOB_WIDTH * 7 + HSEPARATOR * 2;
 
     eqInput = std::make_unique<EQWidget>(*this, SVF::ParamEQ);
     addChildComponent(eqInput.get());
@@ -240,6 +252,7 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     g.drawText("DIFF", diffAmt->getX(), diffAmt->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("MOD", modDepth->getX(), modDepth->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("SAT", distFeedbk->getX(), distFeedbk->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
+    g.drawText("OTHER", tapeAmt->getX(), tapeAmt->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("DUCK", duckThres->getX(), duckThres->getY() - 10 - HSEPARATOR, KNOB_WIDTH, HSEPARATOR, Justification::centred);
 }
 

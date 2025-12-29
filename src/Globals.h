@@ -39,7 +39,7 @@ namespace globals {
 	constexpr float ENV_MAX_RELEASE = 10000.0f;
 
 	// view consts
-	constexpr int PLUG_WIDTH = 15 * 3 + 10 * 2 + 70 * 9 + 25; // plug padding + hseparator + knob width + meter
+	constexpr int PLUG_WIDTH = 15 * 3 + 10 * 2 + 70 * 10 + 25; // plug padding + hseparator + knob width + meter
 	constexpr int PLUG_HEIGHT = 15 * 2 + 20 + 10 * 3 + 25 + 75 * 3; // plug padding + vsep + header + knob height
 	constexpr int MAX_PLUG_WIDTH = 640 * 3;
 	constexpr int MAX_PLUG_HEIGHT = 650 * 2;

@@ -364,7 +364,7 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 
 void Delay::onSlider()
 {
-    float distfbk = audioProcessor.params.getRawParameterValue("dist_fbk")->load();
+    float distfbk = audioProcessor.params.getRawParameterValue("dist_pre")->load();
     distDry = Utils::cosHalfPi()(distfbk);
     distWet = Utils::sinHalfPi()(distfbk);
 
