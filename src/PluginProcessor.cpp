@@ -34,8 +34,13 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("mod_depth", "Modulation Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
 
-    layout.add(std::make_unique<AudioParameterFloat>("dist_fbk", "Distortion Feedbk", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Distortion Post", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_fbk", "Saturation Feedbk", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Saturation Post", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterChoice>("dist_mode", "Saturation Mode", StringArray{ "Tape", "Tube" }, 0));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_color", "Saturation Color", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_bias", "Saturation Bias", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", NormalisableRange<float>(0.0f, 1.f-0.001f, 0.001f, 3.f), 1.f-0.001f));
     layout.add(std::make_unique<AudioParameterFloat>("duck_amt", "Duck Amount", NormalisableRange<float>(0.f, 1.f - 0.001f, 0.001f, 3.f), 0.0f));
@@ -103,6 +108,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     loadSettings();
 
     delay = std::make_unique<Delay>(*this);
+    dist = std::make_unique<Distortion>(*this);
 }
 
 QDelayAudioProcessor::~QDelayAudioProcessor()
@@ -255,6 +261,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     wetBuffer.setSize (2, samplesPerBlock);
     srate = sampleRate;
     delay->prepare((float)srate);
+    dist->prepare((float)srate);
     onSlider();
     sendChangeMessage();
 }
@@ -332,6 +339,10 @@ void QDelayAudioProcessor::onSlider()
 
     // prepare feedback EQ
     delay->setEqualizer(getEqualizer(SVF::EQType::DecayEQ));
+    delay->onSlider();
+
+    // update distortion
+    dist->onSlider();
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -370,6 +381,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             if (!playing && play) // on play()
             {
                 delay->clear();
+                dist->clear();
             }
             playing = play;
         }
@@ -413,6 +425,14 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
     // process the signal into the same buffer
     delay->processBlock(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), numSamples);
+
+    auto dist_post = params.getRawParameterValue("dist_post")->load();
+    if (dist_post > 0.f) 
+    {
+        auto distDry = Utils::cosHalfPi()(dist_post);
+        auto distWet = Utils::sinHalfPi()(dist_post);
+        dist->processBlock(wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1), numSamples, distDry, distWet);
+    }
 
     auto mix = params.getRawParameterValue("mix")->load();
     auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;

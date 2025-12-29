@@ -241,7 +241,7 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     g.setFont(FontOptions(16.f));
     g.drawText("DIFF", diffAmt->getX(), diffAmt->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("MOD", modDepth->getX(), modDepth->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
-    g.drawText("DIST", distFeedbk->getX(), distFeedbk->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
+    g.drawText("SAT", distFeedbk->getX(), distFeedbk->getY() - 16, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("DUCK", duckThres->getX(), duckThres->getY() - 10 - HSEPARATOR, KNOB_WIDTH, HSEPARATOR, Justification::centred);
 }
 

@@ -54,13 +54,14 @@ void drawMarkers(Graphics& g, Rectangle<float>barbounds, Colour c, float db6, fl
 
 void Meter::paint(juce::Graphics& g) {
 	auto bounds = getLocalBounds().toFloat();
-	UIUtils::drawBevel(g, bounds.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
+	//UIUtils::drawBevel(g, bounds.reduced(0.5f), BEVEL_CORNER, Colour(0xff1a1a1a));
+	g.setColour(Colour(COLOR_BEVEL).brighter(0.05f));
+	g.fillRoundedRectangle(bounds.reduced(0.5f), BEVEL_CORNER);
+	g.setColour(Colour(COLOR_BEVEL));
+	g.drawRoundedRectangle(bounds.reduced(0.5f), BEVEL_CORNER, 1.f);
 
 	auto barbounds = bounds.reduced(4.f);
 	barbounds.setWidth(std::ceil(barbounds.getWidth() / 2));
-
-	g.setColour(Colour(COLOR_ACTIVE).darker(8.f));
-	g.fillRect(barbounds.withWidth(barbounds.getWidth() * 2));
 
 	float rawRmsL = audioProcessor.rmsLeft.load();
 	float rawRmsR = audioProcessor.rmsRight.load();
@@ -96,11 +97,10 @@ void Meter::paint(juce::Graphics& g) {
 
 	g.saveState();
 	g.reduceClipRegion(lbar.toNearestInt());
-	drawMarkers(g, barbounds, Colour(COLOR_ACTIVE).darker(8.f), db6, db18, db30, db42);
+	drawMarkers(g, barbounds, Colour(COLOR_BEVEL), db6, db18, db30, db42);
 	g.restoreState();
 	g.saveState();
 	g.reduceClipRegion(rbar.toNearestInt());
-	drawMarkers(g, barbounds, Colour(COLOR_ACTIVE).darker(8.f), db6, db18, db30, db42);
+	drawMarkers(g, barbounds, Colour(COLOR_BEVEL), db6, db18, db30, db42);
 	g.restoreState();
-
 }

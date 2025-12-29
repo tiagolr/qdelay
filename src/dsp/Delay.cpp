@@ -4,6 +4,8 @@
 Delay::Delay(QDelayAudioProcessor& p)
 	: audioProcessor(p)
 {
+    dist = std::make_unique<Distortion>(audioProcessor);
+    distSwing = std::make_unique<Distortion>(audioProcessor);
 	audioProcessor.params.addParameterListener("link", this);
 	audioProcessor.params.addParameterListener("sync_l", this);
 	audioProcessor.params.addParameterListener("sync_r", this);
@@ -37,6 +39,8 @@ void Delay::clear()
     haasSwingR.clear();
     diffusor.clear();
     diffusorSwing.clear();
+    dist->clear();
+    distSwing->clear();
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -58,6 +62,8 @@ void Delay::prepare(float _srate)
     swingSmooth.setup(0.15f, srate);
     diffusor.prepare(srate);
     diffusorSwing.prepare(srate);
+    dist->prepare(srate);
+    distSwing->prepare(srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -249,6 +255,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             diffusorSwing.process(s0, s1, diffdry, diffwet);
         }
 
+        // process distortion
+        if (distWet > 0.f)
+        {
+            dist->process(v0, v1, distDry, distWet);
+            distSwing->process(s0, s1, distDry, distWet);
+        }
+
         // process EQ
         for (int j = 0; j < EQ_BANDS; ++j)
         {
@@ -348,6 +361,16 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
         eqSwingL[i].copyFrom(eqL[i]);
         eqSwingR[i].copyFrom(eqL[i]);
     }
+}
+
+void Delay::onSlider()
+{
+    float distfbk = audioProcessor.params.getRawParameterValue("dist_fbk")->load();
+    distDry = Utils::cosHalfPi()(distfbk);
+    distWet = Utils::sinHalfPi()(distfbk);
+
+    dist->onSlider();
+    distSwing->onSlider();
 }
 
 void Delay::parameterChanged(const String& paramId, float value)
