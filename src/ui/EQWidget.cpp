@@ -124,13 +124,13 @@ void EQWidget::paint(Graphics& g)
 	if (mode == SVF::PK) {
 		UIUtils::drawPeak(g, bandBtn.getBounds().toFloat().translated(4.5f, 6.5f), Colours::white, 1.2f);
 	}
-	else if (mode == SVF::LP) {
+	else if (mode == SVF::LP || mode == SVF::LP6) {
 		UIUtils::drawLowpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::BP) {
 		UIUtils::drawBandPass(g, bandBtn.getBounds().toFloat().translated(7.5f, 7.5f), Colours::white, 1.2f);
 	}
-	else if (mode == SVF::HP) {
+	else if (mode == SVF::HP || mode == SVF::HP6) {
 		UIUtils::drawHighpass(g, bandBtn.getBounds().toFloat().translated(4.5f, 8.5f), Colours::white, 1.2f);
 	}
 	else if (mode == SVF::LS) {
@@ -162,25 +162,29 @@ void EQWidget::showBandModeMenu()
 	auto mode = SVF::PK;
 	auto m = (int)editor.audioProcessor.params.getRawParameterValue(prel + "eq_band" + String(selband + 1) + "_mode")->load();
 	if (selband == 0 && m == 0) mode = SVF::HP;
-	else if (selband == 0 && m > 0) mode = SVF::LS;
+	else if (selband == 0 && m == 1) mode = SVF::LS;
+	else if (selband == 0 && m == 2) mode = SVF::HP6;
 	else if (selband == EQ_BANDS - 1 && m == 0) mode = SVF::LP;
-	else if (selband == EQ_BANDS - 1 && m > 0) mode = SVF::HS;
+	else if (selband == EQ_BANDS - 1 && m == 1) mode = SVF::HS;
+	else if (selband == EQ_BANDS - 1 && m == 2) mode = SVF::LP6;
 	else if (m == 0) mode = SVF::BP;
 	else if (m == 2) mode = SVF::BS;
 	else mode = SVF::PK;
 
 	PopupMenu menu;
 	if (selband == 0) {
-		menu.addItem(1, "Low Cut", true, mode == SVF::HP);
 		menu.addItem(2, "Low Shelf", true, mode == SVF::LS);
+		menu.addItem(1, "Low Cut", true, mode == SVF::HP);
+		menu.addItem(7, "Low Cut 6dB", true, mode == SVF::HP6);
 	}
 	else if (selband == EQ_BANDS - 1) {
-		menu.addItem(3, "High Cut", true, mode == SVF::LP);
 		menu.addItem(4, "High Shelf", true, mode == SVF::HS);
+		menu.addItem(3, "High Cut", true, mode == SVF::LP);
+		menu.addItem(8, "High Cut 6dB", true, mode == SVF::LP6);
 	}
 	else {
-		menu.addItem(5, "Band Pass", true, mode == SVF::BP);
 		menu.addItem(6, "Peak", true, mode == SVF::PK);
+		menu.addItem(5, "Band Pass", true, mode == SVF::BP);
 	}
 
 	auto menuPos = localPointToGlobal(bandBtn.getBounds().getBottomLeft());
@@ -204,6 +208,12 @@ void EQWidget::showBandModeMenu()
 			else if (result == 5 || result == 6) {
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband+1) + "_mode");
 				param->setValueNotifyingHost(param->convertTo0to1((float)result - 5));
+				eq->updateEQCurve();
+				toggleUIComponents();
+			}
+			else if (result == 7 || result == 8) {
+				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(EQ_BANDS) + "_mode");
+				param->setValueNotifyingHost(1.f);
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}

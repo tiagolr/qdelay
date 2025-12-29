@@ -122,30 +122,3 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		right[i] = right[i] * drygain + y * wetgain;
 	}
 }
-
-void Distortion::process(float& left, float& right, float drygain, float wetgain)
-{
-	drift = drift_alpha * drift + (1.f - drift_alpha) * (std::fabs(left) + fabs(right));
-
-	// filter left
-	y1l += y2l * k2;
-	y3l = y1l * k1 + y2l - left;
-	y2l += y3l * k3;
-
-	// saturate left
-	float y1_satl = saturate(y1l, dc_y1l);
-	float y2_satl = saturate(y2l, dc_y2l);
-	float y = (y3l * g3 + y1_satl + y2_satl) * trimGain;
-	left = left * drygain + y * wetgain;
-
-	// filter right
-	y1r += y2r * k2;
-	y3r = y1r * k1 + y2r - right;
-	y2r += y3r * k3;
-
-	// saturate right
-	float y1_satr = saturate(y1r, dc_y1r);
-	float y2_satr = saturate(y2r, dc_y2r);
-	y = (y3r * g3 + y1_satr + y2_satr) * trimGain;
-	right = right * drygain + y * wetgain;
-}

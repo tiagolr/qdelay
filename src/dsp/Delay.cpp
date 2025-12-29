@@ -316,8 +316,10 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 
         auto mode = band.mode;
         if (mode == SVF::LP) eqL[i].lp(srate, band.freq, band.q);
+        else if (mode == SVF::LP6) eqL[i].lp6(srate, band.freq);
         else if (mode == SVF::LS) eqL[i].ls(srate, band.freq, band.q, band.gain);
         else if (mode == SVF::HP) eqL[i].hp(srate, band.freq, band.q);
+        else if (mode == SVF::HP6) eqL[i].hp6(srate, band.freq);
         else if (mode == SVF::HS) eqL[i].hs(srate, band.freq, band.q, band.gain);
         else if (mode == SVF::PK) eqL[i].pk(srate, band.freq, band.q, band.gain);
         else if (mode == SVF::BP) eqL[i].bp(srate, band.freq, band.q);

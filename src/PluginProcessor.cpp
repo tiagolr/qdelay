@@ -61,7 +61,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     for (int i = 0; i < EQ_BANDS; ++i) {
         auto paramPrefix = "inputeq_band" + String(i + 1);
         auto namePrefix = "Input EQ Band" + String(i + 1);
-        layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ"}, 1));
+        layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ", "Filter2"}, 1));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.2f, 8.f, 0.707f));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_gain", namePrefix + " Gain", -EQ_MAX_GAIN, EQ_MAX_GAIN, 0.f));
@@ -72,7 +72,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     for (int i = 0; i < EQ_BANDS; ++i) {
         auto paramPrefix = "decayeq_band" + String(i + 1);
         auto namePrefix = "Decay EQ Band" + String(i + 1);
-        layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ"}, 1));
+        layout.add(std::make_unique<AudioParameterChoice>(paramPrefix + "_mode", namePrefix + " Mode", StringArray{ "Filter", "EQ", "Filter2"}, 1));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_freq", namePrefix + " Freq", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), getEQBandFreq(i)));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_q", namePrefix + " Q", 0.2f, 8.f, 0.707f));
         layout.add(std::make_unique<AudioParameterFloat>(paramPrefix + "_gain", namePrefix + " Gain", -EQ_MAX_GAIN, EQ_MAX_GAIN, 0.f));
@@ -145,9 +145,11 @@ std::vector<SVF::EQBand> QDelayAudioProcessor::getEqualizer(SVF::EQType type) co
 
         auto filterOrShelf = (int)params.getRawParameterValue(pre + "band" + String(i + 1) + "_mode")->load();
         if (i == 0 && filterOrShelf == 0) band.mode = SVF::HP;
-        else if (i == 0 && filterOrShelf > 0) band.mode = SVF::LS;
+        else if (i == 0 && filterOrShelf == 1) band.mode = SVF::LS;
+        else if (i == 0 && filterOrShelf == 2) band.mode = SVF::HP6;
         else if (i == EQ_BANDS - 1 && filterOrShelf == 0) band.mode = SVF::LP;
-        else if (i == EQ_BANDS - 1 && filterOrShelf > 0) band.mode = SVF::HS;
+        else if (i == EQ_BANDS - 1 && filterOrShelf == 1) band.mode = SVF::HS;
+        else if (i == EQ_BANDS - 1 && filterOrShelf == 2) band.mode = SVF::LP6;
         else if (filterOrShelf == 0) band.mode = SVF::BP;
 
         band.freq = params.getRawParameterValue(pre + "band" + String(i + 1) + "_freq")->load();
@@ -332,8 +334,10 @@ void QDelayAudioProcessor::onSlider()
         {
             auto mode = band.mode; 
             if (mode == SVF::LP) eqL[i].lp(rate, band.freq, band.q);
+            else if (mode == SVF::LP6) eqL[i].lp6(rate, band.freq);
             else if (mode == SVF::LS) eqL[i].ls(rate, band.freq, band.q, band.gain);
             else if (mode == SVF::HP) eqL[i].hp(rate, band.freq, band.q);
+            else if (mode == SVF::HP6) eqL[i].hp6(rate, band.freq);
             else if (mode == SVF::HS) eqL[i].hs(rate, band.freq, band.q, band.gain);
             else if (mode == SVF::PK) eqL[i].pk(rate, band.freq, band.q, band.gain);
             else if (mode == SVF::BP) eqL[i].bp(rate, band.freq, band.q);
