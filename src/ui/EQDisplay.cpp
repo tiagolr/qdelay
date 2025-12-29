@@ -259,7 +259,10 @@ void EQDisplay::paint(juce::Graphics& g)
 			p.lineTo(x, y);
 		}
 	}
+	g.saveState();
+	g.reduceClipRegion(viewBounds.withTrimmedBottom(2.f).toNearestInt());
 	g.strokePath(p, PathStrokeType(2.f));
+	g.restoreState();
 	p.lineTo(viewBounds.getX() + viewBounds.getWidth(), viewBounds.getCentreY());
 	p.lineTo(viewBounds.getX(), viewBounds.getCentreY());
 	p.closeSubPath();
