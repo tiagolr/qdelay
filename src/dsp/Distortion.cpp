@@ -69,6 +69,7 @@ void Distortion::onSlider()
 float Distortion::saturate(float x, float& dc) const
 {
 	x += bias * drift;
+	x *= driveGain;
 	float y;
 
 	if (mode == Tape) 
@@ -104,8 +105,8 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		y2l += y3l * k3;
 
 		// saturate left
-		float y1_satl = saturate(y1l * driveGain, dc_y1l);
-		float y2_satl = saturate(y2l * driveGain, dc_y2l);
+		float y1_satl = saturate(y1l, dc_y1l);
+		float y2_satl = saturate(y2l, dc_y2l);
 		float y = (y3l * g3 + y1_satl + y2_satl) * trimGain;
 		left[i] = left[i] * drygain + y * wetgain;
 
@@ -115,8 +116,8 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		y2r += y3r * k3;
 
 		// saturate right
-		float y1_satr = saturate(y1r * driveGain, dc_y1r);
-		float y2_satr = saturate(y2r * driveGain, dc_y2r);
+		float y1_satr = saturate(y1r, dc_y1r);
+		float y2_satr = saturate(y2r, dc_y2r);
 		y = (y3r * g3 + y1_satr + y2_satr) * trimGain;
 		right[i] = right[i] * drygain + y * wetgain;
 	}
@@ -132,8 +133,8 @@ void Distortion::process(float& left, float& right, float drygain, float wetgain
 	y2l += y3l * k3;
 
 	// saturate left
-	float y1_satl = saturate(y1l * driveGain, dc_y1l);
-	float y2_satl = saturate(y2l * driveGain, dc_y2l);
+	float y1_satl = saturate(y1l, dc_y1l);
+	float y2_satl = saturate(y2l, dc_y2l);
 	float y = (y3l * g3 + y1_satl + y2_satl) * trimGain;
 	left = left * drygain + y * wetgain;
 
@@ -143,8 +144,8 @@ void Distortion::process(float& left, float& right, float drygain, float wetgain
 	y2r += y3r * k3;
 
 	// saturate right
-	float y1_satr = saturate(y1r * driveGain, dc_y1r);
-	float y2_satr = saturate(y2r * driveGain, dc_y2r);
+	float y1_satr = saturate(y1r, dc_y1r);
+	float y2_satr = saturate(y2r, dc_y2r);
 	y = (y3r * g3 + y1_satr + y2_satr) * trimGain;
 	right = right * drygain + y * wetgain;
 }
