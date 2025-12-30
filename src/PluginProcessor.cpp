@@ -45,6 +45,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
+    layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 0));
+    layout.add(std::make_unique<AudioParameterFloat>("pitch_mix", "Pitch Mix", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", NormalisableRange<float>(0.0f, 1.f-0.001f, 0.001f, 3.f), 1.f-0.001f));
     layout.add(std::make_unique<AudioParameterFloat>("duck_amt", "Duck Amount", NormalisableRange<float>(0.f, 1.f - 0.001f, 0.001f, 3.f), 0.0f));
@@ -114,6 +116,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     delay = std::make_unique<Delay>(*this);
     dist = std::make_unique<Distortion>(*this);
     diffusor = std::make_unique<Diffusor>();
+    pitcher = std::make_unique<Pitcher>();
 }
 
 QDelayAudioProcessor::~QDelayAudioProcessor()
@@ -270,6 +273,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     delay->prepare((float)srate);
     dist->prepare((float)srate);
     diffusor->prepare((float)srate);
+    pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     onSlider();
     sendChangeMessage();
 }
@@ -455,6 +459,17 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         wetBuffer.getWritePointer(1),
         numSamples
     );
+
+    float pitchShift = params.getRawParameterValue("pitch_shift")->load();
+    float* dryl = buffer.getWritePointer(0);
+    float* dryr = buffer.getWritePointer(1);
+    for (int i = 0; i < numSamples; ++i)
+    {
+        pitcher->setSpeedSemis(pitchShift);
+        pitcher->update(dryl[i], dryr[i]);
+        dryl[i] = pitcher->outL;
+        dryr[i] = pitcher->outR;
+    }
 
     auto dist_post = params.getRawParameterValue("dist_post")->load();
     if (dist_post > 0.f) 

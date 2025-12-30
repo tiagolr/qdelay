@@ -1,4 +1,4 @@
-// Port of Saikes pitch shifting library to c++ and Juce for FFTs
+// Port of Saikes pitch shifting library to c++ and Juce
 // Tilr 2026
 
 // WSOLA Pitch shifting library
@@ -35,46 +35,52 @@ public:
 	{
 		left[writePos] = l;
 		right[writePos] = r;
-		writePos = (writePos + 1) & size;
+		writePos = (writePos + 1) % size;
 	}
 
-	inline int wrap (int idx)
+	inline int wrap (int idx) const
     {
         while (idx < 0) idx += size;
         while (idx >= size) idx -= size;
         return idx;
     }
 
-    inline void read(float delay)
-    {
-        float readPos = static_cast<float>(writePos) - delay;
-        while (readPos < 0.f) readPos += static_cast<float>(size);
-        while (readPos >= static_cast<float>(size)) readPos -= static_cast<float>(size);
+	inline void read(float dtime)
+	{
+		// 1. Absolute fractional read position
+		float readPos = (float)writePos - dtime;
+		while (readPos < 0.f)         readPos += (float)size;
+		while (readPos >= (float)size) readPos -= (float)size;
 
-        int idx0 = static_cast<int>(std::floor(readPos));
-        float t = readPos - idx0; // fractional part
+		// 2. Integer position and fraction
+		int i1 = (int)std::floor(readPos); // sample at t = 0
+		float t = readPos - (float)i1;     // fractional part [0,1)
 
-        // 5-tap Lagrange interpolation coefficients
-        float tm1 = t - 1.f;
-        float tm2 = t - 2.f;
-        float tm3 = t - 3.f;
-        float tm4 = t - 4.f;
+		// 3. Neighboring samples
+		int i0 = wrap(i1 - 1);
+		int i2 = wrap(i1 + 1);
+		int i3 = wrap(i1 + 2);
 
-        float a0 = tm1 * tm2 * tm3 * tm4 / 24.f;
-        float a1 = -t * tm2 * tm3 * tm4 / 6.f;
-        float a2 = t * tm1 * tm3 * tm4 / 4.f;
-        float a3 = -t * tm1 * tm2 * tm4 / 6.f;
-        float a4 = t * tm1 * tm2 * tm3 / 24.f;
+		// 4. Catmull–Rom spline
+		float t2 = t * t;
+		float t3 = t2 * t;
 
-        int i0 = wrap(idx0);
-        int i1 = wrap(idx0 - 1);
-        int i2 = wrap(idx0 - 2);
-        int i3 = wrap(idx0 - 3);
-        int i4 = wrap(idx0 - 4);
+		float a0 = -0.5f * t3 + t2 - 0.5f * t;
+		float a1 = 1.5f * t3 - 2.5f * t2 + 1.0f;
+		float a2 = -1.5f * t3 + 2.0f * t2 + 0.5f * t;
+		float a3 = 0.5f * t3 - 0.5f * t2;
 
-        outL = a0 * left[i0] + a1 * left[i1] + a2 * left[i2] + a3 * left[i3] + a4 * left[i4];
-        outR = a0 * right[i0] + a1 * right[i1] + a2 * right[i2] + a3 * right[i3] + a4 * right[i4];
-    }
+		// 5. Interpolate
+		outL = a0 * left[i0]
+			+ a1 * left[i1]
+			+ a2 * left[i2]
+			+ a3 * left[i3];
+
+		outR = a0 * right[i0]
+			+ a1 * right[i1]
+			+ a2 * right[i2]
+			+ a3 * right[i3];
+	}
 
 	// Copies 'copyLength' samples from 'delay' behind writePos into a linear target array
 	// channel = true => left, false => right
@@ -111,18 +117,17 @@ public:
 
 		void prepare(float N)
 		{
-			w = juce::MathConstants<float>::pi / (N - 1);
-			b1 = 2.0f * std::cos(w);
-			y1 = std::sin(0.5f * juce::MathConstants<float>::pi - w);
-			y2 = std::sin(0.5f * juce::MathConstants<float>::pi - 2.0f * w);
-
-			if (Nc > 0) // if previously prepared
-				count *= N/Nc;
-
 			Nc = N;
+			w = MathConstants<float>::pi / (N - 1);
+			float ip = MathConstants<float>::halfPi;
+
+			count = N;
+			b1 = 2.0f * std::cos(w);
+			y1 = std::sin(ip - w);
+			y2 = std::sin(ip - 2.0f * w);
 		}
 
-	    inline void next(float N)
+	    inline void update(float N)
 	    {
 	        if (count <= 0) return;
     		w = juce::MathConstants<float>::pi / (N-1);
@@ -138,10 +143,11 @@ public:
         	y1 = y0;
         	w = 0.5f * (y0 + 1.0f);
         	w = std::clamp(w, 0.0f, 1.0f);
+			count -= 1.f;
 		}
 	};
 
-	enum WindowSize
+	enum WindowMode
 	{
 		kSmall,   // drums
 		kMedium,   // general
@@ -167,19 +173,29 @@ public:
 		juce::dsp::FFT fftMedium { O_WIN_MEDIUM };
 		juce::dsp::FFT fftLarge  { O_WIN_LARGE  };
 
-		juce::dsp::FFT& get (WindowSize w)
+		juce::dsp::FFT& get (WindowMode w)
 		{
 			switch (w)
 			{
-				case WindowSize::kSmall:  return fftSmall;
-				case WindowSize::kMedium: return fftMedium;
-				case WindowSize::kLarge:  return fftLarge;
+				case WindowMode::kSmall:  return fftSmall;
+				case WindowMode::kMedium: return fftMedium;
+				case WindowMode::kLarge:  return fftLarge;
 				default: jassertfalse; return fftMedium;
 			}
 		}
 	};
 
-	WindowSize windowSize = WindowSize::kSmall;
+	float outL = 0.f;
+	float outR = 0.f;
+
+	void init(WindowMode mode);
+	float computeMaxACFPosition();
+	void update(float l, float r);
+	void setSpeed(float newHeadSpeed);
+	void setSpeedSemis(float semis);
+
+private:
+	WindowMode mode = WindowMode::kSmall;
 	RingBuffer buffer; //
 	CosineFade fader;
 	FFTSet fftSet;
@@ -189,16 +205,8 @@ public:
 	float readHead2 = 0.f;
 	float lastHeadSpeed = 0.f;
 	float readHeadSpeed = 0.f;
-	int fadeCount = 0;
 	float speed = 0.f;
 	bool fade = false;
 	bool acf = false;
 	int crossFadeSamples = 0;
-	float outL = 0.f;
-	float outR = 0.f;
-
-	void init(bool use_acf, WindowSize size);
-	float computeMaxACFPosition();
-	void update(float l, float r);
-	void setPitchShifterSpeed(float newHeadSpeed);
 };

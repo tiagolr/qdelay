@@ -1,18 +1,18 @@
 #include "Pitcher.h"
 
-void Pitcher::init (bool use_acf, WindowSize size)
+void Pitcher::init (WindowMode _mode)
 {
-	windowSize = size;
-	int winSize = windowSizes[size];
+	mode = _mode;
+	int winSize = windowSizes[_mode];
 	buffer.init(winSize * 2);
 
-	acf = use_acf;
-	lastHeadSpeed = readHeadSpeed = 1;
+	acf = acfFlags[_mode];
+	lastHeadSpeed = readHeadSpeed = 1.f;
 	crossFadeSamples = winSize;
 	fftmem1.resize(winSize * 2);
 	fftmem2.resize(winSize * 2);
 
-	readHead1 = buffer.size*.5f;
+	readHead1 = buffer.size * .5f;
 	readHead2 = -1.f;
 	speed = 1.f;
 }
@@ -20,11 +20,10 @@ void Pitcher::init (bool use_acf, WindowSize size)
 // calculates the ACF and finds its maximum.
 float Pitcher::computeMaxACFPosition()
 {
-
-	int fftSize = windowSizes[windowSize] * 2;
+	int fftSize = windowSizes[mode] * 2;
 	float* B1 = fftmem2.data();
 	float* B2 = fftmem1.data();
-	auto& fft = fftSet.get(windowSize);
+	auto& fft = fftSet.get(mode);
 
 	fft.performRealOnlyForwardTransform(B1);
 	fft.performRealOnlyForwardTransform(B2);
@@ -51,7 +50,7 @@ float Pitcher::computeMaxACFPosition()
 	// Find maximum in first quarter of the buffer
 	int maxIdx = 0;
 	float cmax = -1e7f;
-	int winSize = windowSizes[windowSize];
+	int winSize = windowSizes[mode];
 
 	for (int idx = 0; idx < winSize / 4 - 1; idx++)
 	{
@@ -79,30 +78,41 @@ float Pitcher::computeMaxACFPosition()
 	return std::max(peakIdx, 0.f);
 }
 
-void Pitcher::setPitchShifterSpeed(float newHeadSpeed)
+void Pitcher::setSpeed(float newHeadSpeed)
 {
-    readHeadSpeed = readHeadSpeed *.999f + .001f * newHeadSpeed;
+    readHeadSpeed = readHeadSpeed * .999f + .001f * newHeadSpeed;
+
     if (std::fabs(readHeadSpeed - lastHeadSpeed) > .0001f)
-        fader.next(crossFadeSamples / std::max(1.1f, std::fabs(readHeadSpeed)) - 16);
+        fader.update(crossFadeSamples / std::max(1.1f, std::fabs(readHeadSpeed)) - 16);
 
     lastHeadSpeed = readHeadSpeed;
+}
+
+void Pitcher::setSpeedSemis(float semis)
+{
+    setSpeed((std::pow(2.f, semis / 12.f)) - 1.0f);
 }
 
 void Pitcher::update(float l, float r)
 {
     readHead1 -= readHeadSpeed;
+    if (readHead1 >= buffer.size)
+        readHead1 -= (float)buffer.size;
 
-    if (fadeCount <= 0)
-    {
-        fade = false;
-        fadeCount = 1;
-        readHead1 = readHead2;
-    }
+    //if (fader.count <= 0.f)
+    //{
+    //    fade = false;
+    //    fader.count = 1.f;
+    //    readHead1 = readHead2;
+    //}
 
     buffer.write(l, r);
     buffer.read(readHead1);
     float L1 = buffer.outL;
     float R1 = buffer.outR;
+    outL = L1;
+    outR = R1;
+    return;
 
     if (fade)  // Crossfade active
     {
@@ -112,8 +122,6 @@ void Pitcher::update(float l, float r)
         float R2 = buffer.outR;
 
         fader.eval();
-
-        fadeCount -= 1;
 
         outL = L1 * fader.w + L2 * (1.0f - fader.w);
         outR = R1 * fader.w + R2 * (1.0f - fader.w);
@@ -127,7 +135,7 @@ void Pitcher::update(float l, float r)
         {
             src = buffer.size - crossFadeSamples;
             crit = readHead1 > src;
-            target = crossFadeSamples * 2;
+            target = crossFadeSamples;
         }
         else  // pitching up
         {
@@ -138,7 +146,10 @@ void Pitcher::update(float l, float r)
 
         if (crit)
         {
-            // Determine crossfade offset using autocorrelation
+            // We're over the crossFadeSample boundary. Time to quickly initialize the crossfade.
+            // We determine the phase shift between the cross fade sections using an autocorrelation between
+            // them. We then jump into the buffer with an offset that corresponds to the peak in the autocorrelation
+            // function.
             float cmax_position = 0.f;
             if (acf)
             {

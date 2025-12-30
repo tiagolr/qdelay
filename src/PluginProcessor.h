@@ -16,6 +16,7 @@
 #include "dsp/Follower.h"
 #include "dsp/Distortion.h"
 #include "dsp/Diffusor.h"
+#include "dsp/Pitcher.h"
 
 using namespace globals;
 
@@ -31,6 +32,7 @@ public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> dist;
     std::unique_ptr<Diffusor> diffusor;
+    std::unique_ptr<Pitcher> pitcher;
     AudioBuffer<float> wetBuffer;
     Follower follower;
     std::vector<SVF::EQBand> eqBands;
