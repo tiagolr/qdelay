@@ -47,21 +47,17 @@ public:
 
 	inline void read(float dtime)
 	{
-		// 1. Absolute fractional read position
 		float readPos = (float)writePos - dtime;
-		while (readPos < 0.f)         readPos += (float)size;
+		while (readPos < 0.f) readPos += (float)size;
 		while (readPos >= (float)size) readPos -= (float)size;
 
-		// 2. Integer position and fraction
-		int i1 = (int)std::floor(readPos); // sample at t = 0
-		float t = readPos - (float)i1;     // fractional part [0,1)
+		int i1 = (int)std::floor(readPos);
+		float t = readPos - (float)i1;
 
-		// 3. Neighboring samples
 		int i0 = wrap(i1 - 1);
 		int i2 = wrap(i1 + 1);
 		int i3 = wrap(i1 + 2);
 
-		// 4. Catmull–Rom spline
 		float t2 = t * t;
 		float t3 = t2 * t;
 
@@ -70,16 +66,8 @@ public:
 		float a2 = -1.5f * t3 + 2.0f * t2 + 0.5f * t;
 		float a3 = 0.5f * t3 - 0.5f * t2;
 
-		// 5. Interpolate
-		outL = a0 * left[i0]
-			+ a1 * left[i1]
-			+ a2 * left[i2]
-			+ a3 * left[i3];
-
-		outR = a0 * right[i0]
-			+ a1 * right[i1]
-			+ a2 * right[i2]
-			+ a3 * right[i3];
+		outL = a0 * left[i0] + a1 * left[i1] + a2 * left[i2] + a3 * left[i3];
+		outR = a0 * right[i0] + a1 * right[i1] + a2 * right[i2] + a3 * right[i3];
 	}
 
 	// Copies 'copyLength' samples from 'delay' behind writePos into a linear target array
@@ -127,7 +115,7 @@ public:
 			y2 = std::sin(ip - 2.0f * w);
 		}
 
-	    inline void update(float N)
+	    inline void resize(float N)
 	    {
 	        if (count <= 0) return;
     		w = juce::MathConstants<float>::pi / (N-1);

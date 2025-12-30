@@ -8,7 +8,7 @@ void Pitcher::init (WindowMode _mode)
 
 	acf = acfFlags[_mode];
 	lastHeadSpeed = readHeadSpeed = 1.f;
-	crossFadeSamples = winSize;
+	crossFadeSamples = winSize / 2;
 	fftmem1.resize(winSize * 2);
 	fftmem2.resize(winSize * 2);
 
@@ -83,7 +83,7 @@ void Pitcher::setSpeed(float newHeadSpeed)
     readHeadSpeed = readHeadSpeed * .999f + .001f * newHeadSpeed;
 
     if (std::fabs(readHeadSpeed - lastHeadSpeed) > .0001f)
-        fader.update(crossFadeSamples / std::max(1.1f, std::fabs(readHeadSpeed)) - 16);
+        fader.resize(crossFadeSamples / std::max(1.1f, std::fabs(readHeadSpeed)) - 16);
 
     lastHeadSpeed = readHeadSpeed;
 }
@@ -96,23 +96,18 @@ void Pitcher::setSpeedSemis(float semis)
 void Pitcher::update(float l, float r)
 {
     readHead1 -= readHeadSpeed;
-    if (readHead1 >= buffer.size)
-        readHead1 -= (float)buffer.size;
 
-    //if (fader.count <= 0.f)
-    //{
-    //    fade = false;
-    //    fader.count = 1.f;
-    //    readHead1 = readHead2;
-    //}
+    if (fader.count <= 0.f)
+    {
+        fade = false;
+        fader.count = 1.f;
+        readHead1 = readHead2;
+    }
 
     buffer.write(l, r);
     buffer.read(readHead1);
     float L1 = buffer.outL;
     float R1 = buffer.outR;
-    outL = L1;
-    outR = R1;
-    return;
 
     if (fade)  // Crossfade active
     {
@@ -135,7 +130,7 @@ void Pitcher::update(float l, float r)
         {
             src = buffer.size - crossFadeSamples;
             crit = readHead1 > src;
-            target = crossFadeSamples;
+            target = crossFadeSamples + crossFadeSamples;
         }
         else  // pitching up
         {
