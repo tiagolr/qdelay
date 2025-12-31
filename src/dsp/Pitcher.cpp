@@ -9,8 +9,8 @@ void Pitcher::init (WindowMode _mode)
 	acf = acfFlags[_mode];
 	lastHeadSpeed = readHeadSpeed = 1.f;
 	crossFadeSamples = winSize / 2;
-	fftmem1.resize(winSize * 2);
-	fftmem2.resize(winSize * 2);
+	fftmem1.resize(winSize * 2, 0.f);
+	fftmem2.resize(winSize * 2, 0.f);
 
 	readHead1 = buffer.size * .5f;
 	readHead2 = -1.f;
@@ -20,7 +20,8 @@ void Pitcher::init (WindowMode _mode)
 // calculates the ACF and finds its maximum.
 float Pitcher::computeMaxACFPosition()
 {
-	int fftSize = windowSizes[mode] * 2;
+    int winsize = windowSizes[mode];
+	int fftSize = winsize * 2;
 	float* B1 = fftmem2.data();
 	float* B2 = fftmem1.data();
 	auto& fft = fftSet.get(mode);
@@ -29,8 +30,8 @@ float Pitcher::computeMaxACFPosition()
 	fft.performRealOnlyForwardTransform(B2);
 
 	// Conjugate B2 (imaginary parts)
-	for (int i = 1; i < fftSize; i += 2)
-		B2[i] = -B2[i];
+    for (int i = 3; i < fftSize; i += 2)  // imaginary parts start at index 3
+        B2[i] = -B2[i];
 
 	// Element-wise complex multiplication (frequency domain convolution)
 	for (int i = 0; i < fftSize; i += 2)
@@ -62,14 +63,12 @@ float Pitcher::computeMaxACFPosition()
 		}
 	}
 
-	// Quadratic interpolation for sub-sample accuracy
 	// Improve resolution and reduce jitter by a quadratic fit of the peak
 	float yc = B1[maxIdx];
-	float yl = B1[maxIdx - 1];
-	float yr = B1[maxIdx + 1];
-
-	float correction = (-2.0f * maxIdx * yc + maxIdx * yl + maxIdx * yr + yl - yr)
-					/ (-2.0f * yc + yl + yr) - maxIdx;
+	float yl = B1[std::max(maxIdx - 1, 0)];
+	float yr = B1[std::min(maxIdx + 1, winSize / 4 - 2)];
+    float denom = -2.f * yc + yl + yr;
+    float correction = (denom == 0.f) ? 0 : (yl - yr) / denom;
 
     float peakIdx = (float)maxIdx;
 	if (std::abs(correction) < 4.0f)
@@ -148,6 +147,8 @@ void Pitcher::update(float l, float r)
             float cmax_position = 0.f;
             if (acf)
             {
+                std::fill(fftmem1.begin(), fftmem1.end(), 0.f);
+                std::fill(fftmem2.begin(), fftmem2.end(), 0.f);
                 buffer.copyFromBuffer(fftmem1.data(), src, crossFadeSamples, true);   // left
                 buffer.copyFromBuffer(fftmem2.data(), target, crossFadeSamples, false); // right
                 cmax_position = computeMaxACFPosition();

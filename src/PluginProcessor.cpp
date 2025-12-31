@@ -273,7 +273,8 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     delay->prepare((float)srate);
     dist->prepare((float)srate);
     diffusor->prepare((float)srate);
-    pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
+    //pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
+    pitcher->init(Pitcher::kMedium);
     onSlider();
     sendChangeMessage();
 }

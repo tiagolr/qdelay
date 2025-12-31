@@ -144,7 +144,7 @@ public:
 
 	// fft order
 	static constexpr int O_WIN_SMALL  = 7;
-	static constexpr int O_WIN_MEDIUM = 9;
+	static constexpr int O_WIN_MEDIUM = 10;
 	static constexpr int O_WIN_LARGE  = 11;
 
 	std::array<int, 3> windowSizes {
