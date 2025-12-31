@@ -31,6 +31,10 @@ class QDelayAudioProcessor
 public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> dist;
+    float dist_pre = 0.f;
+    float dist_post = 0.f;
+    std::unique_ptr<juce::dsp::Oversampling<float>> distPreOversampler;
+    std::unique_ptr<juce::dsp::Oversampling<float>> distPostOversampler;
     std::unique_ptr<Diffusor> diffusor;
     std::unique_ptr<Pitcher> pitcher;
     float pitcherSpeed = 0.f;
@@ -51,8 +55,7 @@ public:
     double beatsPerSecond = 1.0;
     int samplesPerBeat = 44100;
     double secondsPerBeat = 0.1;
-    double srate = 44100.0; // oversampled srate
-    int oversampling = 1;
+    double srate = 44100.0;
     double secondsPerBar = 1.0;
 
     // UI State

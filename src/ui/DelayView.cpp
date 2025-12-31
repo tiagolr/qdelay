@@ -132,6 +132,7 @@ void DelayView::paint(Graphics& g)
 		delayL.seed(0.f, 1.f);
 		delayR.seed(0.f, 1.f);
 
+		int i = 0;
 		while (true)
 		{
 			auto dl = delayL.read();
@@ -150,8 +151,9 @@ void DelayView::paint(Graphics& g)
 
 			delayL.write(sl);
 			delayR.write(sr);
-			swingL.write(dl);
-			swingR.write(dr);
+			swingL.write(dl, i == 0);
+			swingR.write(dr, i == 0);
+			i++;
 		}
 	}
 	else if (mode == Delay::PingPong)
@@ -159,6 +161,7 @@ void DelayView::paint(Graphics& g)
 		delayL.seed(0.f, 1.f);
 		delayR.seed(0.f, 1.f);
 
+		int i = 0;
 		while (true)
 		{
 			auto dl = delayL.read();
@@ -179,8 +182,9 @@ void DelayView::paint(Graphics& g)
 			if (dr.dry) dr.gain *= lfactor;
 			delayL.write(sr);
 			delayR.write(sl);
-			swingL.write(dr);
-			swingR.write(dl);
+			swingL.write(dr, i == 0);
+			swingR.write(dl, i == 0);
+			i++;
 		}
 	}
 	else if (mode == Delay::Tap)
@@ -190,6 +194,7 @@ void DelayView::paint(Graphics& g)
 		delayL.seed(0.f, 1.f);
 		delayR.seed(0.f, 1.f);
 
+		int i = 0;
 		while (true)
 		{
 			auto dl = delayL.read();
@@ -208,15 +213,16 @@ void DelayView::paint(Graphics& g)
 
 			delayL.write(sl);
 			delayR.write(sr);
-			swingL.write(dl);
-			swingR.write(dr);
+			swingL.write(dl, i == 0);
+			swingR.write(dr, i == 0);
+			i++;
 		}
 
 		for (auto& tap : leftTaps) 
-			if (tap.time != 0.f)
+			if (tap.time > 0.f)
 				tap.time += timeL;
 		for (auto& tap : rightTaps)
-			if (tap.time != 0.f)
+			if (tap.time > 0.f)
 				tap.time += timeL;
 	}
 

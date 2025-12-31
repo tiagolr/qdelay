@@ -42,9 +42,14 @@ public:
         taps.push_back({ false, true, time, gain });
     }
 
-    void write(Tap tap)
+    void write(Tap tap, bool firstTap = false)
     {
-        taps.push_back({ false, false, tap.time + delay, tap.gain * feedback }); // sqrt makes the display more visible
+        taps.push_back({ 
+            false, 
+            false, 
+            tap.time + delay, 
+            tap.gain * (firstTap ? 1.f : feedback)
+        });
         std::sort(taps.begin(), taps.end(), [](const Tap& a, const Tap& b) 
             {
                 return a.time < b.time;

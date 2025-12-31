@@ -292,11 +292,15 @@ void QDelayAudioProcessorEditor::setEQTab(bool feedbackOrInput)
 void QDelayAudioProcessorEditor::showSettings()
 {
     int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
+    int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
 
     PopupMenu pitchMenu;
+    pitchMenu.addItem(83, "Feedback", true, pitchPath == 0);
+    pitchMenu.addItem(84, "Post", true, pitchPath == 1);
+    pitchMenu.addSeparator();
     pitchMenu.addItem(80, "Drums", true, pitchMode == 0);
     pitchMenu.addItem(81, "General", true, pitchMode == 1);
-    pitchMenu.addItem(82, "Audio", true, pitchMode == 2);
+    pitchMenu.addItem(82, "Smooth", true, pitchMode == 2);
 
     PopupMenu menu;
     menu.addSubMenu("Pitch Shifter", pitchMenu);
@@ -315,6 +319,11 @@ void QDelayAudioProcessorEditor::showSettings()
             {
                 auto param = audioProcessor.params.getParameter("pitch_mode");
                 param->setValueNotifyingHost(param->convertTo0to1(float(result - 80)));
+            }
+            else if (result == 83 || result == 84)
+            {
+                auto param = audioProcessor.params.getParameter("pitch_path");
+                param->setValueNotifyingHost(result == 84 ? 1.f : 0.f);
             }
         }
     );
