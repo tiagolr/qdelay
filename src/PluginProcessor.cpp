@@ -41,6 +41,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_color", "Saturation Color", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_bias", "Saturation Bias", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_dyn", "Saturation Dynamics", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
 
@@ -115,7 +116,8 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     loadSettings();
 
     delay = std::make_unique<Delay>(*this);
-    dist = std::make_unique<Distortion>(*this);
+    distPre = std::make_unique<Distortion>(*this);
+    distPost = std::make_unique<Distortion>(*this);
     diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
 
@@ -276,14 +278,15 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 {
     wetBuffer.setSize (2, samplesPerBlock);
     srate = sampleRate;
-    delay->prepare((float)srate);
-    dist->prepare((float)srate);
-    diffusor->prepare((float)srate);
-    pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     distPreOversampler->initProcessing(samplesPerBlock);
     distPreOversampler->reset();
     distPostOversampler->initProcessing(samplesPerBlock);
     distPostOversampler->reset();
+    delay->prepare((float)srate);
+    distPre->prepare((float)srate * (float)distPreOversampler->getOversamplingFactor());
+    distPost->prepare((float)srate * (float)distPostOversampler->getOversamplingFactor());
+    diffusor->prepare((float)srate);
+    pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     onSlider();
     sendChangeMessage();
 }
@@ -366,7 +369,8 @@ void QDelayAudioProcessor::onSlider()
     delay->onSlider();
 
     // update distortion
-    dist->onSlider();
+    distPre->onSlider();
+    distPost->onSlider();
     float dpre = params.getRawParameterValue("dist_pre")->load();
     if (dpre == 0.f && dist_pre > 0.f)
         distPreOversampler->reset();
@@ -428,7 +432,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             if (!playing && play) // onplay()
             {
                 delay->clear();
-                dist->clear();
+                distPre->clear();
+                distPost->clear();
                 diffusor->clear();
             }
             playing = play;
@@ -483,7 +488,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
         auto distDry = Utils::cosHalfPi()(dist_pre);
         auto distWet = Utils::sinHalfPi()(dist_pre);
-        dist->processBlock(osleft, osright, numSamples * os, distDry, distWet);
+        distPre->processBlock(osleft, osright, numSamples * os, distDry, distWet);
         distPreOversampler->processSamplesDown(block);
     }
 
@@ -534,7 +539,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
         auto distDry = Utils::cosHalfPi()(dist_post);
         auto distWet = Utils::sinHalfPi()(dist_post);
-        dist->processBlock(osleft, osright, numSamples * os, distDry, distWet);
+        distPost->processBlock(osleft, osright, numSamples * os, distDry, distWet);
         distPostOversampler->processSamplesDown(block);
     }
 

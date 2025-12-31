@@ -8,6 +8,37 @@ class QDelayAudioProcessor;
 class Distortion
 {
 public:
+	struct Dynamics
+	{
+		float env_ca = 0.f;
+		float env_cr = 0.f;
+		float s = 0.f;
+		float ms1 = 0.f;
+		float ms2 = 0.f;
+		float denv = 0.f;
+		float env = 0.f;
+		int k = 0;
+
+		void prepare(float srate)
+		{
+			env_ca = 2.f / (srate * 0.001f);
+			env_cr = 2.f / (srate * 0.050f);
+		}
+
+		void process(float x)
+		{
+			s = x * x;
+			ms1 += (s > ms1 ? env_ca : env_cr) * (s - ms1);
+			ms2 += (ms1 > ms2 ? env_ca : env_cr) * (ms1 - ms2);
+			if (k <= 0) {
+				denv = (std::sqrt(ms2) - env) * 0.125f;
+				k = 8;
+			}
+			k -= 1;
+			env += denv;
+		}
+	};
+
 	enum Mode
 	{
 		Tape,
@@ -24,6 +55,9 @@ public:
 	float bias = 0.f;
 	float dc_alpha = 0.995f;
 	float drift_alpha = 0.999f;
+	float dynamics = 0.f;
+	Dynamics dyn_l;
+	Dynamics dyn_r;
 
 	Distortion(QDelayAudioProcessor& p);
 	~Distortion();
@@ -37,8 +71,8 @@ public:
 private:
 	float srate = 88200.0;
 	QDelayAudioProcessor& audioProcessor;
-
 	
+	// coeffs
 	float k1 = 0.f;
 	float k2 = 0.f;
 	float k3 = 0.f;

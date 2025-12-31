@@ -9,6 +9,8 @@ void Distortion::prepare(float _srate)
 	srate = _srate;
 	dc_alpha = std::exp(-1.f / (0.00456f * srate)); // ~ 0.995
 	drift_alpha = std::exp(-1.0f / (0.025f * srate)); // ~ 0.999
+	dyn_l.prepare(srate);
+	dyn_r.prepare(srate);
 	clear();
 }
 
@@ -31,6 +33,7 @@ void Distortion::clear()
 void Distortion::onSlider()
 {
 	mode = (Mode)audioProcessor.params.getRawParameterValue("dist_mode")->load();
+	dynamics = audioProcessor.params.getRawParameterValue("dist_dyn")->load();
 
 	float d = audioProcessor.params.getRawParameterValue("dist_drive")->load();
 	if (d != drive) {
@@ -98,6 +101,9 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 	for (int i = 0; i < nsamps; ++i)
 	{
 		drift = drift_alpha * drift + (1.f - drift_alpha) * (std::fabs(left[i]) + fabs(right[i]));
+		
+		dyn_l.process(left[i]);
+		dyn_r.process(right[i]);
 
 		// filter left
 		y1l += y2l * k2;
@@ -108,6 +114,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		float y1_satl = saturate(y1l, dc_y1l);
 		float y2_satl = saturate(y2l, dc_y2l);
 		float y = (y3l * g3 + y1_satl + y2_satl) * trimGain;
+		y = y * (1.f + dynamics * (dyn_l.env - 1.f));
 		left[i] = left[i] * drygain + y * wetgain;
 
 		// filter right
@@ -119,6 +126,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		float y1_satr = saturate(y1r, dc_y1r);
 		float y2_satr = saturate(y2r, dc_y2r);
 		y = (y3r * g3 + y1_satr + y2_satr) * trimGain;
+		y = y * (1.f + dynamics * (dyn_r.env - 1.f));
 		right[i] = right[i] * drygain + y * wetgain;
 	}
 }
