@@ -212,7 +212,7 @@ void EQWidget::showBandModeMenu()
 				toggleUIComponents();
 			}
 			else if (result == 7 || result == 8) {
-				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(EQ_BANDS) + "_mode");
+				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband+1) + "_mode");
 				param->setValueNotifyingHost(1.f);
 				eq->updateEQCurve();
 				toggleUIComponents();

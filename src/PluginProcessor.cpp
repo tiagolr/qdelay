@@ -479,10 +479,11 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         auto oversampledBlock = distPreOversampler->processSamplesUp(block);
         float* osleft = oversampledBlock.getChannelPointer(0);
         float* osright = oversampledBlock.getChannelPointer(1);
+        int os = (int)distPreOversampler->getOversamplingFactor();
 
         auto distDry = Utils::cosHalfPi()(dist_pre);
         auto distWet = Utils::sinHalfPi()(dist_pre);
-        dist->processBlock(osleft, osright, numSamples, distDry, distWet);
+        dist->processBlock(osleft, osright, numSamples * os, distDry, distWet);
         distPreOversampler->processSamplesDown(block);
     }
 
@@ -529,10 +530,11 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         auto oversampledBlock = distPostOversampler->processSamplesUp(block);
         float* osleft = oversampledBlock.getChannelPointer(0);
         float* osright = oversampledBlock.getChannelPointer(1);
+        int os = (int)distPostOversampler->getOversamplingFactor();
 
         auto distDry = Utils::cosHalfPi()(dist_post);
         auto distWet = Utils::sinHalfPi()(dist_post);
-        dist->processBlock(osleft, osright, numSamples, distDry, distWet);
+        dist->processBlock(osleft, osright, numSamples * os, distDry, distWet);
         distPostOversampler->processSamplesDown(block);
     }
 
