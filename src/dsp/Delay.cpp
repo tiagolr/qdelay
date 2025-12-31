@@ -11,6 +11,9 @@ Delay::Delay(QDelayAudioProcessor& p)
 	audioProcessor.params.addParameterListener("rate_sync_l", this);
 	audioProcessor.params.addParameterListener("rate_r", this);
 	audioProcessor.params.addParameterListener("rate_sync_r", this);
+
+    pitcher = std::make_unique<Pitcher>();
+    pitcherSwing = std::make_unique<Pitcher>();
 }
 
 Delay::~Delay()
@@ -64,6 +67,11 @@ void Delay::prepare(float _srate)
     haasR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
     haasSwingL.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
     haasSwingR.resize((int)std::ceil(srate * MAX_HAAS / 1000.f));
+
+    Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
+    pitcher->init(pitchMode);
+    pitcherSwing->init(pitchMode);
+
     clear();
 }
 
@@ -122,6 +130,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 {
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     auto time = getTimeSamples();
+
+    float pitchMix = audioProcessor.params.getRawParameterValue("pitch_mix")->load();
+    auto pitchDry = Utils::cosHalfPi()(pitchMix);
+    auto pitchWet = Utils::sinHalfPi()(pitchMix);
 
     auto feedback = audioProcessor.params.getRawParameterValue("feedback")->load();
     auto pipoWidth = audioProcessor.params.getRawParameterValue("pipo_width")->load();
@@ -235,6 +247,18 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             v1 = eqR[j].process(v1);
             s0 = eqSwingL[j].process(s0);
             s1 = eqSwingR[j].process(s1);
+        }
+
+        // process pitch shift
+        if (std::fabs(audioProcessor.pitcherSpeed) > 1e-6 && audioProcessor.pitcherPath == 0) {
+            pitcher->setSpeed(audioProcessor.pitcherSpeed);
+            pitcher->update(v0, v1);
+            v0 = v0 * pitchDry + pitcher->outL * pitchWet;
+            v1 = v1 * pitchDry + pitcher->outR * pitchWet;
+            pitcherSwing->setSpeed(audioProcessor.pitcherSpeed);
+            pitcherSwing->update(s0, s1);
+            s0 = s0 * pitchDry + pitcherSwing->outL * pitchWet;
+            s1 = s1 * pitchDry + pitcherSwing->outR * pitchWet;
         }
 
         // EQ on the feedback path can be quite dangerous

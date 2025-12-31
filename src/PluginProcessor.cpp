@@ -45,7 +45,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
-    layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 0));
+    layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 1));
+    layout.add(std::make_unique<AudioParameterChoice>("pitch_path", "Pitch Path", StringArray{ "Feedback", "Post" }, 0));
     layout.add(std::make_unique<AudioParameterFloat>("pitch_mix", "Pitch Mix", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", NormalisableRange<float>(0.0f, 1.f-0.001f, 0.001f, 3.f), 1.f-0.001f));
@@ -273,8 +274,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     delay->prepare((float)srate);
     dist->prepare((float)srate);
     diffusor->prepare((float)srate);
-    //pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
-    pitcher->init(Pitcher::kMedium);
+    pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     onSlider();
     sendChangeMessage();
 }
@@ -362,6 +362,17 @@ void QDelayAudioProcessor::onSlider()
     // diffusor
     float diffsize = params.getRawParameterValue("diff_size")->load();
     diffusor->setSize(diffsize);
+
+    // pitch shifter
+    Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load();
+    if (pitcher->mode != pitchMode) {
+        pitcher->init(pitchMode);
+        delay->pitcher->init(pitchMode);
+        delay->pitcherSwing->init(pitchMode);
+    }
+    pitcherPath = (int)params.getRawParameterValue("pitch_path")->load();
+    float pitchSemis = params.getRawParameterValue("pitch_shift")->load();
+    pitcherSpeed = pitcher->getSpeedFromSemis(pitchSemis);
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -454,24 +465,30 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         );
     }
 
-    // process the signal into the same buffer
+    // process delay
     delay->processBlock(
         wetBuffer.getWritePointer(0), 
         wetBuffer.getWritePointer(1),
         numSamples
     );
 
-    float pitchShift = params.getRawParameterValue("pitch_shift")->load();
-    float* dryl = buffer.getWritePointer(0);
-    float* dryr = buffer.getWritePointer(1);
-    for (int i = 0; i < numSamples; ++i)
-    {
-        pitcher->setSpeedSemis(pitchShift);
-        pitcher->update(dryl[i], dryr[i]);
-        dryl[i] = pitcher->outL;
-        dryr[i] = pitcher->outR;
+    // process pitch shift
+    if (std::fabs(pitcherSpeed) > 1e-6 && pitcherPath == 1) {
+        float* wetl = wetBuffer.getWritePointer(0);
+        float* wetr = wetBuffer.getWritePointer(1);
+        float pitchMix = params.getRawParameterValue("pitch_mix")->load();
+        auto pitchDry = Utils::cosHalfPi()(pitchMix);
+        auto pitchWet = Utils::sinHalfPi()(pitchMix);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            pitcher->setSpeed(pitcherSpeed);
+            pitcher->update(wetl[i], wetr[i]);
+            wetl[i] = wetl[i] * pitchDry + pitcher->outL * pitchWet;
+            wetr[i] = wetr[i] * pitchDry + pitcher->outR * pitchWet;
+        }
     }
 
+    // process post distortion
     auto dist_post = params.getRawParameterValue("dist_post")->load();
     if (dist_post > 0.f) 
     {

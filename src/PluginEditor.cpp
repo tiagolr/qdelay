@@ -22,6 +22,18 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(logo);
     logo.setAlpha(0.f);
     logo.setBounds(col, row, 100, HEADER_HEIGHT);
+    logo.onClick = [this]
+        {
+            about->setVisible(true);
+        };
+
+    addAndMakeVisible(settingsBtn);
+    settingsBtn.setAlpha(0.f);
+    settingsBtn.setBounds(col + 100 - 5, row, 25, 25);
+    settingsBtn.onClick = [this]
+        {
+            showSettings();
+        };
 
     row += HEADER_HEIGHT + 10;
 
@@ -163,6 +175,15 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(duckRel.get());
     duckRel->setBounds(col + KNOB_WIDTH * 3, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
 
+    addAndMakeVisible(pitchMix);
+    pitchMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "pitch_mix", pitchMix);
+    pitchMix.setComponentID("pitch_mix");
+    pitchMix.setSliderStyle(Slider::LinearBar);
+    pitchMix.setTooltip("Set the pitch shift mix amount");
+    pitchMix.setBounds(col + KNOB_WIDTH * 3 + (KNOB_WIDTH - 60) / 2, row + KNOB_HEIGHT * 2 + 15 - 1, 60, 22);
+    pitchMix.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    pitchMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
+
     // RIGHT SECTION
     row = PLUG_PADDING;
     col = PLUG_PADDING + KNOB_WIDTH * 7 + HSEPARATOR * 2;
@@ -246,6 +267,7 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     g.setFont(FontOptions(26.f));
     g.setColour(Colours::white);
     g.drawText("QDELAY", logo.getBounds().expanded(0, 10), Justification::centredLeft);
+    UIUtils::drawGear(g, settingsBtn.getBounds(), 9, 6, Colours::white, Colour(COLOR_BACKGROUND));
 
     g.setColour(Colour(COLOR_NEUTRAL));
     g.setFont(FontOptions(16.f));
@@ -265,4 +287,35 @@ void QDelayAudioProcessorEditor::setEQTab(bool feedbackOrInput)
 {
     audioProcessor.eqTab = (int)feedbackOrInput;
     toggleUIComponents();
+}
+
+void QDelayAudioProcessorEditor::showSettings()
+{
+    int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
+
+    PopupMenu pitchMenu;
+    pitchMenu.addItem(80, "Drums", true, pitchMode == 0);
+    pitchMenu.addItem(81, "General", true, pitchMode == 1);
+    pitchMenu.addItem(82, "Audio", true, pitchMode == 2);
+
+    PopupMenu menu;
+    menu.addSubMenu("Pitch Shifter", pitchMenu);
+    menu.addSeparator();
+    menu.addItem(9999, "About");
+
+    auto menuPos = localPointToGlobal(settingsBtn.getBounds().getBottomLeft());
+    menu.showMenuAsync(PopupMenu::Options()
+        .withTargetComponent(*this)
+        .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+        [this](int result) 
+        {
+            if (result == 0) return;
+            else if (result == 9999) about->setVisible(true);
+            else if (result >= 80 && result <= 82) 
+            {
+                auto param = audioProcessor.params.getParameter("pitch_mode");
+                param->setValueNotifyingHost(param->convertTo0to1(float(result - 80)));
+            }
+        }
+    );
 }

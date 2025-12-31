@@ -33,6 +33,8 @@ public:
     std::unique_ptr<Distortion> dist;
     std::unique_ptr<Diffusor> diffusor;
     std::unique_ptr<Pitcher> pitcher;
+    float pitcherSpeed = 0.f;
+    int pitcherPath = 0; // feedback or wet signal
     AudioBuffer<float> wetBuffer;
     Follower follower;
     std::vector<SVF::EQBand> eqBands;

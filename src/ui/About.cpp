@@ -1,5 +1,20 @@
 #include "About.h"
 
+About::About()
+{
+	addAndMakeVisible(siteLink);
+	siteLink.setURL(URL("https://github.com/tiagolr/qdelay"));
+	siteLink.setButtonText("github.com/tiagolr/qdelay");
+	siteLink.setFont(FontOptions(20.f), false, Justification::centred);
+	siteLink.setColour(HyperlinkButton::ColourIds::textColourId, Colour(COLOR_ACTIVE));
+}
+
+void About::resized()
+{
+	auto b = getLocalBounds();
+	siteLink.setBounds(b.getCentreX() - 150, b.getY() + 50 + 30 + 20 + 20 + 15, 300, 25);
+}
+
 void About::mouseDown(const juce::MouseEvent& e)
 {
 	(void)e;
@@ -8,7 +23,7 @@ void About::mouseDown(const juce::MouseEvent& e)
 
 void About::paint(Graphics& g)
 {
-	auto bounds = getBounds();
+	auto bounds = getLocalBounds();
 	g.setColour(Colour(0xdd000000));
 	g.fillRect(bounds);
 
@@ -19,9 +34,9 @@ void About::paint(Graphics& g)
 	g.setFont(FontOptions(20.f));
 	g.drawText(std::string("v") + PROJECT_VERSION, bounds.removeFromTop(25), Justification::centred);
 	g.setFont(FontOptions(20.0f));
-	g.drawText("Copyright (C) Tilr 2025", bounds.removeFromTop(25), Justification::centred);
+	g.drawText("Copyright (C) Tilr 2026", bounds.removeFromTop(25), Justification::centred);
 	g.setColour(Colour(COLOR_ACTIVE));
-	g.drawText("github.com/tiagolr/qdelay", bounds.removeFromTop(25), Justification::centred);
+	bounds.removeFromTop(25); // site link
 	g.setColour(Colours::white);
 	bounds.removeFromTop(40);
 	auto w = PLUG_WIDTH - 100;

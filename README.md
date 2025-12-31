@@ -42,11 +42,11 @@
 
 I decided to build a plug-in that could come somewhat close to EchoBoy in terms of capabilities, the result is good enough but probably nowhere near the quality of Saturations or Tape emulations that SoundToys and Native Instruments engineers can achieve. I'm not that savvy to build my own models so instead the distortion unit is based of [JClones TapeHead](https://github.com/JClones/JSFXClones/blob/master/JClones_TapeHead.md) - an open JSFX tape like distortion.
 
-The pitch shift uses xxx library, it offers real-time pitching without a big performance hit or artifacts for moderate increments.
+For the pitch shift, I couldn't find many solutions for a zero delay pitch shift that I could adapt to this project, so I went with what I know and ported Saike's [Pitch_Shift](https://github.com/JoepVanlier/JSFX/blob/master/Basics/Saike_Pitch_Shift.jsfx) library from JSFX to c++ and JUCE. The result is surprisingly good and it's impressive the number of people looking for a solution like this in JUCE forums and other places.
 
 Delay swing is implemented using serial delay lines with different times and Feel/Offset is implemented in a hacky way by shifting the write position of the input in relation to the feedback with some extra care to pick the leading write to overrided the circular buffer while the trailing write overdubs the existing contents.
 
-Coding jargon aside, feel free to explore the repository for snippets on parametric EQs envelope followers etc.. or most likely just download the plug-in and have fun with it.
+Feel free to explore the repository for snippets on parametric EQs, envelope followers, pitch shifting etc.. or most likely just download the plug-in and have fun with it.
 
 ## MacOS
 

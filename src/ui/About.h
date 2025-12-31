@@ -8,9 +8,12 @@ class RipplerXAudioProcessor;
 
 class About : public juce::Component {
 public:
-    About() {}
+    HyperlinkButton siteLink;
+
+    About();
     ~About() override {}
 
     void mouseDown(const juce::MouseEvent& e) override;
     void paint(Graphics& g) override;
+    void resized() override;
 };

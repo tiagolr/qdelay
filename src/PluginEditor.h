@@ -40,12 +40,14 @@ public:
     void resized() override;
     void changeListenerCallback(ChangeBroadcaster* source) override;
     void setEQTab(bool feedbackOrInput);
+    void showSettings();
 
     QDelayAudioProcessor& audioProcessor;
 private:
     bool init = false;
 
     TextButton logo;
+    TextButton settingsBtn;
     std::unique_ptr<DelayView> delayView;
     std::unique_ptr<DelayWidget> delayWidget;
     TextButton mixTabBtn;
@@ -74,6 +76,8 @@ private:
     std::unique_ptr<Rotary> duckAmt;
     std::unique_ptr<Rotary> duckAtk;
     std::unique_ptr<Rotary> duckRel;
+    Slider pitchMix;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> pitchMixAttachment;
 
     std::unique_ptr<EQWidget> eqInput;
     std::unique_ptr<EQWidget> eqFeedbk;

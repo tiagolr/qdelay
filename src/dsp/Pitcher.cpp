@@ -14,7 +14,6 @@ void Pitcher::init (WindowMode _mode)
 
 	readHead1 = buffer.size * .5f;
 	readHead2 = -1.f;
-	speed = 1.f;
 }
 
 // calculates the ACF and finds its maximum.
@@ -87,9 +86,9 @@ void Pitcher::setSpeed(float newHeadSpeed)
     lastHeadSpeed = readHeadSpeed;
 }
 
-void Pitcher::setSpeedSemis(float semis)
+float Pitcher::getSpeedFromSemis(float semis)
 {
-    setSpeed((std::pow(2.f, semis / 12.f)) - 1.0f);
+    return std::pow(2.f, semis / 12.f) - 1.0f;
 }
 
 void Pitcher::update(float l, float r)
@@ -149,8 +148,8 @@ void Pitcher::update(float l, float r)
             {
                 std::fill(fftmem1.begin(), fftmem1.end(), 0.f);
                 std::fill(fftmem2.begin(), fftmem2.end(), 0.f);
-                buffer.copyFromBuffer(fftmem1.data(), src, crossFadeSamples, true);   // left
-                buffer.copyFromBuffer(fftmem2.data(), target, crossFadeSamples, false); // right
+                buffer.copyFromBuffer(fftmem1.data(), src, crossFadeSamples);   // left
+                buffer.copyFromBuffer(fftmem2.data(), target, crossFadeSamples); // right
                 cmax_position = computeMaxACFPosition();
             }
 

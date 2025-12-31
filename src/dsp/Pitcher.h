@@ -71,25 +71,30 @@ public:
 	}
 
 	// Copies 'copyLength' samples from 'delay' behind writePos into a linear target array
-	// channel = true => left, false => right
-	void copyFromBuffer(float* target, int delay, int copyLength, bool channel) const
+	void copyFromBuffer(float* target, int delay, int copyLength) const
 	{
-	    const auto& buf = channel ? left : right;
+		int start = writePos - delay;
+		while (start < 0) start += size;
+		start %= size;
 
-	    int start = writePos - delay;
-	    while (start < 0) start += size; // wrap negative
-	    start %= size;
+		int remaining = copyLength;
+		int pos = start;
+		int out = 0;
 
-	    int remaining = copyLength;
-	    int pos = start;
+		while (remaining > 0)
+		{
+			int chunk = std::min(size - pos, remaining);
 
-	    while (remaining > 0)
-	    {
-	        int chunk = std::min(size - pos, remaining);
-	        std::memcpy(target + (copyLength - remaining), &buf[pos], chunk * sizeof(float));
-	        remaining -= chunk;
-	        pos = (pos + chunk) % size; // wrap
-	    }
+			for (int i = 0; i < chunk; ++i)
+			{
+				int idx = pos + i;
+				target[out + i] = 0.5f * (left[idx] + right[idx]);
+			}
+
+			out += chunk;
+			remaining -= chunk;
+			pos = (pos + chunk) % size;
+		}
 	}
 };
 
@@ -173,6 +178,7 @@ public:
 		}
 	};
 
+	WindowMode mode = WindowMode::kSmall;
 	float outL = 0.f;
 	float outR = 0.f;
 
@@ -180,10 +186,9 @@ public:
 	float computeMaxACFPosition();
 	void update(float l, float r);
 	void setSpeed(float newHeadSpeed);
-	void setSpeedSemis(float semis);
+	float getSpeedFromSemis(float semis);
 
 private:
-	WindowMode mode = WindowMode::kSmall;
 	RingBuffer buffer; //
 	CosineFade fader;
 	FFTSet fftSet;
@@ -193,7 +198,6 @@ private:
 	float readHead2 = 0.f;
 	float lastHeadSpeed = 0.f;
 	float readHeadSpeed = 0.f;
-	float speed = 0.f;
 	bool fade = false;
 	bool acf = false;
 	int crossFadeSamples = 0;

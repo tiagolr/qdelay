@@ -4,6 +4,7 @@
 #include "DelayLine.h"
 #include "Utils.h"
 #include "SVF.h"
+#include "Pitcher.h"
 
 class QDelayAudioProcessor;
 
@@ -24,6 +25,9 @@ public:
 		Triplet,
 		Dotted
 	};
+
+	std::unique_ptr<Pitcher> pitcher;
+	std::unique_ptr<Pitcher> pitcherSwing;
 
 	// exposed variables for UI draw
 	float feedbackL = 1.f;

@@ -39,12 +39,36 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
     const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
     auto tag = slider.getComponentID();
-    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical") {
+    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix") {
         LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
         return;
     }
 
-    if (tag == "symmetric_vertical") {
+    if (style == juce::Slider::LinearBar)
+    {
+        auto bounds = Rectangle<int>(x, y, width, height).toFloat();
+        // Draw a filled bar
+        g.setColour(Colour(Colours::lightgrey).withAlpha(0.5f));
+        g.fillRect(bounds); // background
+
+        g.setColour(Colour(Colours::lightgrey));
+        g.fillRect(bounds.withWidth(static_cast<float>(sliderPos - x))); // filled portion
+
+        if (slider.getComponentID() == "pitch_mix") {
+            String text;
+            if (slider.isMouseButtonDown())       // mouse is pressed
+                text = String(std::round(slider.getValue() * 100)) + " %";
+            else
+                text = "Pitch%";
+
+            g.setColour(Colour(globals::COLOR_BACKGROUND).darker(0.7f));
+            g.setFont(15.0f);
+            g.drawFittedText(text, x, y, width, height , juce::Justification::centred, 1);
+        }
+        return;
+    }
+
+    else if (tag == "symmetric_vertical") {
         const float center = (minSliderPos + maxSliderPos) * 0.5f;
 
         juce::Rectangle<float> trackBounds(x + width / 2.f - width / 8.f, (float)y, width / 4.f, (float)height );
