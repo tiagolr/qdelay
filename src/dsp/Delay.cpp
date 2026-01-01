@@ -57,6 +57,7 @@ void Delay::prepare(float _srate)
     timeR.setup(0.15f, srate);
     feelSmooth.setup(0.15f, srate);
     swingSmooth.setup(0.15f, srate);
+    modDepthSmooth.setup(0.15f, srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -209,14 +210,16 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     // Process samples
     for (int i = 0; i < nsamps; ++i)
     {
+        // modulation
+        float mdepth = modDepthSmooth.process(modDepth);
         float mod = 0.f;
-        if (modDepth > 0.f) 
+        if (mdepth > 1e-6f) 
         { 
             modPhase += modRate * israte;
             if (modPhase > 1.f) modPhase -= 1.f;
             mod = std::sin(modPhase * MathConstants<float>::twoPi);
         }
-        mod *= modDepth;
+        mod = mod * mdepth - mdepth;
 
         // smoothed params
         auto timeLeft = timeL.process((float)time[0]);

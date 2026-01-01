@@ -58,6 +58,7 @@ private:
 	RCFilter timeR{};
 	RCFilter swingSmooth{};
 	RCFilter feelSmooth{};
+	RCFilter modDepthSmooth{};
 	DelayLine predelayL{};
 	DelayLine predelayR{};
 	DelayLine delayL{};
