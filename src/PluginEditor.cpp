@@ -196,6 +196,18 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(eqFeedbk.get());
     eqFeedbk->setBounds(col, row, KNOB_WIDTH * 3, getHeight() - row - PLUG_PADDING);
 
+    distWidget = std::make_unique<DistWidget>(*this);
+    addChildComponent(distWidget.get());
+    distWidget->setBounds(col, row + HEADER_HEIGHT + 10, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 20);
+
+    addAndMakeVisible(rightTabBtn);
+    rightTabBtn.setAlpha(0.0f);
+    rightTabBtn.setBounds(col, row + 4, 100, 25);
+    rightTabBtn.onClick = [this]
+        {
+            showRightTabMenu();
+        };
+
     meter = std::make_unique<Meter>(audioProcessor);
     addAndMakeVisible(meter.get());
     meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 30 + HEADER_HEIGHT)
@@ -255,6 +267,7 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
 
     eqInput->setVisible(audioProcessor.eqTab == 0 && audioProcessor.rightTab == 0);
     eqFeedbk->setVisible(audioProcessor.eqTab == 1 && audioProcessor.rightTab == 0);
+    distWidget->setVisible(audioProcessor.rightTab == 1);
 
     MessageManager::callAsync([this] { repaint(); });
 }
@@ -276,6 +289,12 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     g.drawText("SAT", distFeedbk->getX(), distFeedbk->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("OTHER", tapeAmt->getX(), tapeAmt->getY() - 16 - 10, KNOB_WIDTH, 16, Justification::centred);
     g.drawText("DUCK", duckThres->getX(), duckThres->getY() - 10 - HSEPARATOR, KNOB_WIDTH, HSEPARATOR, Justification::centred);
+
+    UIUtils::drawTriangle(g, rightTabBtn.getBounds().toFloat().withWidth(25.f).reduced(8.f), 2, Colour(COLOR_ACTIVE));
+    g.setColour(Colour(COLOR_ACTIVE));
+    int tab = audioProcessor.rightTab;
+    g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : "TAPE", rightTabBtn.getBounds()
+        .toFloat().withTrimmedLeft(25.f), Justification::centredLeft);
 }
 
 void QDelayAudioProcessorEditor::resized()
@@ -293,16 +312,22 @@ void QDelayAudioProcessorEditor::showSettings()
 {
     int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
+    int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
+
+    PopupMenu diffMenu;
+    diffMenu.addItem(70, "Pre Delay", true, diffPath == 0);
+    diffMenu.addItem(71, "Post Delay", true, diffPath == 1);
 
     PopupMenu pitchMenu;
     pitchMenu.addItem(83, "Feedback", true, pitchPath == 0);
-    pitchMenu.addItem(84, "Post", true, pitchPath == 1);
+    pitchMenu.addItem(84, "Post Delay", true, pitchPath == 1);
     pitchMenu.addSeparator();
     pitchMenu.addItem(80, "Drums", true, pitchMode == 0);
     pitchMenu.addItem(81, "General", true, pitchMode == 1);
     pitchMenu.addItem(82, "Smooth", true, pitchMode == 2);
 
     PopupMenu menu;
+    menu.addSubMenu("Diffusion", diffMenu);
     menu.addSubMenu("Pitch Shifter", pitchMenu);
     menu.addSeparator();
     menu.addItem(9999, "About");
@@ -325,6 +350,32 @@ void QDelayAudioProcessorEditor::showSettings()
                 auto param = audioProcessor.params.getParameter("pitch_path");
                 param->setValueNotifyingHost(result == 84 ? 1.f : 0.f);
             }
+            else if (result == 70 || result == 71) {
+                auto param = audioProcessor.params.getParameter("diff_path");
+                param->setValueNotifyingHost(result == 71 ? 1.f : 0.f);
+            }
+        }
+    );
+}
+
+void QDelayAudioProcessorEditor::showRightTabMenu()
+{
+    auto tab = audioProcessor.rightTab;
+
+    PopupMenu menu;
+    menu.addItem(1, "Equalizer", true, tab == 0);
+    menu.addItem(2, "Saturation", true, tab == 1);
+    menu.addItem(3, "Tape", true, tab == 2);
+
+    auto menuPos = localPointToGlobal(rightTabBtn.getBounds().getBottomLeft());
+    menu.showMenuAsync(PopupMenu::Options()
+        .withTargetComponent(*this)
+        .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+        [this](int result)
+        {
+            if (result == 0) return;
+            audioProcessor.rightTab = result - 1;
+            toggleUIComponents();
         }
     );
 }

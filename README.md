@@ -19,7 +19,7 @@
 
 </div>
 
-**QDelay** (short for quick-delay) is a dual-delay with more features than it should to be considered quick. While it offers nothing groundbreaking it is based on many popular units like *ReplikaXT* and *EchoBoy*. The main goal is to create a free and open plug-in for my own productions, an alternative to the popular [Deelay](https://sixthsample.com/deelay/) by *SixthSample* without premium versions or trimmed features or on-line activation.
+**QDelay** (short for quick-delay) is a dual-delay with more features than it should to be considered quick or basic. While it offers nothing groundbreaking it is based on many popular units like *ReplikaXT* and *EchoBoy*. The main goal is to create a free and open plug-in for my own productions, an alternative to the popular [Deelay](https://sixthsample.com/deelay/) by *SixthSample* without premium versions or trimmed features or on-line activation.
 
 <div align="center">
 
@@ -29,7 +29,20 @@
 
 ## Features
 
-  *
+  * **Stereo Dual Delay** with independent delay times and multiple modes.
+  * **Ping-Pong mode** with feedback width control.
+  * **Tap mode** with offset time (tap) and delay time.
+  * **Swing and Feel** offset.
+  * **Accent** odd or even taps.
+  * **Parametric EQ** on feedback and post delay signal.
+  * **Diffusion** on pre or post delay signal.
+  * **Modulation** of delay line time.
+  * **Pitch Shifter** on the feedback or post delay signal.
+  * **Saturation** on pre and post delay signal.
+  * **Color, Bias and Dynamics** controls for saturation.
+  * **Ducking** to muffle the delayed signal on input.
+  * **Tape wow and flutter** to add tone variation.
+  * **Taps preview** display.
 
 ## Download
 
@@ -42,11 +55,32 @@
 
 I decided to build a plug-in that could come somewhat close to EchoBoy in terms of capabilities, the result is good enough but probably nowhere near the quality of Saturations or Tape emulations that SoundToys and Native Instruments engineers can achieve. I'm not that savvy to build my own models so instead the distortion unit is based of [JClones TapeHead](https://github.com/JClones/JSFXClones/blob/master/JClones_TapeHead.md) - an open JSFX tape like distortion.
 
-For the pitch shift, I couldn't find many solutions for a zero delay pitch shift that I could adapt to this project, so I went with what I know and ported Saike's [Pitch_Shift](https://github.com/JoepVanlier/JSFX/blob/master/Basics/Saike_Pitch_Shift.jsfx) library from JSFX to c++ and JUCE. The result is surprisingly good and it's impressive the number of people looking for a solution like this in JUCE forums and other places.
+For the pitch shift, I couldn't find many solutions for a zero latency pitch shift that I could adapt to this project, so I went with what I know and ported Saike's [Pitch_Shift](https://github.com/JoepVanlier/JSFX/blob/master/Basics/Saike_Pitch_Shift.jsfx) library from JSFX to c++ and JUCE. The result is surprisingly good and it's impressive the number of people looking for a solution like this in JUCE forums and other places.
 
-Delay swing is implemented using serial delay lines with different times and Feel/Offset is implemented in a hacky way by shifting the write position of the input in relation to the feedback with some extra care to pick the leading write to overrided the circular buffer while the trailing write overdubs the existing contents.
+Delay swing is implemented using serial delay lines with different times and Feel/Offset is implemented in a hacky way by shifting the write position of the input in relation to the feedback with some extra care to pick the leading write to override the circular buffer while the trailing write overdubs the existing contents.
+
+For future work things can be added like a preset manager, multiple taps per delay like EchoBoy or Valhalla delay, better saturations and more delay modes. By all means if you're a wizard and can create his own Analog or Tape saturations, get involved and let me know how they can be improved.
 
 Feel free to explore the repository for snippets on parametric EQs, envelope followers, pitch shifting etc.. or most likely just download the plug-in and have fun with it.
+
+## Tips
+
+Current signal routing:
+
+```
+Input > EQ Input > Saturation Pre > Diffusion Pre >
+[Delay <-> EQ Feedback <-> Pitch Feedback] >
+Pitch Post > Saturation Post > Diffusion Post > Output
+```
+
+My first attempt was to add diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.
+
+Saturation can be added Pre and Post simultaneously while diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
+
+* In **Tap** mode the first time controls the offset (tap), the second is the delay time.
+* **Feel** control offsets the whole delay line by max 1/16 note.
+* **Bias** control in Saturation tab shifts the saturation curve creating odd harmonics.
+* **Dynamics** control in Saturation tab makes louder hits harder and quieter softer.
 
 ## MacOS
 

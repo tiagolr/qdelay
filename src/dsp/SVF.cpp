@@ -112,7 +112,7 @@ void SVF::pk(float _srate, float _freq, float _q, float _gain)
 
 float SVF::process(float sample)
 {
-	if (mode == Off) 
+	if (mode == Off)
 	{
 		return sample;
 	}
@@ -160,10 +160,10 @@ void SVF::processBlock(float* buf, int nsamples, int blockoffset, int blocksize,
 	float curr_cb = cb;
 	float curr_ch = ch;
 
-	if (blockoffset == 0) 
+	if (blockoffset == 0)
 	{
 		auto interpolate = tfreq != freq || tq != q || tgain != gain;
-		if (interpolate) 
+		if (interpolate)
 		{
 			if (mode == LP) lp(srate, tfreq, tq);
 			else if (mode == BP) bp(srate, tfreq, tq);
@@ -182,7 +182,7 @@ void SVF::processBlock(float* buf, int nsamples, int blockoffset, int blocksize,
 			cb_step = (cb - curr_cb) * size;
 			ch_step = (ch - curr_ch) * size;
 		}
-		else 
+		else
 		{
 			a1_step = 0.0f; a2_step = 0.0f;
 			a3_step = 0.0f; r2_step = 0.0f;
@@ -190,7 +190,7 @@ void SVF::processBlock(float* buf, int nsamples, int blockoffset, int blocksize,
 		}
 	}
 
-	for (int n = 0; n < nsamples; ++n) 
+	for (int n = 0; n < nsamples; ++n)
 	{
 		auto sample = buf[n];
 		float v3 = sample - s2;
@@ -283,10 +283,10 @@ void SVF::copyFrom(SVF svf)
 float SVF::getMagnitude(float _freq)
 {
 	_freq = std::min(_freq, 0.49f * srate);
-	float omega = 2.0f * MathConstants<float>::pi * _freq / srate;
 
 	if (mode == LP6 || mode == HP6)
 	{
+		float omega = 2.0f * MathConstants<float>::pi * _freq / srate;
 		float a = g;
 		float b = 1.0f - a;
 		float c = std::cos(omega);

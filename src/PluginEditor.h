@@ -19,6 +19,7 @@
 #include "ui/Rotary.h"
 #include "ui/EQWidget.h"
 #include "ui/Meter.h"
+#include "ui/DistWidget.h"
 #include "dsp/Delay.h"
 
 using namespace globals;
@@ -41,6 +42,7 @@ public:
     void changeListenerCallback(ChangeBroadcaster* source) override;
     void setEQTab(bool feedbackOrInput);
     void showSettings();
+    void showRightTabMenu();
 
     QDelayAudioProcessor& audioProcessor;
 private:
@@ -79,8 +81,10 @@ private:
     Slider pitchMix;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> pitchMixAttachment;
 
+    TextButton rightTabBtn;
     std::unique_ptr<EQWidget> eqInput;
     std::unique_ptr<EQWidget> eqFeedbk;
+    std::unique_ptr<DistWidget> distWidget;
     std::unique_ptr<Meter> meter;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;

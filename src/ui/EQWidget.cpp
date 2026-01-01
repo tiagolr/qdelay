@@ -115,8 +115,6 @@ void EQWidget::resized()
 
 void EQWidget::paint(Graphics& g)
 {
-	g.fillAll(Colour(COLOR_BACKGROUND));
-
 	// draw band curve button
 	g.setColour(Colour(COLOR_NEUTRAL));
 	UIUtils::drawBevel(g, bandBtn.getBounds().toFloat().expanded(.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));

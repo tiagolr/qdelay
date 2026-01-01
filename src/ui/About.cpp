@@ -38,7 +38,8 @@ void About::paint(Graphics& g)
 	g.setColour(Colour(COLOR_ACTIVE));
 	bounds.removeFromTop(25); // site link
 	g.setColour(Colours::white);
-	bounds.removeFromTop(40);
+	bounds.removeFromTop(25);
+
 	auto w = PLUG_WIDTH - 100;
 	bounds.setWidth(w);
 	bounds.setX(getWidth() / 2 - w/2);

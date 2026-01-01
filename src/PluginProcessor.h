@@ -37,9 +37,10 @@ public:
     std::unique_ptr<juce::dsp::Oversampling<float>> distPreOversampler;
     std::unique_ptr<juce::dsp::Oversampling<float>> distPostOversampler;
     std::unique_ptr<Diffusor> diffusor;
+    int diffPath = 0; // pre or post delay diffusion
     std::unique_ptr<Pitcher> pitcher;
     float pitcherSpeed = 0.f;
-    int pitcherPath = 0; // feedback or wet signal
+    int pitcherPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
     Follower follower;
     std::vector<SVF::EQBand> eqBands;

@@ -30,6 +30,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
     layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffusion Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterChoice>("diff_path", "Diffusion Path", StringArray{ "Pre", "Post" }, 0));
 
     layout.add(std::make_unique<AudioParameterFloat>("mod_depth", "Modulation Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
@@ -382,6 +383,7 @@ void QDelayAudioProcessor::onSlider()
 
     // diffusor
     float diffsize = params.getRawParameterValue("diff_size")->load();
+    diffPath = (int)params.getRawParameterValue("diff_path")->load();
     diffusor->setSize(diffsize);
 
     // pitch shifter
@@ -485,16 +487,13 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         float* osleft = oversampledBlock.getChannelPointer(0);
         float* osright = oversampledBlock.getChannelPointer(1);
         int os = (int)distPreOversampler->getOversamplingFactor();
-
-        auto distDry = Utils::cosHalfPi()(dist_pre);
-        auto distWet = Utils::sinHalfPi()(dist_pre);
-        distPre->processBlock(osleft, osright, numSamples * os, distDry, distWet);
+        distPre->processBlock(osleft, osright, numSamples * os, 1.f-dist_pre, dist_pre);
         distPreOversampler->processSamplesDown(block);
     }
 
-    // process diffusion
+    // process pre diffusion
     float diffamt = params.getRawParameterValue("diff_amt")->load();
-    if (diffamt > 0.f) {
+    if (diffamt > 0.f && diffPath == 0) {
         float diffdry = Utils::cosHalfPi()(diffamt);
         float diffwet = Utils::sinHalfPi()(diffamt);
         diffusor->processBlock(
@@ -536,11 +535,19 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         float* osleft = oversampledBlock.getChannelPointer(0);
         float* osright = oversampledBlock.getChannelPointer(1);
         int os = (int)distPostOversampler->getOversamplingFactor();
-
-        auto distDry = Utils::cosHalfPi()(dist_post);
-        auto distWet = Utils::sinHalfPi()(dist_post);
-        distPost->processBlock(osleft, osright, numSamples * os, distDry, distWet);
+        distPost->processBlock(osleft, osright, numSamples * os, 1.f - dist_post, dist_post);
         distPostOversampler->processSamplesDown(block);
+    }
+
+    // process post diffusion
+    if (diffamt > 0.f && diffPath == 1) {
+        float diffdry = Utils::cosHalfPi()(diffamt);
+        float diffwet = Utils::sinHalfPi()(diffamt);
+        diffusor->processBlock(
+            wetBuffer.getWritePointer(0),
+            wetBuffer.getWritePointer(1),
+            numSamples, diffdry, diffwet
+        );
     }
 
     auto mix = params.getRawParameterValue("mix")->load();

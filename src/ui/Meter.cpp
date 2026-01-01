@@ -96,11 +96,11 @@ void Meter::paint(juce::Graphics& g) {
 	}
 
 	g.saveState();
-	g.reduceClipRegion(lbar.toNearestInt());
+	g.reduceClipRegion(lbar.expanded(2.f, 0).toNearestInt());
 	drawMarkers(g, barbounds, Colour(COLOR_BEVEL), db6, db18, db30, db42);
 	g.restoreState();
 	g.saveState();
-	g.reduceClipRegion(rbar.toNearestInt());
+	g.reduceClipRegion(rbar.expanded(2.f, 0).toNearestInt());
 	drawMarkers(g, barbounds, Colour(COLOR_BEVEL), db6, db18, db30, db42);
 	g.restoreState();
 }

@@ -15,10 +15,11 @@ class DistWidget
 public:
 
 	TextButton modeBtn;
-	std::unique_ptr<Rotary> color;
 	std::unique_ptr<Rotary> drive;
 	std::unique_ptr<Rotary> trim;
+	std::unique_ptr<Rotary> color;
 	std::unique_ptr<Rotary> bias;
+	std::unique_ptr<Rotary> dynamics;
 
 	DistWidget(QDelayAudioProcessorEditor& e);
 	~DistWidget();
@@ -26,7 +27,7 @@ public:
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void paint(Graphics& g) override;
 	void resized() override;
-	void toggleUIComponents();
+	void showModeMenu();
 
 private:
 	QDelayAudioProcessorEditor& editor;

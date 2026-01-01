@@ -235,9 +235,9 @@ void DelayView::paint(Graphics& g)
 	feelOffset = std::clamp(feelOffset, -maxFeelOffset, maxFeelOffset);
 
 	for (auto& tap : leftTaps)
-		if (tap.time > 0.f) tap.time += feelOffset;
+		if (!tap.dry) tap.time += feelOffset;
 	for (auto& tap : rightTaps)
-		if (tap.time > 0.f) tap.time += feelOffset;
+		if (!tap.dry) tap.time += feelOffset;
 
 	// apply haas offset
 	if (mode != Delay::PingPong)
@@ -246,7 +246,7 @@ void DelayView::paint(Graphics& g)
 		{
 			for (int i = 0; i < rightTaps.size(); ++i)
 			{
-				if (i != 0) 
+				if (!rightTaps[i].dry)
 					rightTaps[i].time += haas_width;
 			}
 		}
@@ -254,7 +254,7 @@ void DelayView::paint(Graphics& g)
 		{
 			for (int i = 0; i < leftTaps.size(); ++i)
 			{
-				if (i != 0) 
+				if (!leftTaps[i].dry)
 					leftTaps[i].time -= haas_width;
 			}
 		}
@@ -267,14 +267,14 @@ void DelayView::paint(Graphics& g)
 	float leftPan = (pan_wet < 0.5 ? 1.f : 1.f - (pan_wet - 0.5f) * 2.f);
 	for (auto& tap : leftTaps)
 	{
-		if (tap.time == 0.f)
+		if (tap.dry)
 			tap.gain *= dryMix * (pan_dry < 0.5 ? 1.f : 1.f - (pan_dry - 0.5f) * 2.f);
 		else
 			tap.gain *= wetMix * leftPan;
 	}
 	for (auto& tap : rightTaps)
 	{
-		if (tap.time == 0.f)
+		if (tap.dry)
 			tap.gain *= dryMix * (pan_dry > 0.5 ? 1.f : pan_dry * 2.f);
 		else
 			tap.gain *= wetMix * rightPan;
@@ -298,7 +298,7 @@ void DelayView::paint(Graphics& g)
 		float gain = leftTaps[i].gain;
 		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(leftTaps[i].dry ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY() - h, w, h);
 	}
 
@@ -308,7 +308,7 @@ void DelayView::paint(Graphics& g)
 		float gain = rightTaps[i].gain;
 		float w = 3.f;
 		float h = b.getHeight() / 2.f * gain;
-		g.setColour(i == 0 ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
+		g.setColour(rightTaps[i].dry ? Colour(COLOR_ACTIVE).darker(0.5f) : Colour(COLOR_ACTIVE));
 		g.fillRect(b.getX() + (time / totalTime) * b.getWidth() - w / 2, b.getCentreY(), w, h);
 	}
 }
