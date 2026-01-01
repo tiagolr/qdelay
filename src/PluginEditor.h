@@ -20,6 +20,7 @@
 #include "ui/EQWidget.h"
 #include "ui/Meter.h"
 #include "ui/DistWidget.h"
+#include "ui/TapeWidget.h"
 #include "dsp/Delay.h"
 
 using namespace globals;
@@ -85,6 +86,7 @@ private:
     std::unique_ptr<EQWidget> eqInput;
     std::unique_ptr<EQWidget> eqFeedbk;
     std::unique_ptr<DistWidget> distWidget;
+    std::unique_ptr<TapeWidget> tapeWidget;
     std::unique_ptr<Meter> meter;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;

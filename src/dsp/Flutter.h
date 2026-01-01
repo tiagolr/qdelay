@@ -1,3 +1,8 @@
+/**
+ * Wow and Flutter taken from ChowDSP Analog Tape Model
+ * https://github.com/jatinchowdhury18/AnalogTapeModel/
+ */
+
 #pragma once
 #include <JuceHeader.h>
 #include <utility>

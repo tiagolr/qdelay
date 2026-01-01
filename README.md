@@ -69,8 +69,8 @@ Current signal routing:
 
 ```
 Input > EQ Input > Saturation Pre > Diffusion Pre >
-[Delay <-> EQ Feedback <-> Pitch Feedback] >
-Pitch Post > Saturation Post > Diffusion Post > Output
+[Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback] >
+Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 ```
 
 My first attempt was to add diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.

@@ -219,3 +219,45 @@ public:
         output = state = value;
     }
 };
+
+class NoiseGen {
+public:
+    NoiseGen(uint32_t seed)
+        : original_seed(seed), state(seed) {}
+
+    float next()
+    {
+        uint32_t x = state;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        state = x;
+
+        // Convert to float in [-1, 1]
+        return (int32_t)x * mult; // float(x)/2^31
+    }
+
+    float gaussian()
+    {
+        float g = 0.0f;
+        for (int i = 0; i < 8; ++i)
+            g += next();
+
+        return g * 0.612f; // unit variance
+    }
+
+    void reset()
+    {
+        state = original_seed;
+    }
+
+    void reseed(uint32_t seed)
+    {
+        state = seed;
+    }
+
+private:
+    const float mult = 1.0f / 2147483648.0f;
+    uint32_t original_seed;
+    uint32_t state;
+};

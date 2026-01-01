@@ -200,6 +200,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(distWidget.get());
     distWidget->setBounds(col, row + HEADER_HEIGHT + 10, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 20);
 
+    tapeWidget = std::make_unique<TapeWidget>(*this);
+    addChildComponent(tapeWidget.get());
+    tapeWidget->setBounds(distWidget->getBounds());
+
     addAndMakeVisible(rightTabBtn);
     rightTabBtn.setAlpha(0.0f);
     rightTabBtn.setBounds(col, row + 4, 100, 25);
@@ -268,6 +272,7 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     eqInput->setVisible(audioProcessor.eqTab == 0 && audioProcessor.rightTab == 0);
     eqFeedbk->setVisible(audioProcessor.eqTab == 1 && audioProcessor.rightTab == 0);
     distWidget->setVisible(audioProcessor.rightTab == 1);
+    tapeWidget->setVisible(audioProcessor.rightTab == 2);
 
     MessageManager::callAsync([this] { repaint(); });
 }

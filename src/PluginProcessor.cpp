@@ -38,15 +38,19 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("dist_pre", "Saturation Pre", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Saturation Post", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("dist_mode", "Saturation Mode", StringArray{ "Tape", "Tube" }, 0));
-    layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, -6.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_color", "Saturation Color", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_bias", "Saturation Bias", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_dyn", "Saturation Dynamics", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("flutter_rate", "Flutter Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), .5f));
-    layout.add(std::make_unique<AudioParameterFloat>("flutter_depth", "Flutter Depth", 0.0f, 1.f, 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("flutter_rate", "Flutter Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("flutter_depth", "Flutter Depth", 0.0f, 1.f, .3f));
+    layout.add(std::make_unique<AudioParameterFloat>("wow_rate", "Wow Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("wow_depth", "Wow Depth", 0.0f, 1.f, 0.3f));
+    layout.add(std::make_unique<AudioParameterFloat>("wow_drift", "Wow Drift", 0.0f, 1.f, 0.25f));
+    layout.add(std::make_unique<AudioParameterFloat>("wow_var", "Wow Variance", 0.0f, 1.f, 0.25f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 1));
@@ -124,6 +128,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
     flutter = std::make_unique<Flutter>(*this);
+    wow = std::make_unique<Wow>(*this);
     wowflut_l = std::make_unique<DelayLine>();
     wowflut_r = std::make_unique<DelayLine>();
 
@@ -294,6 +299,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     diffusor->prepare((float)srate);
     pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     flutter->prepare((float)sampleRate);
+    wow->prepare((float)sampleRate);
     wowflut_l->resize((int)std::ceil(srate / 10));
     wowflut_r->resize((int)std::ceil(srate / 10));
     wowflut_l->clear();
@@ -557,12 +563,15 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         float* wetl = wetBuffer.getWritePointer(0);
         float* wetr = wetBuffer.getWritePointer(1);
         flutter->prepareBlock();
+        wow->prepareBlock();
         float flutOffset = flutter->dcOffset;
         float sr = (float)srate * 0.001f;
         for (int i = 0; i < numSamples; ++i)
         {
             auto flutLFO = flutter->getLFO();
-            auto offset = (flutLFO + flutOffset) * sr;
+            auto wowLFO = wow->getLFO();
+            float wowOffset = wow->curDepth;
+            auto offset = (flutLFO + flutOffset + wowLFO + wowOffset) * sr;
             wowflut_l->write(wetl[i]);
             wowflut_r->write(wetr[i]);
             float wetSampleL = wowflut_l->read3(offset);
@@ -579,6 +588,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         }
 
         flutter->boundPhase();
+        wow->boundPhase();
     }
 
     // process post distortion

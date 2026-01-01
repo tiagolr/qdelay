@@ -18,6 +18,7 @@
 #include "dsp/Diffusor.h"
 #include "dsp/Pitcher.h"
 #include "dsp/Flutter.h"
+#include "dsp/Wow.h"
 #include "dsp/DelayLine.h"
 
 using namespace globals;
@@ -55,6 +56,7 @@ public:
     int tapeFadeSize = 500;
     bool tapeFadeIn = false;
     std::unique_ptr<Flutter> flutter;
+    std::unique_ptr<Wow> wow;
     std::unique_ptr<DelayLine> wowflut_l; // wow + flutter delay
     std::unique_ptr<DelayLine> wowflut_r;
 
