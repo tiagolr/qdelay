@@ -33,7 +33,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterChoice>("diff_path", "Diffusion Path", StringArray{ "Pre", "Post" }, 0));
 
     layout.add(std::make_unique<AudioParameterFloat>("mod_depth", "Modulation Amt", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", 0.f, 10.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("dist_pre", "Saturation Pre", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Saturation Post", 0.f, 1.f, 0.0f));
@@ -45,6 +45,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("dist_dyn", "Saturation Dynamics", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("flutter_rate", "Flutter Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), .5f));
+    layout.add(std::make_unique<AudioParameterFloat>("flutter_depth", "Flutter Depth", 0.0f, 1.f, 1.f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 1));
@@ -121,6 +123,9 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     distPost = std::make_unique<Distortion>(*this);
     diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
+    flutter = std::make_unique<Flutter>(*this);
+    wowflut_l = std::make_unique<DelayLine>();
+    wowflut_r = std::make_unique<DelayLine>();
 
     distPreOversampler = std::make_unique<juce::dsp::Oversampling<float>>(
         2, 1, juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR, false, true);
@@ -288,6 +293,11 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     distPost->prepare((float)srate * (float)distPostOversampler->getOversamplingFactor());
     diffusor->prepare((float)srate);
     pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
+    flutter->prepare((float)sampleRate);
+    wowflut_l->resize((int)std::ceil(srate / 10));
+    wowflut_r->resize((int)std::ceil(srate / 10));
+    wowflut_l->clear();
+    wowflut_r->clear();
     onSlider();
     sendChangeMessage();
 }
@@ -334,9 +344,9 @@ void QDelayAudioProcessor::onSlider()
 
     // prepare input EQ
     eqBands = getEqualizer(SVF::EQType::ParamEQ);
-    for (int i = 0; i < EQ_BANDS; ++i) 
+    for (int i = 0; i < EQ_BANDS; ++i)
     {
-        if (eqL.size() < EQ_BANDS) 
+        if (eqL.size() < EQ_BANDS)
         {
             eqL.push_back({});
             eqR.push_back({});
@@ -350,7 +360,7 @@ void QDelayAudioProcessor::onSlider()
         auto& band = eqBands[i];
         if (band.mode != eqL[i].mode || rateChanged)
         {
-            auto mode = band.mode; 
+            auto mode = band.mode;
             if (mode == SVF::LP) eqL[i].lp(rate, band.freq, band.q);
             else if (mode == SVF::LP6) eqL[i].lp6(rate, band.freq);
             else if (mode == SVF::LS) eqL[i].ls(rate, band.freq, band.q, band.gain);
@@ -396,6 +406,20 @@ void QDelayAudioProcessor::onSlider()
     pitcherPath = (int)params.getRawParameterValue("pitch_path")->load();
     float pitchSemis = params.getRawParameterValue("pitch_shift")->load();
     pitcherSpeed = pitcher->getSpeedFromSemis(pitchSemis);
+
+    // wow and flutter
+    float tape = params.getRawParameterValue("tape_amt")->load();
+    if (tape > 0.f && tapeAmt == 0.f) { // turning tape ON
+        tapeFadeIn = true;
+        tapeFadeSize = (int)std::ceil(100 * 0.001 * srate);
+        tapeFadeSamps = tapeFadeSize;
+    }
+    else if (tape == 0.f && tapeAmt > 0.f) { // turning tape OFF
+        tapeFadeIn = false;
+        tapeFadeSize = (int)std::ceil(100 * 0.001 * srate);
+        tapeFadeSamps = tapeFadeSize;
+    }
+    tapeAmt = tape;
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -505,7 +529,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
     // process delay
     delay->processBlock(
-        wetBuffer.getWritePointer(0), 
+        wetBuffer.getWritePointer(0),
         wetBuffer.getWritePointer(1),
         numSamples
     );
@@ -526,8 +550,39 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         }
     }
 
+    // process wow and flutter
+    if (tapeAmt > 0.f || tapeFadeSamps > 0)
+    {
+        bool fading = tapeFadeSamps > 0;
+        float* wetl = wetBuffer.getWritePointer(0);
+        float* wetr = wetBuffer.getWritePointer(1);
+        flutter->prepareBlock();
+        float flutOffset = flutter->dcOffset;
+        float sr = (float)srate * 0.001f;
+        for (int i = 0; i < numSamples; ++i)
+        {
+            auto flutLFO = flutter->getLFO();
+            auto offset = (flutLFO + flutOffset) * sr;
+            wowflut_l->write(wetl[i]);
+            wowflut_r->write(wetr[i]);
+            float wetSampleL = wowflut_l->read3(offset);
+            float wetSampleR = wowflut_r->read3(offset);
+
+            // compute crossfade
+            float fade = !fading ? 1.f : tapeFadeIn
+                    ? 1.0f - (float)tapeFadeSamps / (float)tapeFadeSize
+                    : (float)tapeFadeSamps / (float)tapeFadeSize;
+            if (tapeFadeSamps > 0) tapeFadeSamps--;
+
+            wetl[i] = fade * wetSampleL + (1.0f - fade) * wetl[i];
+            wetr[i] = fade * wetSampleR + (1.0f - fade) * wetr[i];
+        }
+
+        flutter->boundPhase();
+    }
+
     // process post distortion
-    if (dist_post > 0.f) 
+    if (dist_post > 0.f)
     {
         float* channels[2] = { wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1) };
         juce::dsp::AudioBlock<float> block(channels, 2, (size_t)numSamples);

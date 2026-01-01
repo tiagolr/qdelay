@@ -180,3 +180,42 @@ public:
         output = state = value;
     }
 };
+
+class RCFilterBlock
+{
+public:
+    float r = 1.0f;
+    float k = 1.f;
+    float state = 0.0f;
+    float output = 0.0f;
+    float srate;
+    float resistance = 0.f;
+
+    void setup(float _resistance, float _srate)
+    {
+        resistance = _resistance;
+        srate = _srate;
+        r = 1.0f / (_resistance * srate + 1);
+        k = _resistance <= 0.f ? 0.f : -srate * std::log(1.f - r);
+    }
+
+    float process(float input, float dt)
+    {
+        // no smoothing
+        if (r >= 1.f) {
+            state = input;
+        }
+        else {
+            float alpha = 1.f - std::exp(-k * dt);
+            state += alpha * (input - state);
+        }
+
+        output = state;
+        return output;
+    }
+
+    void reset(float value = 0.0f)
+    {
+        output = state = value;
+    }
+};

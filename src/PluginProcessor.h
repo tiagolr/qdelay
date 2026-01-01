@@ -17,6 +17,8 @@
 #include "dsp/Distortion.h"
 #include "dsp/Diffusor.h"
 #include "dsp/Pitcher.h"
+#include "dsp/Flutter.h"
+#include "dsp/DelayLine.h"
 
 using namespace globals;
 
@@ -46,6 +48,16 @@ public:
     std::vector<SVF::EQBand> eqBands;
     std::vector<SVF> eqL;
     std::vector<SVF> eqR;
+
+    // wow and flutter
+    float tapeAmt = 0.f;
+    int tapeFadeSamps = 0;
+    int tapeFadeSize = 500;
+    bool tapeFadeIn = false;
+    std::unique_ptr<Flutter> flutter;
+    std::unique_ptr<DelayLine> wowflut_l; // wow + flutter delay
+    std::unique_ptr<DelayLine> wowflut_r;
+
 
     // Plugin settings
     float scale = 1.0f; // UI scale factor

@@ -22,6 +22,8 @@ void Diffusor::prepare(float _srate)
 		allpassL[i].init(srate, apLCoeffs[i], distance);
 		allpassR[i].init(srate, apRCoeffs[i], distance);
 	}
+
+	clear();
 }
 
 void Diffusor::setSize(float size)

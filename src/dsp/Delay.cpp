@@ -198,10 +198,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float modDepth = audioProcessor.params.getRawParameterValue("mod_depth")->load();
     float modRate = audioProcessor.params.getRawParameterValue("mod_rate")->load();
     float maxDepth = mode == Tap
-        ? time[1] - std::fabs(swing) * 0.5f * time[1]
+        ? time[1] - std::fabs(swing) * 0.5f * time[1] + feelOffset
         : std::min(
-            time[0] - std::fabs(swing) * 0.5f * time[0],
-            time[1] - std::fabs(swing) * 0.5f * time[1]
+            time[0] - std::fabs(swing) * 0.5f * time[0] + feelOffset,
+            time[1] - std::fabs(swing) * 0.5f * time[1] + feelOffset
         );
     maxDepth *= 0.5f;
     modDepth = modDepth * std::min(srate / 250.f, maxDepth);

@@ -45,6 +45,7 @@ public:
 
 		void clear() {
 			std::fill(buf.begin(), buf.end(), 0.f);
+			pos = 0;
 		}
 	};
 
