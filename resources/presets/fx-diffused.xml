@@ -41,7 +41,7 @@
     <PARAM id="duck_thres" value="0.9990000128746033"/>
     <PARAM id="feedback" value="0.0"/>
     <PARAM id="feel" value="-0.01000005006790161"/>
-    <PARAM id="flutter_depth" value="0.2999999821186066"/>
+    <PARAM id="flutter_depth" value="0.55"/>
     <PARAM id="flutter_rate" value="2.008800029754639"/>
     <PARAM id="haas_width" value="0.1362999677658081"/>
     <PARAM id="inputeq_band1_bypass" value="0.0"/>
@@ -85,7 +85,7 @@
     <PARAM id="sync_l" value="0.0"/>
     <PARAM id="sync_r" value="0.0"/>
     <PARAM id="tape_amt" value="0.2099999934434891"/>
-    <PARAM id="wow_depth" value="0.2999999821186066"/>
+    <PARAM id="wow_depth" value="0.55"/>
     <PARAM id="wow_drift" value="0.25"/>
     <PARAM id="wow_rate" value="0.5037000179290771"/>
     <PARAM id="wow_var" value="0.25"/>
