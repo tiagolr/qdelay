@@ -53,13 +53,15 @@
 
 **QDelay** [started as a JSFX](https://github.com/tiagolr/tilr_jsfx?tab=readme-ov-file#qdelay) a few years ago to have a quick delay with basic features like Ping-Pong, cutoff and pitch shift. Like other plug-ins I've rebuilt, the goal is to make an improved version using better tools with better visuals, performance etc.
 
-I decided to build a plug-in that could come somewhat close to EchoBoy in terms of capabilities, the result is good enough but probably nowhere near the quality of Saturations or Tape emulations that SoundToys and Native Instruments engineers can achieve. I'm not that savvy to build my own models so instead the distortion unit is based of [JClones TapeHead](https://github.com/JClones/JSFXClones/blob/master/JClones_TapeHead.md) - an open JSFX tape like distortion.
+I decided to build a plug-in that could come somewhat close to EchoBoy in terms of capabilities, the result is good enough but probably nowhere near the quality of Saturations or Tape emulations that SoundToys and Native Instruments engineers can achieve. The distortion unit is based of [JClones TapeHead](https://github.com/JClones/JSFXClones/blob/master/JClones_TapeHead.md) - an open JSFX tape like distortion.
 
 For the pitch shift, I couldn't find many solutions for a zero latency pitch shift that I could adapt to this project, so I went with what I know and ported Saike's [Pitch_Shift](https://github.com/JoepVanlier/JSFX/blob/master/Basics/Saike_Pitch_Shift.jsfx) library from JSFX to c++ and JUCE. The result is surprisingly good and it's impressive the number of people looking for a solution like this in JUCE forums and other places.
 
 Delay swing is implemented using serial delay lines with different times and Feel/Offset is implemented in a hacky way by shifting the write position of the input in relation to the feedback with some extra care to pick the leading write to override the circular buffer while the trailing write overdubs the existing contents.
 
-For future work things can be added like a preset manager, multiple taps per delay like EchoBoy or Valhalla delay, better saturations and more delay modes. By all means if you're a wizard and can create his own Analog or Tape saturations, get involved and let me know how they can be improved.
+Tape Flutter and Wow, is taken from ChowDSP [AnalogTapeModel](https://github.com/jatinchowdhury18/AnalogTapeModel).
+
+For future work things can be added like a preset manager, multiple taps per delay like EchoBoy or Valhalla delay, better saturations and more delay modes.
 
 Feel free to explore the repository for snippets on parametric EQs, envelope followers, pitch shifting etc.. or most likely just download the plug-in and have fun with it.
 
