@@ -18,7 +18,9 @@ void Wow::prepare (float sampleRate)
 void Wow::prepareBlock ()
 {
 	float amt = audioProcessor.params.getRawParameterValue("tape_amt")->load();
-	depth = audioProcessor.params.getRawParameterValue("wow_depth")->load() * amt;
+	depth = audioProcessor.params.getRawParameterValue("wow_depth")->load();
+	depth *= depth;
+	depth *= amt;
 	rate = audioProcessor.params.getRawParameterValue("wow_rate")->load();
 	drift = audioProcessor.params.getRawParameterValue("wow_drift")->load();
 	var = audioProcessor.params.getRawParameterValue("wow_var")->load();

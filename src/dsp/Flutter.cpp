@@ -25,7 +25,9 @@ void Flutter::prepare (float sampleRate)
 void Flutter::prepareBlock ()
 {
 	float amt = audioProcessor.params.getRawParameterValue("tape_amt")->load();
-	depth = audioProcessor.params.getRawParameterValue("flutter_depth")->load() * amt;
+	depth = audioProcessor.params.getRawParameterValue("flutter_depth")->load(); 
+	depth *= depth;
+	depth *= amt;
 	rate = audioProcessor.params.getRawParameterValue("flutter_rate")->load();
 
 	angleDelta1 = MathConstants<float>::twoPi * rate / srate;

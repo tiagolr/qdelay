@@ -483,21 +483,18 @@ void QDelayAudioProcessorEditor::showPresetsMenu()
 void QDelayAudioProcessorEditor::savePreset()
 {
     auto dir = File(audioProcessor.presetmgr->dir);
-    String filestr = audioProcessor.presetmgr->exportPreset();
-
-    if (filestr == "")
-        return;
-
     fileChooser.reset(new juce::FileChooser("Save Preset", dir, "*.xml"));
     fileChooser->launchAsync(juce::FileBrowserComponent::saveMode | FileBrowserComponent::warnAboutOverwriting,
-        [this, filestr](const juce::FileChooser& fc)
+        [this](const juce::FileChooser& fc)
         {
             auto file = fc.getResult();
             if (file.isDirectory()) return;
             if (file == juce::File()) return;
 
-            file.replaceWithText(filestr);
             audioProcessor.presetName = file.getFileNameWithoutExtension();
+            String filestr = audioProcessor.presetmgr->exportPreset();
+            if (filestr == "") return;
+            file.replaceWithText(filestr);
             MessageManager::callAsync([this] { repaint(); });
         });
 }
