@@ -202,6 +202,7 @@ void QDelayAudioProcessor::loadSettings ()
     if (auto* file = settings.getUserSettings())
     {
         scale = (float)file->getDoubleValue("scale", 1.0f);
+        drawWaveform = file->getBoolValue("drawWaveform", true);
     }
 }
 
@@ -211,6 +212,7 @@ void QDelayAudioProcessor::saveSettings ()
     if (auto* file = settings.getUserSettings())
     {
         file->setValue("scale", scale);
+        file->setValue("drawWaveform", drawWaveform);
     }
     settings.saveIfNeeded();
 }
@@ -732,8 +734,10 @@ void QDelayAudioProcessor::setStateInformation (const void* data, int sizeInByte
     auto state = ValueTree::fromXml (*xmlState);
     if (!state.isValid()) return;
 
+    isLoadingState = true;
     params.replaceState(state.getChild(0));
     presetName = state.getProperty("preset").toString();
+    isLoadingState = false;
     sendChangeMessage();
 }
 

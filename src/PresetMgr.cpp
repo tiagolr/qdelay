@@ -33,8 +33,8 @@ void PresetMgr::load(String name, int offset)
 		if (userPresets[i].getFileNameWithoutExtension() == name)
 		{
 			i += offset;
-			if (i > userPresets.size()) i = 0;
-			if (i < 0) i = userPresets.size() - 1;
+			if (i >= (int)userPresets.size()) i = 0;
+			if (i < 0) i = (int)(userPresets.size() - 1);
 			// Load user preset
 			std::unique_ptr<juce::XmlElement> xml;
     		xml = juce::XmlDocument::parse(userPresets[i]); // load preset file
@@ -61,8 +61,8 @@ void PresetMgr::load(String name, int offset)
 		if (factoryPresets[i].name == name)
 		{
 			i += offset;
-			if (i > factoryPresets.size()) i = 0;
-			if (i < 0) i = (int)factoryPresets.size() - 1;
+			if (i >= (int)factoryPresets.size()) i = 0;
+			if (i < 0) i = (int)(factoryPresets.size() - 1);
 			loadFactory(i);
 			return;
 		}

@@ -46,10 +46,18 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(nextPresetBtn);
     nextPresetBtn.setAlpha(0.f);
     nextPresetBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withX(presetBtn.getRight()));
+    nextPresetBtn.onClick = [this]
+        {
+            audioProcessor.presetmgr->loadNext();
+        };
 
     addAndMakeVisible(prevPresetBtn);
     prevPresetBtn.setAlpha(0.f);
     prevPresetBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withRightX(presetBtn.getX()));
+    prevPresetBtn.onClick = [this]
+        {
+            audioProcessor.presetmgr->loadPrev();
+        };
 
     addAndMakeVisible(saveBtn);
     saveBtn.setAlpha(0.f);
@@ -371,6 +379,16 @@ void QDelayAudioProcessorEditor::showSettings()
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
     int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
 
+    PopupMenu scaleMenu;
+    scaleMenu.addItem(50, "100%", true, std::fabs(audioProcessor.scale - 1.0f) < 1e-5);
+    scaleMenu.addItem(51, "125%", true, std::fabs(audioProcessor.scale - 1.25f) < 1e-5);
+    scaleMenu.addItem(52, "150%", true, std::fabs(audioProcessor.scale - 1.5f) < 1e-5);
+    scaleMenu.addItem(53, "175%", true, std::fabs(audioProcessor.scale - 1.75f) < 1e-5);
+    scaleMenu.addItem(54, "200%", true, std::fabs(audioProcessor.scale - 2.0f) < 1e-5);
+
+    PopupMenu eqMenu;
+    eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
+
     PopupMenu diffMenu;
     diffMenu.addItem(70, "Pre Delay", true, diffPath == 0);
     diffMenu.addItem(71, "Post Delay", true, diffPath == 1);
@@ -384,6 +402,8 @@ void QDelayAudioProcessorEditor::showSettings()
     pitchMenu.addItem(82, "Smooth", true, pitchMode == 2);
 
     PopupMenu menu;
+    menu.addSubMenu("UI Scale", scaleMenu);
+    menu.addSubMenu("EQ", eqMenu);
     menu.addSubMenu("Diffusion", diffMenu);
     menu.addSubMenu("Pitch Shifter", pitchMenu);
     menu.addSeparator();
@@ -397,6 +417,20 @@ void QDelayAudioProcessorEditor::showSettings()
         {
             if (result == 0) return;
             else if (result == 9999) about->setVisible(true);
+            else if (result >= 50 && result <= 54)
+            {
+                if (result == 50) audioProcessor.setScale(1.f);
+                if (result == 51) audioProcessor.setScale(1.25f);
+                if (result == 52) audioProcessor.setScale(1.5f);
+                if (result == 53) audioProcessor.setScale(1.75f);
+                if (result == 54) audioProcessor.setScale(2.f);
+                setScaleFactor(audioProcessor.scale);
+            }
+            else if (result == 60)
+            {
+                audioProcessor.drawWaveform = !audioProcessor.drawWaveform;
+                audioProcessor.saveSettings();
+            }
             else if (result >= 80 && result <= 82)
             {
                 auto param = audioProcessor.params.getParameter("pitch_mode");
@@ -440,14 +474,25 @@ void QDelayAudioProcessorEditor::showRightTabMenu()
 void QDelayAudioProcessorEditor::showPresetsMenu()
 {
     PopupMenu menu;
+    PopupMenu basicPresets;
+    PopupMenu drumsPresets;
+    PopupMenu fxPresets;
     for (int i = 0; i < PresetMgr::factoryPresets.size(); ++i)
     {
         auto& preset = PresetMgr::factoryPresets[i];
         if (preset.category == "")
-        {
             menu.addItem(i + 1, preset.name, true, audioProcessor.presetName == preset.name);
-        }
+        else if (preset.category == "Basic")
+            basicPresets.addItem(i + 1, preset.name, true, audioProcessor.presetName == preset.name);
+        else if (preset.category == "Drums")
+            drumsPresets.addItem(i + 1, preset.name, true, audioProcessor.presetName == preset.name);
+        else if (preset.category == "FX")
+            fxPresets.addItem(i + 1, preset.name, true, audioProcessor.presetName == preset.name);
     }
+
+    menu.addSubMenu("Basic", basicPresets);
+    menu.addSubMenu("Drums", drumsPresets);
+    menu.addSubMenu("FX", fxPresets);
 
     PopupMenu userMenu;
     File parent = File(audioProcessor.presetmgr->dir);
@@ -456,7 +501,7 @@ void QDelayAudioProcessorEditor::showPresetsMenu()
     for (int i = 0; i < userPresets.size(); ++i)
     {
         String name = userPresets[i].getFileNameWithoutExtension();
-        userMenu.addItem(1000 + i + 1, name, true, audioProcessor.presetName == name);
+        userMenu.addItem(1000 + i, name, true, audioProcessor.presetName == name);
     }
 
     menu.addSubMenu("User", userMenu);
@@ -464,17 +509,17 @@ void QDelayAudioProcessorEditor::showPresetsMenu()
     auto menuPos = localPointToGlobal(presetBtn.getBounds().getBottomLeft());
     menu.showMenuAsync(PopupMenu::Options()
         .withTargetComponent(*this)
-        .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
-        [this](int result)
+        .withTargetScreenArea({ menuPos.getX() + 50, menuPos.getY(), 1, 1 }),
+        [this, userPresets](int result)
         {
             if (result == 0) return;
             if (result < 1000)
             {
-
+                audioProcessor.presetmgr->loadFactory(result - 1);
             }
-            if (result > 1000)
+            if (result >= 1000)
             {
-
+                audioProcessor.presetmgr->load(userPresets[result - 1000].getFileNameWithoutExtension(), 0);
             }
         }
     );

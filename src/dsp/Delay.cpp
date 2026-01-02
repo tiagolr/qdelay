@@ -76,7 +76,7 @@ void Delay::prepare(float _srate)
     clear();
 }
 
-std::array<int, 2> Delay::getTimeSamples(bool forceSync)
+std::array<int, 2> Delay::getTimeSamples()
 {
     auto getSamplesSync = [this](int rate, SyncMode sync)
         {
@@ -98,16 +98,22 @@ std::array<int, 2> Delay::getTimeSamples(bool forceSync)
             return (int)std::ceil(qn * secondsPerBeat * srate);
         };
 
-    auto syncL = forceSync ? Straight : (SyncMode)audioProcessor.params.getRawParameterValue("sync_l")->load();
-    auto syncR = forceSync ? Straight : (SyncMode)audioProcessor.params.getRawParameterValue("sync_r")->load();
+    auto syncL = (SyncMode)audioProcessor.params.getRawParameterValue("sync_l")->load();
+    auto syncR = (SyncMode)audioProcessor.params.getRawParameterValue("sync_r")->load();
+
 
     auto tl = syncL == 0
         ? (int)(std::ceil(audioProcessor.params.getRawParameterValue("rate_l")->load() * srate))
         : getSamplesSync((int)audioProcessor.params.getRawParameterValue("rate_sync_l")->load(), syncL);
+    tl = std::max(1, tl);
 
     auto tr = syncR == 0
         ? (int)(std::ceil(audioProcessor.params.getRawParameterValue("rate_r")->load() * srate))
         : getSamplesSync((int)audioProcessor.params.getRawParameterValue("rate_sync_r")->load(), syncR);
+    tr = std::max(1, tr);
+
+    if (syncL != RateHz) lastSyncTimeL = tl;
+    if (syncR != RateHz) lastSyncTimeR = tr;
 
     return { std::max(1, tl), std::max(1, tr) };
 }
@@ -367,6 +373,9 @@ void Delay::onSlider()
 
 void Delay::parameterChanged(const String& paramId, float value)
 {
+    if (audioProcessor.isLoadingState)
+        return; // ignore preset changes
+
     // keep linked delay Left and Right rates in sync
     auto link = (bool)audioProcessor.params.getRawParameterValue("link")->load();
 
@@ -391,15 +400,14 @@ void Delay::parameterChanged(const String& paramId, float value)
         }
     }
     else if (paramId == "sync_l") {
-        // if sync is turned off set rate from rate_sync
+        // if sync is turned off set rate from time_sync
         // makes it easier for the user to offset times from project tempo
         if (value < 1.f) {
-            auto time = getTimeSamples(true);
             auto param = audioProcessor.params.getParameter("rate_l");
-            param->setValueNotifyingHost(param->convertTo0to1(time[0] / srate));
+            param->setValueNotifyingHost(param->convertTo0to1(lastSyncTimeL / srate));
             if (link) {
                 param = audioProcessor.params.getParameter("rate_r");
-                param->setValueNotifyingHost(param->convertTo0to1(time[0] / srate));
+                param->setValueNotifyingHost(param->convertTo0to1(lastSyncTimeL / srate));
             }
         }
         if (link) {
@@ -411,15 +419,14 @@ void Delay::parameterChanged(const String& paramId, float value)
         }
     }
     else if (paramId == "sync_r") {
-        // if sync is turned off set rate from rate_sync
+        // if sync is turned off set rate from time_sync
         // makes it easier for the user to offset times from project tempo
         if (value < 1.f) {
-            auto time = getTimeSamples(true);
             auto param = audioProcessor.params.getParameter("rate_r");
-            param->setValueNotifyingHost(param->convertTo0to1(time[1] / srate));
+            param->setValueNotifyingHost(param->convertTo0to1(lastSyncTimeR / srate));
             if (link) {
                 param = audioProcessor.params.getParameter("rate_l");
-                param->setValueNotifyingHost(param->convertTo0to1(time[1] / srate));
+                param->setValueNotifyingHost(param->convertTo0to1(lastSyncTimeR / srate));
             }
         }
         if (link) {

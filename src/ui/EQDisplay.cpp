@@ -17,7 +17,9 @@ EQDisplay::~EQDisplay()
 void EQDisplay::timerCallback()
 {
 	if (isShowing()) {
-		if (editor.audioProcessor.eqFFTReady.exchange(false, std::memory_order_acquire)) {
+		if (editor.audioProcessor.drawWaveform && 
+			editor.audioProcessor.eqFFTReady.exchange(false, std::memory_order_acquire)) 
+		{
 			recalcFFTMags();
 		}
 
@@ -279,6 +281,9 @@ void EQDisplay::paint(juce::Graphics& g)
 
 void EQDisplay::drawWaveform(juce::Graphics& g)
 {
+	if (!editor.audioProcessor.drawWaveform)
+		return;
+
 	auto size = fftMagnitudes.size();
 	auto bounds = viewBounds;
 

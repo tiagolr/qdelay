@@ -86,6 +86,8 @@ public:
     std::atomic<bool> eqFFTReady = false;
     std::atomic<float> rmsLeft = 0.f;
     std::atomic<float> rmsRight = 0.f;
+    bool drawWaveform = true;
+    bool isLoadingState = false;
 
     static AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     //==============================================================================

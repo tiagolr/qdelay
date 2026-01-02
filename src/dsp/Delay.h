@@ -38,7 +38,7 @@ public:
 
 	void prepare(float _srate);
 
-	std::array<int, 2> getTimeSamples(bool forceSync = false);
+	std::array<int, 2> getTimeSamples();
 	int getFeelOffset(int timeL, int timeR, float swing);
 	void processBlock(float* left, float* right, int nsamps);
 	void clear();
@@ -75,4 +75,9 @@ private:
 	float modPhase = 0.f;
 	float distWet = 0.f;
 	float distDry = 1.f;
+
+	// store last sync times to set RateHz
+	// when sync mode changes from straight,trippled,dotted to rateHz
+	int lastSyncTimeL = 0;
+	int lastSyncTimeR = 0;
 };
