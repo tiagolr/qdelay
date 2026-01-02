@@ -20,6 +20,7 @@
 #include "dsp/Flutter.h"
 #include "dsp/Wow.h"
 #include "dsp/DelayLine.h"
+#include "PresetMgr.h"
 
 using namespace globals;
 
@@ -35,6 +36,7 @@ public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> distPre;
     std::unique_ptr<Distortion> distPost;
+    std::unique_ptr<PresetMgr> presetmgr;
     float dist_pre = 0.f;
     float dist_post = 0.f;
     std::unique_ptr<juce::dsp::Oversampling<float>> distPreOversampler;

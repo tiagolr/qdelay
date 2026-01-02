@@ -22,6 +22,7 @@
 #include "ui/DistWidget.h"
 #include "ui/TapeWidget.h"
 #include "dsp/Delay.h"
+#include "PresetMgr.h"
 
 using namespace globals;
 
@@ -44,6 +45,8 @@ public:
     void setEQTab(bool feedbackOrInput);
     void showSettings();
     void showRightTabMenu();
+    void showPresetsMenu();
+    void savePreset();
 
     QDelayAudioProcessor& audioProcessor;
 private:
@@ -97,6 +100,7 @@ private:
     CustomLookAndFeel* customLookAndFeel = nullptr;
     std::unique_ptr<About> about;
     TooltipWindow tooltipWindow;
+    std::unique_ptr<juce::FileChooser> fileChooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (QDelayAudioProcessorEditor)
 };

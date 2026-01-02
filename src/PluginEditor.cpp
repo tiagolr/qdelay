@@ -38,6 +38,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(presetBtn);
     presetBtn.setAlpha(0.f);
     presetBtn.setBounds(getWidth() / 2 - KNOB_WIDTH * 3 / 2, NAV_HEIGHT / 2 - 25 / 2 + 1, KNOB_WIDTH * 3, 25);
+    presetBtn.onClick = [this]
+        {
+            showPresetsMenu();
+        };
 
     addAndMakeVisible(nextPresetBtn);
     nextPresetBtn.setAlpha(0.f);
@@ -50,6 +54,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(saveBtn);
     saveBtn.setAlpha(0.f);
     saveBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withX(nextPresetBtn.getRight()));
+    saveBtn.onClick = [this]
+        {
+            savePreset();
+        };
 
     // LEFT SECTION
     col = PLUG_PADDING;
@@ -385,11 +393,11 @@ void QDelayAudioProcessorEditor::showSettings()
     menu.showMenuAsync(PopupMenu::Options()
         .withTargetComponent(*this)
         .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
-        [this](int result) 
+        [this](int result)
         {
             if (result == 0) return;
             else if (result == 9999) about->setVisible(true);
-            else if (result >= 80 && result <= 82) 
+            else if (result >= 80 && result <= 82)
             {
                 auto param = audioProcessor.params.getParameter("pitch_mode");
                 param->setValueNotifyingHost(param->convertTo0to1(float(result - 80)));
@@ -427,4 +435,69 @@ void QDelayAudioProcessorEditor::showRightTabMenu()
             toggleUIComponents();
         }
     );
+}
+
+void QDelayAudioProcessorEditor::showPresetsMenu()
+{
+    PopupMenu menu;
+    for (int i = 0; i < PresetMgr::factoryPresets.size(); ++i)
+    {
+        auto& preset = PresetMgr::factoryPresets[i];
+        if (preset.category == "")
+        {
+            menu.addItem(i + 1, preset.name, true, audioProcessor.presetName == preset.name);
+        }
+    }
+
+    PopupMenu userMenu;
+    File parent = File(audioProcessor.presetmgr->dir);
+	juce::Array<juce::File> userPresets;
+	parent.findChildFiles(userPresets, File::findFiles, false, "*.xml");
+    for (int i = 0; i < userPresets.size(); ++i)
+    {
+        String name = userPresets[i].getFileNameWithoutExtension();
+        userMenu.addItem(1000 + i + 1, name, true, audioProcessor.presetName == name);
+    }
+
+    menu.addSubMenu("User", userMenu);
+
+    auto menuPos = localPointToGlobal(presetBtn.getBounds().getBottomLeft());
+    menu.showMenuAsync(PopupMenu::Options()
+        .withTargetComponent(*this)
+        .withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
+        [this](int result)
+        {
+            if (result == 0) return;
+            if (result < 1000)
+            {
+
+            }
+            if (result > 1000)
+            {
+
+            }
+        }
+    );
+}
+
+void QDelayAudioProcessorEditor::savePreset()
+{
+    auto dir = File(audioProcessor.presetmgr->dir);
+    String filestr = audioProcessor.presetmgr->exportPreset();
+
+    if (filestr == "")
+        return;
+
+    fileChooser.reset(new juce::FileChooser("Save Preset", dir, "*.xml"));
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode | FileBrowserComponent::warnAboutOverwriting,
+        [this, filestr](const juce::FileChooser& fc)
+        {
+            auto file = fc.getResult();
+            if (file.isDirectory()) return;
+            if (file == juce::File()) return;
+
+            file.replaceWithText(filestr);
+            audioProcessor.presetName = file.getFileNameWithoutExtension();
+            MessageManager::callAsync([this] { repaint(); });
+        });
 }

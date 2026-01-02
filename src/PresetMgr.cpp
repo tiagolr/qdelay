@@ -24,7 +24,7 @@ void PresetMgr::load(String name, int offset)
 {
 	File parent = File(dir);
 	juce::Array<juce::File> userPresets;
-	parent.findChildFiles(userPresets, false, "*.xml");
+	parent.findChildFiles(userPresets, File::findFiles, false, "*.xml");
 	if (name.isEmpty())
 		name = audioProcessor.presetName;
 
@@ -62,7 +62,7 @@ void PresetMgr::load(String name, int offset)
 		{
 			i += offset;
 			if (i > factoryPresets.size()) i = 0;
-			if (i < 0) i = factoryPresets.size() - 1;
+			if (i < 0) i = (int)factoryPresets.size() - 1;
 			loadFactory(i);
 			return;
 		}
@@ -80,4 +80,17 @@ void PresetMgr::loadFactory(int index)
 {
 	auto& preset = factoryPresets[index];
 	audioProcessor.setStateInformation(preset.data, preset.size);
+}
+
+String PresetMgr::exportPreset()
+{
+	juce::MemoryBlock state;
+	audioProcessor.getStateInformation(state);
+	std::unique_ptr<juce::XmlElement> xml(
+		audioProcessor.getXmlFromBinary(state.getData(), (int)state.getSize())
+	);
+	if (xml == nullptr) {
+		return "";
+	}
+	return xml->toString();
 }

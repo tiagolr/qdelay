@@ -9,10 +9,12 @@ public:
 	struct Preset
 	{
 		String name;
+		String category;
 		const void* data;
     	int size;
 	};
 
+	String dir;
 	inline static const std::array<Preset, 2> factoryPresets =
     {{
         { "-- Init --" },
@@ -23,10 +25,10 @@ public:
 	void loadPrev();
 	void loadNext();
 	void loadInit();
+	String exportPreset();
 
 private:
 	QDelayAudioProcessor& audioProcessor;
-	String dir;
 	void load(String name, int offset);
 	void loadFactory(int index);
 };

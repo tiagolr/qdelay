@@ -122,6 +122,13 @@ QDelayAudioProcessor::QDelayAudioProcessor()
 
     loadSettings();
 
+    String presetsFolder = options
+        .getDefaultFile()
+        .getParentDirectory()
+        .getChildFile("presets")
+        .getFullPathName();
+
+    presetmgr = std::make_unique<PresetMgr>(*this, presetsFolder);
     delay = std::make_unique<Delay>(*this);
     distPre = std::make_unique<Distortion>(*this);
     distPost = std::make_unique<Distortion>(*this);
