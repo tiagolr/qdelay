@@ -51,6 +51,11 @@ private:
 
     TextButton logo;
     TextButton settingsBtn;
+    TextButton presetBtn;
+    TextButton prevPresetBtn;
+    TextButton nextPresetBtn;
+    TextButton saveBtn;
+
     std::unique_ptr<DelayView> delayView;
     std::unique_ptr<DelayWidget> delayWidget;
     TextButton mixTabBtn;

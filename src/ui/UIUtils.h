@@ -23,4 +23,5 @@ static void drawNotch(Graphics& g, Rectangle<float> bounds, Colour c, float scal
 static void drawHighShelf(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);
 static void drawHighpass(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);
 static void drawLowpass(Graphics& g, Rectangle<float> bounds, Colour c, float scale = 1.f);
+static void drawSave(Graphics& g, Rectangle<float> bounds, Colour c);
 };

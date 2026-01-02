@@ -15,13 +15,13 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     audioProcessor.addChangeListener(this);
     audioProcessor.params.addParameterListener("mode", this);
 
-    // LEFT SECTION
+    // NAVBAR
     int col = PLUG_PADDING;
-    int row = PLUG_PADDING;
+    int row = 0;
 
     addAndMakeVisible(logo);
     logo.setAlpha(0.f);
-    logo.setBounds(col, row, 100, HEADER_HEIGHT);
+    logo.setBounds(col, row, 100, NAV_HEIGHT);
     logo.onClick = [this]
         {
             about->setVisible(true);
@@ -29,17 +29,35 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     addAndMakeVisible(settingsBtn);
     settingsBtn.setAlpha(0.f);
-    settingsBtn.setBounds(col + 100 - 5, row, 25, 25);
+    settingsBtn.setBounds(col + 100 - 5, NAV_HEIGHT / 2 - 25 / 2, 25, 25);
     settingsBtn.onClick = [this]
         {
             showSettings();
         };
 
-    row += HEADER_HEIGHT + 10;
+    addAndMakeVisible(presetBtn);
+    presetBtn.setAlpha(0.f);
+    presetBtn.setBounds(getWidth() / 2 - KNOB_WIDTH * 3 / 2, NAV_HEIGHT / 2 - 25 / 2 + 1, KNOB_WIDTH * 3, 25);
+
+    addAndMakeVisible(nextPresetBtn);
+    nextPresetBtn.setAlpha(0.f);
+    nextPresetBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withX(presetBtn.getRight()));
+
+    addAndMakeVisible(prevPresetBtn);
+    prevPresetBtn.setAlpha(0.f);
+    prevPresetBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withRightX(presetBtn.getX()));
+
+    addAndMakeVisible(saveBtn);
+    saveBtn.setAlpha(0.f);
+    saveBtn.setBounds(Rectangle<int>(25, 25).withY(presetBtn.getY()).withX(nextPresetBtn.getRight()));
+
+    // LEFT SECTION
+    col = PLUG_PADDING;
+    row = PLUG_PADDING + NAV_HEIGHT + HEADER_HEIGHT + 10;
 
     delayView = std::make_unique<DelayView>(*this);
     addAndMakeVisible(delayView.get());
-    delayView->setBounds(col, row, KNOB_WIDTH * 3, KNOB_HEIGHT);
+    delayView->setBounds(col, row - 25, KNOB_WIDTH * 3, KNOB_HEIGHT + 25);
 
     row += KNOB_HEIGHT;
 
@@ -122,7 +140,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     accent->setBounds(haasWidth->getBounds());
 
     // MID SECTION
-    row = PLUG_PADDING;
+    row = PLUG_PADDING + NAV_HEIGHT;
     col = PLUG_PADDING + KNOB_WIDTH * 3 + HSEPARATOR;
 
     row += HEADER_HEIGHT + 10;
@@ -185,7 +203,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     pitchMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
 
     // RIGHT SECTION
-    row = PLUG_PADDING;
+    row = PLUG_PADDING + NAV_HEIGHT - 5;
     col = PLUG_PADDING + KNOB_WIDTH * 7 + HSEPARATOR * 2;
 
     eqInput = std::make_unique<EQWidget>(*this, SVF::ParamEQ);
@@ -198,7 +216,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     distWidget = std::make_unique<DistWidget>(*this);
     addChildComponent(distWidget.get());
-    distWidget->setBounds(col, row + HEADER_HEIGHT + 10, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 20);
+    distWidget->setBounds(col, row + HEADER_HEIGHT + 10 + 5, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 20);
 
     tapeWidget = std::make_unique<TapeWidget>(*this);
     addChildComponent(tapeWidget.get());
@@ -214,7 +232,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     meter = std::make_unique<Meter>(audioProcessor);
     addAndMakeVisible(meter.get());
-    meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 30 + HEADER_HEIGHT)
+    meter->setBounds(Rectangle<int>(0, row, METER_WIDTH, KNOB_HEIGHT * 3 + VSEPARATOR + 30 + HEADER_HEIGHT + 5)
         .withRightX(getWidth() - PLUG_PADDING));
 
     // ABOUT
@@ -282,10 +300,37 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
 void QDelayAudioProcessorEditor::paint (Graphics& g)
 {
     g.fillAll(Colour(COLOR_BACKGROUND));
+
+    g.setColour(Colour(COLOR_ACTIVE).withAlpha(0.15f));
+    g.fillRect(0, 0, getWidth(), NAV_HEIGHT);
+    auto navsep = getLocalBounds().withY(NAV_HEIGHT).withHeight(3).toFloat();
+    auto grad = ColourGradient(
+        Colours::black.withAlpha(0.25f),
+        navsep.getTopLeft(),
+        Colours::transparentBlack,
+        navsep.getBottomLeft(),
+        false
+    );
+    if (getHeight() >= PLUG_HEIGHT) {
+        g.setGradientFill(grad);
+        g.fillRect(navsep);
+    }
+
+    g.setColour(Colour(COLOR_BEVEL));
+    g.fillRoundedRectangle(presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER);
+    //g.setColour(Colour(COLOR_BEVEL));
+    //g.drawRoundedRectangle(presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER, 1.f);
+    g.setColour(Colours::white);
+    g.setFont(FontOptions(16.f));
+    g.drawText("Ping-Mid-Pong", presetBtn.getBounds().toFloat(), Justification::centred);
+    UIUtils::drawTriangle(g, nextPresetBtn.getBounds().toFloat().reduced(8.f), 1, Colours::white);
+    UIUtils::drawTriangle(g, prevPresetBtn.getBounds().toFloat().reduced(8.f), 3, Colours::white);
+    UIUtils::drawSave(g, saveBtn.getBounds().toFloat().translated(3.5, 3.5), Colours::white);
+
     g.setFont(FontOptions(26.f));
     g.setColour(Colours::white);
     g.drawText("QDELAY", logo.getBounds().expanded(0, 10), Justification::centredLeft);
-    UIUtils::drawGear(g, settingsBtn.getBounds(), 9, 6, Colours::white, Colour(COLOR_BACKGROUND));
+    UIUtils::drawGear(g, settingsBtn.getBounds(), 9, 6, Colours::white, Colour(0xff3A2727));
 
     g.setColour(Colour(COLOR_NEUTRAL));
     g.setFont(FontOptions(16.f));

@@ -13,12 +13,12 @@ namespace globals {
 	constexpr float MAX_FEEL_QN_OFFSET = 0.25f; // quarter note max offset
 
 	// UI
-	constexpr int HEADER_HEIGHT = 25;
+	constexpr int NAV_HEIGHT = 35; // top header
+	constexpr int HEADER_HEIGHT = 20; // old header, now the row below nav
 	constexpr int HSEPARATOR = 10;
 	constexpr int VSEPARATOR = 20;
 	constexpr int METER_WIDTH = 25;
 	constexpr unsigned int COLOR_BACKGROUND = 0xff181818;
-	//constexpr unsigned int COLOR_ACTIVE = 0xff469DDA;
 	constexpr unsigned int COLOR_ACTIVE = 0xffFF8080;
 	constexpr unsigned int COLOR_NEUTRAL = 0xff666666;
 	constexpr unsigned int COLOR_KNOB = 0xff272727;
@@ -40,7 +40,7 @@ namespace globals {
 
 	// view consts
 	constexpr int PLUG_WIDTH = 15 * 3 + 10 * 2 + 70 * 10 + 25; // plug padding + hseparator + knob width + meter
-	constexpr int PLUG_HEIGHT = 15 * 2 + 20 + 10 * 3 + 25 + 75 * 3; // plug padding + vsep + header + knob height
+	constexpr int PLUG_HEIGHT = 15 * 2 + 20 + 10 * 3 + 20 + 75 * 3 + 35; // plug padding + vsep + header + knob height + nav
 	constexpr int MAX_PLUG_WIDTH = 640 * 3;
 	constexpr int MAX_PLUG_HEIGHT = 650 * 2;
 	constexpr int PLUG_PADDING = 15;

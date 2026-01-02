@@ -241,3 +241,40 @@ void UIUtils::drawLowpass(Graphics& g, Rectangle<float> bounds, Colour c, float 
 	g.setColour(c);
 	g.strokePath(p, PathStrokeType(1.0f, PathStrokeType::curved));
 }
+
+void UIUtils::drawSave(Graphics& g, Rectangle<float>bounds, Colour c)
+{
+    Path p;
+    p.startNewSubPath(4.0f, 17.0f);
+    p.lineTo(2.0f, 17.0f);
+    p.lineTo(1.0f, 16.0f);
+    p.lineTo(1.0f, 2.0f);
+    p.lineTo(2.0f, 1.0f);
+    p.lineTo(5.0f, 1.0f);
+    p.startNewSubPath(4.0f, 17.0f);
+    p.lineTo(4.0f, 12.0f);
+    p.lineTo(5.0f, 11.0f);
+    p.lineTo(13.0f, 11.0f);
+    p.lineTo(14.0f, 12.0f);
+    p.lineTo(14.0f, 17.0f);
+    p.startNewSubPath(4.0f, 17.0f);
+    p.lineTo(14.0f, 17.0f);
+    p.startNewSubPath(14.0f, 17.0f);
+    p.lineTo(16.0f, 17.0f);
+    p.lineTo(17.0f, 16.0f);
+    p.lineTo(17.0f, 4.0f);
+    p.lineTo(14.0f, 1.0f);
+    p.lineTo(13.0f, 1.0f);
+    p.startNewSubPath(5.0f, 1.0f);
+    p.lineTo(5.0f, 5.0f);
+    p.lineTo(6.0f, 6.0f);
+    p.lineTo(12.0f, 6.0f);
+    p.lineTo(13.0f, 5.0f);
+    p.lineTo(13.0f, 1.0f);
+    p.startNewSubPath(5.0f, 1.0f);
+    p.lineTo(13.0f, 1.0f);
+
+    p.applyTransform(AffineTransform::translation(bounds.getX(), bounds.getY()));
+    g.setColour(c);
+    g.strokePath(p, PathStrokeType(1.0f, PathStrokeType::beveled));
+}

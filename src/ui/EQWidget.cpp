@@ -94,7 +94,7 @@ void EQWidget::parameterChanged(const juce::String& parameterID, float newValue)
 void EQWidget::resized()
 {
 	auto b = getLocalBounds();
-	eq->setBounds(Rectangle<int>(b.getX(), b.getY() + HEADER_HEIGHT, KNOB_WIDTH * 3, KNOB_HEIGHT * 2 + 10)
+	eq->setBounds(Rectangle<int>(b.getX(), b.getY() + HEADER_HEIGHT + 5, KNOB_WIDTH * 3, KNOB_HEIGHT * 2 + 10)
 		.withTrimmedTop(10));
 
 	for (int i = 0; i < EQ_BANDS; ++i) {
