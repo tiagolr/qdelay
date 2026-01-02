@@ -706,6 +706,7 @@ void QDelayAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     auto state = ValueTree("PluginState");
     state.appendChild(params.copyState(), nullptr);
     state.setProperty("version", PROJECT_VERSION, nullptr);
+    state.setProperty("preset", presetName, nullptr);
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -725,6 +726,8 @@ void QDelayAudioProcessor::setStateInformation (const void* data, int sizeInByte
     if (!state.isValid()) return;
 
     params.replaceState(state.getChild(0));
+    presetName = state.getProperty("preset").toString();
+    sendChangeMessage();
 }
 
 //==============================================================================

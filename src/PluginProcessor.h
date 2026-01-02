@@ -75,6 +75,7 @@ public:
     double secondsPerBar = 1.0;
 
     // UI State
+    String presetName = "-- Init --";
     int delayTab = 0; // mix, pan, pattern
     int eqTab = 0; // input, feedback
     int rightTab = 0; // EQ, Dist, Pitch

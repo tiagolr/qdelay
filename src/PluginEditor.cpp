@@ -316,13 +316,12 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
         g.fillRect(navsep);
     }
 
-    g.setColour(Colour(COLOR_BEVEL));
-    g.fillRoundedRectangle(presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER);
     //g.setColour(Colour(COLOR_BEVEL));
-    //g.drawRoundedRectangle(presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER, 1.f);
+    //g.fillRoundedRectangle(presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER);
+    UIUtils::drawBevel(g, presetBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
     g.setColour(Colours::white);
     g.setFont(FontOptions(16.f));
-    g.drawText("Ping-Mid-Pong", presetBtn.getBounds().toFloat(), Justification::centred);
+    g.drawText(audioProcessor.presetName, presetBtn.getBounds().toFloat(), Justification::centred);
     UIUtils::drawTriangle(g, nextPresetBtn.getBounds().toFloat().reduced(8.f), 1, Colours::white);
     UIUtils::drawTriangle(g, prevPresetBtn.getBounds().toFloat().reduced(8.f), 3, Colours::white);
     UIUtils::drawSave(g, saveBtn.getBounds().toFloat().translated(3.5, 3.5), Colours::white);
