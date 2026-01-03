@@ -38,8 +38,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("dist_pre", "Saturation Pre", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Saturation Post", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("dist_mode", "Saturation Mode", StringArray{ "Tape", "Tube" }, 0));
-    layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, 1.f));
-    layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, -12.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, .5f));
+    layout.add(std::make_unique<AudioParameterFloat>("dist_trim", "Saturation Trim", -24.f, 24.f, -6.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_color", "Saturation Color", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_bias", "Saturation Bias", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("dist_dyn", "Saturation Dynamics", 0.f, 1.f, 0.0f));
@@ -54,7 +54,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 1));
-    layout.add(std::make_unique<AudioParameterChoice>("pitch_path", "Pitch Path", StringArray{ "Feedback", "Post" }, 0));
+    layout.add(std::make_unique<AudioParameterChoice>("pitch_path", "Pitch Path", StringArray{ "Feedback", "Post" }, 1));
     layout.add(std::make_unique<AudioParameterFloat>("pitch_mix", "Pitch Mix", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("duck_thres", "Duck Threshold", NormalisableRange<float>(0.0f, 1.f-0.001f, 0.001f, 3.f), 1.f-0.001f));

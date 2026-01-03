@@ -10,7 +10,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 {
     setResizable(false, false);
     setSize (PLUG_WIDTH, PLUG_HEIGHT);
-    setScaleFactor(audioProcessor.scale);
+    Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
 
     audioProcessor.addChangeListener(this);
     audioProcessor.params.addParameterListener("mode", this);
@@ -424,7 +424,7 @@ void QDelayAudioProcessorEditor::showSettings()
                 if (result == 52) audioProcessor.setScale(1.5f);
                 if (result == 53) audioProcessor.setScale(1.75f);
                 if (result == 54) audioProcessor.setScale(2.f);
-                setScaleFactor(audioProcessor.scale);
+                Desktop::getInstance().setGlobalScaleFactor(audioProcessor.scale);
             }
             else if (result == 60)
             {
