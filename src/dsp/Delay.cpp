@@ -144,6 +144,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
     auto feedback = audioProcessor.params.getRawParameterValue("feedback")->load();
     auto pipoWidth = audioProcessor.params.getRawParameterValue("pipo_width")->load();
+    float pipoMonoGain = std::sqrt(fabs(pipoWidth));
+    float pipoStereoGain = std::sqrt(1.f - fabs(pipoWidth));
     float lfactor = pipoWidth > 0.f ? 1.f - pipoWidth : 1.f;
     float rfactor = pipoWidth < 0.f ? 1.f + pipoWidth : 1.f;
 
@@ -288,8 +290,12 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
         else if (mode == PingPong)
         {
-            delayL.writeOffset(left[i] * lfactor, feelEff, feelEff < 0);
-            delayR.writeOffset(right[i] * rfactor, feelEff, feelEff < 0);
+            float monoIn = (left[i] + right[i]) * 0.5f;
+            float inL = left[i] * pipoStereoGain + monoIn * pipoMonoGain;
+            float inR = right[i] * pipoStereoGain + monoIn * pipoMonoGain;
+
+            delayL.writeOffset(inL * lfactor, feelEff, feelEff < 0);
+            delayR.writeOffset(inR * rfactor, feelEff, feelEff < 0);
             delayL.write(s1 * feedbackL, feelEff >= 0);
             delayR.write(s0 * feedbackR, feelEff >= 0);
             swingL.write(v1 * feedbackL);
