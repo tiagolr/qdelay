@@ -34,7 +34,7 @@
   * **Tap mode** with offset time (tap) and delay time.
   * **Swing and Feel** offset.
   * **Accent** odd or even taps.
-  * **Parametric EQ** on feedback and post delay signal.
+  * **Parametric EQ** on feedback and input signal.
   * **Diffusion** on pre or post delay signal.
   * **Modulation** of delay line time.
   * **Pitch Shifter** on the feedback or post delay signal.
@@ -61,7 +61,7 @@ Delay swing is implemented using serial delay lines with different times and Fee
 
 Tape Flutter and Wow, is taken from ChowDSP [AnalogTapeModel](https://github.com/jatinchowdhury18/AnalogTapeModel).
 
-For future work things can be added like a preset manager, multiple taps per delay like EchoBoy or Valhalla delay, better saturations and more delay modes.
+For future work things can be added like multiple taps per delay like EchoBoy or Valhalla delay, better saturations and more delay modes.
 
 Feel free to explore the repository for snippets on parametric EQs, envelope followers, pitch shifting etc.. or most likely just download the plug-in and have fun with it.
 
@@ -75,7 +75,7 @@ Input > EQ Input > Saturation Pre > Diffusion Pre >
 Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 ```
 
-My first attempt was to add diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.
+The first attempt was adding diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.
 
 Saturation can be added Pre and Post simultaneously while diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
 
