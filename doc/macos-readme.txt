@@ -1,5 +1,5 @@
 ========== QDelay ==========
-Copyright (C) 2025 Tilr
+Copyright (C) 2026 Tilr
 
 Because the builds are unsigned you may have to run the following commands:
 

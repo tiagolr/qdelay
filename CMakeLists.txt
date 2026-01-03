@@ -27,7 +27,7 @@ if(BUILD_VST3)
     list(APPEND plugin_formats VST3)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND BUILD_LV2)
+if (BUILD_LV2 AND UNIX AND NOT APPLE)
     list(APPEND plugin_formats LV2)
 endif()
 
