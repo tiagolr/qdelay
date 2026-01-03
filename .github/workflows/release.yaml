@@ -146,9 +146,13 @@ jobs:
           zip -r qdelay-linux-${TAG_NAME}.zip qdelay-linux
 
       - name: Create GitHub Release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         with:
-          artifacts: "artifacts/qdelay-win-*.zip,artifacts/qdelay-macos-*.zip,artifacts/qdelay-linux-*.zip"
-          tag: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
           draft: true
+          tag_name: ${{ github.ref_name }}
+          files: |
+            artifacts/qdelay-win-*.zip
+            artifacts/qdelay-macos-*.zip
+            artifacts/qdelay-linux-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
