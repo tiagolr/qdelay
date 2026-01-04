@@ -79,7 +79,7 @@ Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 * Saturation can run on the feedback loop for analog tape distortion, with caution, it adds energy each feedback pass.
 * In **Tap** mode the first time controls the offset (tap), the second is the delay time.
 * **Feel** control offsets the whole delay line by max 1/16 note.
-* **Bias** control in Saturation tab shifts the saturation curve creating odd harmonics.
+* **Bias** control in Saturation tab shifts the saturation curve creating even harmonics.
 * **Dynamics** control in Saturation tab makes louder hits harder and quieter softer.
 
 ## MacOS
