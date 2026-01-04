@@ -14,6 +14,8 @@ Delay::Delay(QDelayAudioProcessor& p)
 
     pitcher = std::make_unique<Pitcher>();
     pitcherSwing = std::make_unique<Pitcher>();
+    dist = std::make_unique<Distortion>(audioProcessor);
+    distSwing = std::make_unique<Distortion>(audioProcessor);
 }
 
 Delay::~Delay()
@@ -38,6 +40,8 @@ void Delay::clear()
     haasR.clear();
     haasSwingL.clear();
     haasSwingR.clear();
+    dist->clear();
+    distSwing->clear();
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -58,6 +62,8 @@ void Delay::prepare(float _srate)
     feelSmooth.setup(0.15f, srate);
     swingSmooth.setup(0.15f, srate);
     modDepthSmooth.setup(0.15f, srate);
+    dist->prepare(srate);
+    distSwing->prepare(srate);
     timeL.reset((float)time[0]);
     timeR.reset((float)time[1]);
     delayL.resize((int)(srate * 6));
@@ -138,6 +144,9 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     constexpr float ISQRT2 = 0.7071067811865475f;
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     auto time = getTimeSamples();
+
+    int distPath = (int)audioProcessor.params.getRawParameterValue("dist_pre_path")->load();
+    float distAmt = audioProcessor.params.getRawParameterValue("dist_pre")->load();
 
     float pitchMix = audioProcessor.params.getRawParameterValue("pitch_mix")->load();
     auto pitchDry = Utils::cosHalfPi()(pitchMix);
@@ -271,6 +280,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             s1 = s1 * pitchDry + pitcherSwing->outR * pitchWet;
         }
 
+        // process distortion
+        if (distPath == 1 && distAmt > 0.f)
+        {
+            dist->process(v0, v1, 1.f - distAmt, distAmt);
+            distSwing->process(s0, s1, 1.f - distAmt, distAmt);
+        }
+
         // EQ on the feedback path can be quite dangerous
         // clamp the feedback
         v0 = std::clamp(v0, -1.f, 1.f);
@@ -371,6 +387,8 @@ void Delay::onSlider()
     float distfbk = audioProcessor.params.getRawParameterValue("dist_pre")->load();
     distDry = Utils::cosHalfPi()(distfbk);
     distWet = Utils::sinHalfPi()(distfbk);
+    dist->onSlider();
+    distSwing->onSlider();
 }
 
 void Delay::parameterChanged(const String& paramId, float value)

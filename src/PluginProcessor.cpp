@@ -36,6 +36,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("mod_rate", "Modulation Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 0.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("dist_pre", "Saturation Pre", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterChoice>("dist_pre_path", "Saturation Pre Path", StringArray{ "Pre", "Feedback" }, 0));
     layout.add(std::make_unique<AudioParameterFloat>("dist_post", "Saturation Post", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("dist_mode", "Saturation Mode", StringArray{ "Tape", "Tube" }, 0));
     layout.add(std::make_unique<AudioParameterFloat>("dist_drive", "Saturation Drive", 0.f, 1.f, .5f));
@@ -302,7 +303,8 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     distPreOversampler->reset();
     distPostOversampler->initProcessing(samplesPerBlock);
     distPostOversampler->reset();
-    delay->prepare((float)srate);
+    distPrePath = (int)params.getRawParameterValue("dist_pre_path")->load();
+    delay->prepare((float)srate * (distPrePath == 1 ? distPreOversampler->getOversamplingFactor() : 1));
     distPre->prepare((float)srate * (float)distPreOversampler->getOversamplingFactor());
     distPost->prepare((float)srate * (float)distPostOversampler->getOversamplingFactor());
     diffusor->prepare((float)srate);
@@ -395,10 +397,17 @@ void QDelayAudioProcessor::onSlider()
     delay->onSlider();
 
     // update distortion
+    int _distPrePath = (int)params.getRawParameterValue("dist_pre_path")->load();
+    if (_distPrePath != distPrePath)
+    {
+        delay->prepare((float)srate * (_distPrePath == 1 ? distPreOversampler->getOversamplingFactor() : 1));
+        distPreOversampler->reset();
+        distPrePath = _distPrePath;
+    }
     distPre->onSlider();
     distPost->onSlider();
     float dpre = params.getRawParameterValue("dist_pre")->load();
-    if (dpre == 0.f && dist_pre > 0.f)
+    if (dpre == 0.f && dist_pre > 0.f && distPrePath == 0)
         distPreOversampler->reset();
     dist_pre = dpre;
     float dpost = params.getRawParameterValue("dist_post")->load();
@@ -518,7 +527,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process pre distortion
-    if (dist_pre > 0.f)
+    if (dist_pre > 0.f && distPrePath == 0)
     {
         float* channels[2] = { wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1) };
         juce::dsp::AudioBlock<float> block(channels, 2, (size_t)numSamples);
@@ -543,11 +552,27 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process delay
-    delay->processBlock(
-        wetBuffer.getWritePointer(0),
-        wetBuffer.getWritePointer(1),
-        numSamples
-    );
+    if (distPrePath == 0) 
+    {
+        delay->processBlock(
+            wetBuffer.getWritePointer(0),
+            wetBuffer.getWritePointer(1),
+            numSamples
+        );
+    }
+    else
+    {
+        // Pre distortion is on the feedback path
+        // upsample the whole delay block
+        float* channels[2] = { wetBuffer.getWritePointer(0), wetBuffer.getWritePointer(1) };
+        juce::dsp::AudioBlock<float> block(channels, 2, (size_t)numSamples);
+        auto oversampledBlock = distPreOversampler->processSamplesUp(block);
+        float* osleft = oversampledBlock.getChannelPointer(0);
+        float* osright = oversampledBlock.getChannelPointer(1);
+        int os = (int)distPreOversampler->getOversamplingFactor();
+        delay->processBlock(osleft,osright, numSamples * os);
+        distPreOversampler->processSamplesDown(block);
+    }
 
     // process pitch shift
     if (std::fabs(pitcherSpeed) > 1e-6 && pitcherPath == 1) {

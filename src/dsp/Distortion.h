@@ -66,6 +66,7 @@ public:
 	void onSlider();
 	float saturate(float x, float& dc) const;
 	void processBlock(float* left, float* right, int nsamps, float drygain, float wetgain);
+	void process(float& left, float& right, float drygain, float wetgain);
 	void clear();
 
 private:

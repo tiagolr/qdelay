@@ -389,6 +389,9 @@ void QDelayAudioProcessorEditor::showSettings()
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
 
+    PopupMenu satMenu;
+    satMenu.addItem(40, "Pre Sat on Feedback Path (Caution)", true, audioProcessor.distPrePath == 1);
+
     PopupMenu diffMenu;
     diffMenu.addItem(70, "Pre Delay", true, diffPath == 0);
     diffMenu.addItem(71, "Post Delay", true, diffPath == 1);
@@ -404,6 +407,7 @@ void QDelayAudioProcessorEditor::showSettings()
     PopupMenu menu;
     menu.addSubMenu("UI Scale", scaleMenu);
     menu.addSubMenu("EQ", eqMenu);
+    menu.addSubMenu("Saturation", satMenu);
     menu.addSubMenu("Diffusion", diffMenu);
     menu.addSubMenu("Pitch Shifter", pitchMenu);
     menu.addSeparator();
@@ -417,6 +421,11 @@ void QDelayAudioProcessorEditor::showSettings()
         {
             if (result == 0) return;
             else if (result == 9999) about->setVisible(true);
+            else if (result == 40) 
+            {
+                auto param = audioProcessor.params.getParameter("dist_pre_path");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+            }
             else if (result >= 50 && result <= 54)
             {
                 if (result == 50) audioProcessor.setScale(1.f);

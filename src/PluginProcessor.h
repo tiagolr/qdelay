@@ -35,6 +35,7 @@ class QDelayAudioProcessor
 public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> distPre;
+    int distPrePath = 0; // Pre or feedback distortion/saturation
     std::unique_ptr<Distortion> distPost;
     std::unique_ptr<PresetMgr> presetmgr;
     float dist_pre = 0.f;
