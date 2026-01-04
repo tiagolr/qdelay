@@ -3,18 +3,39 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+class MetaParameterBool : public juce::AudioParameterBool
+{
+public:
+    using AudioParameterBool::AudioParameterBool;
+    bool isMetaParameter() const override { return true; }
+};
+
+class MetaParameterChoice : public juce::AudioParameterChoice
+{
+public:
+    using AudioParameterChoice::AudioParameterChoice;
+    bool isMetaParameter() const override { return true; }
+};
+
+class MetaParameterFloat : public juce::AudioParameterFloat
+{
+public:
+    using AudioParameterFloat::AudioParameterFloat;
+    bool isMetaParameter() const override { return true; }
+};
+
 AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParameterLayout()
 {
     AudioProcessorValueTreeState::ParameterLayout layout;
 
     layout.add(std::make_unique<AudioParameterChoice>("mode", "Mode", StringArray{ "Normal", "Ping Pong", "Tap" }, 0));
-    layout.add(std::make_unique<AudioParameterBool>("link", "Link", true));
-    layout.add(std::make_unique<AudioParameterChoice>("sync_l", "Sync L", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
-    layout.add(std::make_unique<AudioParameterChoice>("sync_r", "Sync R", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
-    layout.add(std::make_unique<AudioParameterFloat>("rate_l", "Rate L", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
-    layout.add(std::make_unique<AudioParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
-    layout.add(std::make_unique<AudioParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
-    layout.add(std::make_unique<AudioParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
+    layout.add(std::make_unique<MetaParameterBool>("link", "Link", true));
+    layout.add(std::make_unique<MetaParameterChoice>("sync_l", "Sync L", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<MetaParameterChoice>("sync_r", "Sync R", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
+    layout.add(std::make_unique<MetaParameterFloat>("rate_l", "Rate L", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
+    layout.add(std::make_unique<MetaParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
+    layout.add(std::make_unique<MetaParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
+    layout.add(std::make_unique<MetaParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("feedback", "Feedback", 0.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
