@@ -38,7 +38,7 @@
   * **Diffusion** on pre or post delay signal.
   * **Modulation** of delay line time.
   * **Pitch Shifter** on the feedback or post delay signal.
-  * **Saturation** on pre and post delay signal.
+  * **Saturation** on pre and post delay signal (optionally on Feedback path).
   * **Color, Bias and Dynamics** controls for saturation.
   * **Ducking** to muffle the delayed signal on input.
   * **Tape wow and flutter** to add tone variation.
@@ -71,7 +71,7 @@ Current signal routing:
 
 ```
 Input > EQ Input > Saturation Pre > Diffusion Pre >
-[Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback] >
+[Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback <-> Saturation Feedback] >
 Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 ```
 
