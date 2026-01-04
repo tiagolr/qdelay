@@ -75,9 +75,8 @@ Input > EQ Input > Saturation Pre > Diffusion Pre >
 Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 ```
 
-The first attempt was adding diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.
-
 Saturation can be added Pre and Post simultaneously while diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
+Saturation can also run on the feedback loop for analog tape distortion, with caution, it adds energy each feedback pass and Trim volume or feedback may need to turn down.
 
 * In **Tap** mode the first time controls the offset (tap), the second is the delay time.
 * **Feel** control offsets the whole delay line by max 1/16 note.
