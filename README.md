@@ -19,7 +19,7 @@
 
 </div>
 
-**QDelay** (short for quick-delay) is a dual-delay with more features than it should for a free plugin that's supposed to be quick. While it offers nothing groundbreaking it is based on many popular units like *ReplikaXT* and *EchoBoy*. The main goal is to create a free and open plug-in for my own productions, an alternative to the popular [Deelay](https://sixthsample.com/deelay/) by *SixthSample* without premium versions or trimmed features or on-line activation.
+**QDelay** (short for quick-delay) is a dual-delay with more features than it should for a free plugin that's supposed to be quick. While it offers nothing groundbreaking it is based on popular units like *ReplikaXT* and *EchoBoy*. The main goal is to create a free and open plug-in for my own productions, an alternative to the popular [Deelay](https://sixthsample.com/deelay/) by *SixthSample* without premium versions or trimmed features or on-line activation.
 
 <div align="center">
 
@@ -38,7 +38,7 @@
   * **Diffusion** on pre or post delay signal.
   * **Modulation** of delay line time.
   * **Pitch Shifter** on the feedback or post delay signal.
-  * **Saturation** on pre and post delay signal.
+  * **Saturation** on pre and post delay signal (optionally on Feedback path).
   * **Color, Bias and Dynamics** controls for saturation.
   * **Ducking** to muffle the delayed signal on input.
   * **Tape wow and flutter** to add tone variation.
@@ -71,17 +71,15 @@ Current signal routing:
 
 ```
 Input > EQ Input > Saturation Pre > Diffusion Pre >
-[Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback] >
+[Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback <-> Saturation Feedback] >
 Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
 ```
 
-The first attempt was adding diffusion and saturation into the feedback path, the diffusion creates a very large reverb on the feedback but does not sound nearly as good or tight, the saturation even worse because it adds energy to the system and makes it easily unstable.
-
-Saturation can be added Pre and Post simultaneously while diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
-
+* Diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
+* Saturation can run on the feedback loop for analog tape distortion, with caution, it adds energy each feedback pass.
 * In **Tap** mode the first time controls the offset (tap), the second is the delay time.
 * **Feel** control offsets the whole delay line by max 1/16 note.
-* **Bias** control in Saturation tab shifts the saturation curve creating odd harmonics.
+* **Bias** control in Saturation tab shifts the saturation curve creating even harmonics.
 * **Dynamics** control in Saturation tab makes louder hits harder and quieter softer.
 
 ## MacOS
