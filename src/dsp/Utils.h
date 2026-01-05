@@ -159,25 +159,28 @@ public:
 class RCFilter
 {
 public:
-    float r = 1.0f;
-    float state = 0.0f;
-    float output = 0.0f;
+    double r = 1.0;
+    double state = 0.0;
+    float eps = 1e-6f;
 
     void setup(float resistance, float _srate)
     {
-        r = 1.0f / (resistance * _srate + 1);
+        r = 1.0 / (resistance * _srate + 1);
     }
 
     float process(float input)
     {
-        state += r * (input - state);
-        output = state;
-        return output;
+        double targ = (double)input;
+        state += r * (targ - state);
+        if (std::fabs(targ - state) < eps) // snap
+            state = targ;
+
+        return (float)state;
     }
 
     void reset(float value = 0.0f)
     {
-        output = state = value;
+        state = (double)value;
     }
 };
 

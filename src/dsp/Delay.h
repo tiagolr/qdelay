@@ -79,6 +79,13 @@ private:
 	float distWet = 0.f;
 	float distDry = 1.f;
 
+	// reverse delay
+	bool reverse = false;
+	int revposL = 0;
+	int revposR = 0;
+	std::vector<float> revL;
+	std::vector<float> revR;
+
 	// store last sync times to set RateHz
 	// when sync mode changes from straight,trippled,dotted to rateHz
 	int lastSyncTimeL = 0;

@@ -16,6 +16,8 @@ Delay::Delay(QDelayAudioProcessor& p)
     pitcherSwing = std::make_unique<Pitcher>();
     dist = std::make_unique<Distortion>(audioProcessor);
     distSwing = std::make_unique<Distortion>(audioProcessor);
+    timeL.eps = 0.1f; // FIX delay not snapping to correct value
+    timeR.eps = 0.1f;
 }
 
 Delay::~Delay()
@@ -42,6 +44,10 @@ void Delay::clear()
     haasSwingR.clear();
     dist->clear();
     distSwing->clear();
+    std::fill(revL.begin(), revL.end(), 0.f);
+    std::fill(revR.begin(), revR.end(), 0.f);
+    revposL = 0;
+    revposR = 0;
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -223,6 +229,31 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     maxDepth *= 0.5f;
     modDepth = modDepth * std::min(srate / 500.f, maxDepth);
 
+    // reverse
+    int revsizeL = 0;
+    int revsizeR = 0; 
+    int fadetotalL = 0;
+    int fadetotalR = 0; 
+    int midL = 0; 
+    int midR = 0;
+    if (reverse)
+    {
+        // reverse uses double the size of delay buffers
+        // the idea is that when the reverse read pointer crosses half
+        // a full measure of reversed signal has been written
+        float tl = (time[0] - std::fabs(swing) * 0.5f * time[0]) * 2;
+        float tr = (time[1] - std::fabs(swing) * 0.5f * time[1]) * 2;
+        revL.resize((int)std::ceil(mode == Tap ? tr : tl));
+        revR.resize((int)std::ceil(tr));
+        revsizeL = (int)revL.size();
+        revsizeR = (int)revR.size();
+        fadetotalL = (int)std::ceil(revsizeL * 0.05f);
+        fadetotalR = (int)std::ceil(revsizeR * 0.05f);
+        midL = revsizeL / 2;
+        midR = revsizeR / 2;
+    }
+    
+
     // Process samples
     for (int i = 0; i < nsamps; ++i)
     {
@@ -242,6 +273,62 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         auto timeRight = timeR.process((float)time[1]);
         auto swingEff = swingSmooth.process(swing);
         auto feelEff = (int)std::round(feelSmooth.process(feelOffset));
+        int inputOffsetL = feelEff;
+        int inputOffsetR = feelEff;
+
+        // reverse mode processing
+        if (reverse)
+        {
+            int playposL = revsizeL - revposL;
+            int playposR = revsizeR - revposR;
+            playposL = std::clamp(playposL, 0, revsizeL - 1);
+            playposR = std::clamp(playposR, 0, revsizeL - 1);
+            float fadeL = 1.f;
+            
+            // apply fades at reverse buffer begin, mid buffer, and end
+            // because the reverse buffer is twice the size of the delay
+            // fade at the middle as well to avoid clicks
+            if (playposL < fadetotalL) // fade in
+                fadeL = playposL / (float)fadetotalL; 
+            if (playposL > revsizeL - fadetotalL) // fade out 
+                fadeL = (revsizeL - playposL) / (float)fadetotalL;
+            
+            int midStart = midL - fadetotalL;
+            int midEnd = midL + fadetotalL;
+            if (playposL >= midStart && playposL <= midL) 
+                fadeL = 1.f - (playposL - midStart) / (float)fadetotalL;
+            if (playposL > midL && playposL <= midEnd)
+                fadeL = (playposL - midL) / (float)fadetotalL;
+
+            float fadeR = 1.f;
+            if (playposR < fadetotalR) // fade in
+                fadeR = playposR / (float)fadetotalR;
+            if (playposR > revsizeR - fadetotalR) // fade out 
+                fadeR = (revsizeR - playposR) / (float)fadetotalR;
+
+            midStart = midR - fadetotalR;
+            midEnd = midR + fadetotalR;
+            if (playposR >= midStart && playposR <= midR)
+                fadeR = 1.f - (playposR - midStart) / (float)fadetotalR;
+            if (playposR > midR && playposR <= midEnd)
+                fadeR = (playposR - midR) / (float)fadetotalR;
+
+            // replace the input buffer in-place with the reversed buffer read
+            float ll = left[i];
+            float rr = right[i];
+            if (revsizeL > 1) left[i] = revL[playposL] * fadeL;
+            if (revsizeR > 1) right[i] = revR[playposR] * fadeR;
+
+            // override the input offset to write the reversed signal
+            // right at the read head
+            if (revsizeL > 1) inputOffsetL = -revsizeL / 2 + 1;
+            if (revsizeR > 1) inputOffsetR = -revsizeR / 2 + 1;
+
+            revposL = (revposL + 1) % revsizeL;
+            revposR = (revposR + 1) % revsizeR;
+            revL[revposL] = ll;
+            revR[revposR] = rr;
+        }
 
         auto tap1L = mode == Tap ? timeRight : timeLeft;
         tap1L += swingEff * 0.5f * tap1L;
@@ -296,20 +383,20 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         if (mode == Normal)
         {
-            delayL.writeOffset(left[i], feelEff, feelEff < 0);
-            delayR.writeOffset(right[i], feelEff, feelEff < 0);
-            delayL.write(s0 * feedbackL, feelEff >= 0);
-            delayR.write(s1 * feedbackR, feelEff >= 0);
+            delayL.writeOffset(left[i], inputOffsetL, inputOffsetL < 0);
+            delayR.writeOffset(right[i], inputOffsetR, inputOffsetR < 0);
+            delayL.write(s0 * feedbackL, inputOffsetL >= 0);
+            delayR.write(s1 * feedbackR, inputOffsetR >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
         else if (mode == PingPong)
         {
             float monoIn = (left[i] + right[i]) * ISQRT2;
-            delayL.writeOffset(monoIn * lfactor, feelEff, feelEff < 0);
-            delayR.writeOffset(monoIn * rfactor, feelEff, feelEff < 0);
-            delayL.write(s1 * feedbackL, feelEff >= 0);
-            delayR.write(s0 * feedbackR, feelEff >= 0);
+            delayL.writeOffset(monoIn * lfactor, inputOffsetL, inputOffsetL < 0);
+            delayR.writeOffset(monoIn * rfactor, inputOffsetR, inputOffsetR < 0);
+            delayL.write(s1 * feedbackL, inputOffsetL >= 0);
+            delayR.write(s0 * feedbackR, inputOffsetR >= 0);
             swingL.write(v1 * feedbackL);
             swingR.write(v0 * feedbackR);
         }
@@ -319,10 +406,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             float preR = predelayR.read(timeLeft);
             predelayL.write(left[i]);
             predelayR.write(right[i]);
-            delayL.writeOffset(preL, feelEff, feelEff < 0);
-            delayR.writeOffset(preR, feelEff, feelEff < 0);
-            delayL.write(s0 * feedbackL, feelEff >= 0);
-            delayR.write(s1 * feedbackR, feelEff >= 0);
+            delayL.writeOffset(preL, inputOffsetL, inputOffsetL < 0);
+            delayR.writeOffset(preR, inputOffsetR, inputOffsetR < 0);
+            delayL.write(s0 * feedbackL, inputOffsetL >= 0);
+            delayR.write(s1 * feedbackR, inputOffsetR >= 0);
             swingL.write(v0 * feedbackL);
             swingR.write(v1 * feedbackR);
         }
@@ -384,6 +471,7 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 
 void Delay::onSlider()
 {
+    reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     float distfbk = audioProcessor.params.getRawParameterValue("dist_pre")->load();
     distDry = Utils::cosHalfPi()(distfbk);
     distWet = Utils::sinHalfPi()(distfbk);
