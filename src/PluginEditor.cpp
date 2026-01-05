@@ -14,6 +14,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     audioProcessor.addChangeListener(this);
     audioProcessor.params.addParameterListener("mode", this);
+    audioProcessor.params.addParameterListener("reverse", this);
 
     // NAVBAR
     int col = PLUG_PADDING;
@@ -308,6 +309,9 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     distWidget->setVisible(audioProcessor.rightTab == 1);
     tapeWidget->setVisible(audioProcessor.rightTab == 2);
 
+    bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
+    feel->setAlpha(reverse ? 0.5f : 1.f);
+
     MessageManager::callAsync([this] { repaint(); });
 }
 
@@ -378,6 +382,7 @@ void QDelayAudioProcessorEditor::showSettings()
     int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
     int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
+    bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
 
     PopupMenu scaleMenu;
     scaleMenu.addItem(50, "100%", true, std::fabs(audioProcessor.scale - 1.0f) < 1e-5);
@@ -385,6 +390,9 @@ void QDelayAudioProcessorEditor::showSettings()
     scaleMenu.addItem(52, "150%", true, std::fabs(audioProcessor.scale - 1.5f) < 1e-5);
     scaleMenu.addItem(53, "175%", true, std::fabs(audioProcessor.scale - 1.75f) < 1e-5);
     scaleMenu.addItem(54, "200%", true, std::fabs(audioProcessor.scale - 2.0f) < 1e-5);
+
+    PopupMenu delayMenu;
+    delayMenu.addItem(30, "Reverse", true, reverse);
 
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
@@ -406,6 +414,8 @@ void QDelayAudioProcessorEditor::showSettings()
 
     PopupMenu menu;
     menu.addSubMenu("UI Scale", scaleMenu);
+    menu.addSeparator();
+    menu.addSubMenu("Delay", delayMenu);
     menu.addSubMenu("EQ", eqMenu);
     menu.addSubMenu("Saturation", satMenu);
     menu.addSubMenu("Diffusion", diffMenu);
@@ -420,7 +430,13 @@ void QDelayAudioProcessorEditor::showSettings()
         [this](int result)
         {
             if (result == 0) return;
-            else if (result == 9999) about->setVisible(true);
+            else if (result == 9999) 
+                about->setVisible(true);
+            else if (result == 30)
+            {
+                auto param = audioProcessor.params.getParameter("reverse");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+            }
             else if (result == 40) 
             {
                 auto param = audioProcessor.params.getParameter("dist_pre_path");

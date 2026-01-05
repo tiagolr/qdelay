@@ -5,6 +5,7 @@
 DelayView::DelayView(QDelayAudioProcessorEditor& e)
 	:editor(e)
 {
+	editor.audioProcessor.params.addParameterListener("reverse", this);
 	editor.audioProcessor.params.addParameterListener("mode", this);
 	editor.audioProcessor.params.addParameterListener("feedback", this);
 	editor.audioProcessor.params.addParameterListener("sync_l", this);
@@ -25,6 +26,7 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 
 DelayView::~DelayView()
 {
+	editor.audioProcessor.params.removeParameterListener("reverse", this);
 	editor.audioProcessor.params.removeParameterListener("mode", this);
 	editor.audioProcessor.params.removeParameterListener("feedback", this);
 	editor.audioProcessor.params.removeParameterListener("sync_l", this);
@@ -83,6 +85,7 @@ void DelayView::paint(Graphics& g)
 	UIUtils::drawBevel(g, b.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 	b = b.reduced(8.f);
 
+	bool reverse = (bool)editor.audioProcessor.params.getRawParameterValue("reverse")->load();
 	auto mode = (Delay::DelayMode)editor.audioProcessor.params.getRawParameterValue("mode")->load();
 	auto feedback = editor.audioProcessor.params.getRawParameterValue("feedback")->load();
 	auto sync_l = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_l")->load();
@@ -99,6 +102,10 @@ void DelayView::paint(Graphics& g)
 	auto accent = editor.audioProcessor.params.getRawParameterValue("accent")->load();
 	auto haas_width = editor.audioProcessor.params.getRawParameterValue("haas_width")->load() * MAX_HAAS / 1000.f;
 	auto pipo_width = editor.audioProcessor.params.getRawParameterValue("pipo_width")->load();
+
+	if (reverse)
+		feel = 0.f;
+
 	float lfactor = pipo_width > 0.f ? 1.f - pipo_width : 1.f;
 	float rfactor = pipo_width < 0.f ? 1.f + pipo_width : 1.f;
 

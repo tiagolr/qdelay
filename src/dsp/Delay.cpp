@@ -282,7 +282,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             int playposL = revsizeL - revposL;
             int playposR = revsizeR - revposR;
             playposL = std::clamp(playposL, 0, revsizeL - 1);
-            playposR = std::clamp(playposR, 0, revsizeL - 1);
+            playposR = std::clamp(playposR, 0, revsizeR - 1);
             float fadeL = 1.f;
             
             // apply fades at reverse buffer begin, mid buffer, and end
@@ -470,8 +470,10 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 }
 
 void Delay::onSlider()
-{
-    reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
+{   
+    bool rev = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
+    if (rev != reverse) clear();
+    reverse = rev;
     float distfbk = audioProcessor.params.getRawParameterValue("dist_pre")->load();
     distDry = Utils::cosHalfPi()(distfbk);
     distWet = Utils::sinHalfPi()(distfbk);
