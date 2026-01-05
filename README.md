@@ -34,6 +34,7 @@
   * **Tap mode** with offset time (tap) and delay time.
   * **Swing and Feel** offset.
   * **Accent** odd or even taps.
+  * **Reverse** delay.
   * **Parametric EQ** on feedback and input signal.
   * **Diffusion** on pre or post delay signal.
   * **Modulation** of delay line time.
