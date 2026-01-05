@@ -42,6 +42,8 @@ public:
 	std::array<int, 2> getTimeSamples();
 	int getFeelOffset(int timeL, int timeR, float swing);
 	void processBlock(float* left, float* right, int nsamps);
+	void processReverse(float& left, float& right, int revsizeL, int revsizeR,
+		int midL, int midR, int fadetotalL, int fadetotalR);
 	void clear();
 	void setEqualizer(std::vector<SVF::EQBand> bands);
 	void onSlider();

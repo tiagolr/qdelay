@@ -279,55 +279,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         // reverse mode processing
         if (reverse)
         {
-            int playposL = revsizeL - revposL;
-            int playposR = revsizeR - revposR;
-            playposL = std::clamp(playposL, 0, revsizeL - 1);
-            playposR = std::clamp(playposR, 0, revsizeR - 1);
-            float fadeL = 1.f;
-            
-            // apply fades at reverse buffer begin, mid buffer, and end
-            // because the reverse buffer is twice the size of the delay
-            // fade at the middle as well to avoid clicks
-            if (playposL < fadetotalL) // fade in
-                fadeL = playposL / (float)fadetotalL; 
-            if (playposL > revsizeL - fadetotalL) // fade out 
-                fadeL = (revsizeL - playposL) / (float)fadetotalL;
-            
-            int midStart = midL - fadetotalL;
-            int midEnd = midL + fadetotalL;
-            if (playposL >= midStart && playposL <= midL) 
-                fadeL = 1.f - (playposL - midStart) / (float)fadetotalL;
-            if (playposL > midL && playposL <= midEnd)
-                fadeL = (playposL - midL) / (float)fadetotalL;
-
-            float fadeR = 1.f;
-            if (playposR < fadetotalR) // fade in
-                fadeR = playposR / (float)fadetotalR;
-            if (playposR > revsizeR - fadetotalR) // fade out 
-                fadeR = (revsizeR - playposR) / (float)fadetotalR;
-
-            midStart = midR - fadetotalR;
-            midEnd = midR + fadetotalR;
-            if (playposR >= midStart && playposR <= midR)
-                fadeR = 1.f - (playposR - midStart) / (float)fadetotalR;
-            if (playposR > midR && playposR <= midEnd)
-                fadeR = (playposR - midR) / (float)fadetotalR;
-
-            // replace the input buffer in-place with the reversed buffer read
-            float ll = left[i];
-            float rr = right[i];
-            if (revsizeL > 1) left[i] = revL[playposL] * fadeL;
-            if (revsizeR > 1) right[i] = revR[playposR] * fadeR;
-
-            // override the input offset to write the reversed signal
-            // right at the read head
+            processReverse(left[i], right[i], revsizeL, revsizeR, midL, midR, fadetotalL, fadetotalR);
+            // override the input offset to write the reversed right at the read head
             if (revsizeL > 1) inputOffsetL = -revsizeL / 2 + 1;
             if (revsizeR > 1) inputOffsetR = -revsizeR / 2 + 1;
-
-            revposL = (revposL + 1) % revsizeL;
-            revposR = (revposR + 1) % revsizeR;
-            revL[revposL] = ll;
-            revR[revposR] = rr;
         }
 
         auto tap1L = mode == Tap ? timeRight : timeLeft;
@@ -429,6 +384,56 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         left[i] = v0 * accentDelay + s0 * accentSwing;
         right[i] = v1 * accentDelay + s1 * accentSwing;
     }
+}
+
+// replaces left and right input samples with reverse buffer output
+void Delay::processReverse(float& left, float& right, int revsizeL, int revsizeR, int midL, int midR, 
+    int fadetotalL, int fadetotalR)
+{
+    int playposL = revsizeL - revposL;
+    int playposR = revsizeR - revposR;
+    playposL = std::clamp(playposL, 0, revsizeL - 1);
+    playposR = std::clamp(playposR, 0, revsizeR - 1);
+    float fadeL = 1.f;
+
+    // apply fades at reverse buffer begin, mid buffer, and end
+    // because the reverse buffer is twice the size of the delay
+    // fade at the middle as well to avoid clicks
+    if (playposL < fadetotalL) // fade in
+        fadeL = playposL / (float)fadetotalL;
+    if (playposL > revsizeL - fadetotalL) // fade out 
+        fadeL = (revsizeL - playposL) / (float)fadetotalL;
+
+    int midStart = midL - fadetotalL;
+    int midEnd = midL + fadetotalL;
+    if (playposL >= midStart && playposL <= midL)
+        fadeL = 1.f - (playposL - midStart) / (float)fadetotalL;
+    if (playposL > midL && playposL <= midEnd)
+        fadeL = (playposL - midL) / (float)fadetotalL;
+
+    float fadeR = 1.f;
+    if (playposR < fadetotalR) // fade in
+        fadeR = playposR / (float)fadetotalR;
+    if (playposR > revsizeR - fadetotalR) // fade out 
+        fadeR = (revsizeR - playposR) / (float)fadetotalR;
+
+    midStart = midR - fadetotalR;
+    midEnd = midR + fadetotalR;
+    if (playposR >= midStart && playposR <= midR)
+        fadeR = 1.f - (playposR - midStart) / (float)fadetotalR;
+    if (playposR > midR && playposR <= midEnd)
+        fadeR = (playposR - midR) / (float)fadetotalR;
+
+    // replace the input buffer in-place with the reversed buffer read
+    float ll = left;
+    float rr = right;
+    if (revsizeL > 1) left = revL[playposL] * fadeL;
+    if (revsizeR > 1) right = revR[playposR] * fadeR;
+
+    revposL = (revposL + 1) % revsizeL;
+    revposR = (revposR + 1) % revsizeR;
+    revL[revposL] = ll;
+    revR[revposR] = rr;
 }
 
 void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
