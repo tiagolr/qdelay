@@ -149,7 +149,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 {
     constexpr float ISQRT2 = 0.7071067811865475f;
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
-    auto classicPipo = (bool)audioProcessor.params.getRawParameterValue("classic_pipo")->load();
+    bool classicPipo = mode == Delay::ClassicPiPo;
+    if (classicPipo) mode = Delay::PingPong;
     auto time = getTimeSamples();
 
     int distPath = (int)audioProcessor.params.getRawParameterValue("dist_pre_path")->load();

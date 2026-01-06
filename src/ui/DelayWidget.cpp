@@ -98,7 +98,8 @@ void DelayWidget::paint(juce::Graphics& g)
 	g.setFont(FontOptions(16.f));
 	g.drawText(mode == Delay::Normal ? "Normal"
 		: mode == Delay::PingPong ? "PiPo"
-		: "Tap", modeBtn.getBounds(), Justification::centred);
+		: mode == Delay::Tap ? "Tap"
+		: "PiPoC", modeBtn.getBounds(), Justification::centred);
 }
 
 void DelayWidget::resized()
@@ -170,7 +171,8 @@ void DelayWidget::showModeMenu()
 
 	PopupMenu menu;
 	menu.addItem(1, "Normal", true, mode == Delay::Normal);
-	menu.addItem(2, "PingPong", true, mode == Delay::PingPong);
+	menu.addItem(2, "Ping-Pong", true, mode == Delay::PingPong);
+	menu.addItem(4, "Ping-Pong Classic", true, mode == Delay::ClassicPiPo);
 	menu.addItem(3, "Tap", true, mode == Delay::Tap);
 
 	auto menuPos = localPointToGlobal(modeBtn.getBounds().getBottomLeft());

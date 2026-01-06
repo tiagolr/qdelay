@@ -5,7 +5,6 @@
 DelayView::DelayView(QDelayAudioProcessorEditor& e)
 	:editor(e)
 {
-	editor.audioProcessor.params.addParameterListener("classic_pipo", this);
 	editor.audioProcessor.params.addParameterListener("reverse", this);
 	editor.audioProcessor.params.addParameterListener("mode", this);
 	editor.audioProcessor.params.addParameterListener("feedback", this);
@@ -27,7 +26,6 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 
 DelayView::~DelayView()
 {
-	editor.audioProcessor.params.removeParameterListener("classic_pipo", this);
 	editor.audioProcessor.params.removeParameterListener("reverse", this);
 	editor.audioProcessor.params.removeParameterListener("mode", this);
 	editor.audioProcessor.params.removeParameterListener("feedback", this);
@@ -87,9 +85,10 @@ void DelayView::paint(Graphics& g)
 	UIUtils::drawBevel(g, b.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 	b = b.reduced(8.f);
 
-	bool classicPipo = (bool)editor.audioProcessor.params.getRawParameterValue("classic_pipo")->load();
 	bool reverse = (bool)editor.audioProcessor.params.getRawParameterValue("reverse")->load();
 	auto mode = (Delay::DelayMode)editor.audioProcessor.params.getRawParameterValue("mode")->load();
+	bool classicPipo = mode == Delay::ClassicPiPo;
+	if (classicPipo) mode = Delay::PingPong;
 	auto feedback = editor.audioProcessor.params.getRawParameterValue("feedback")->load();
 	auto sync_l = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_l")->load();
 	auto sync_r = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_r")->load();

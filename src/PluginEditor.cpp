@@ -293,6 +293,7 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     patTabBtn.setToggleState(audioProcessor.delayTab == 2, dontSendNotification);
 
     auto mode = (Delay::DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
+    if (mode == Delay::ClassicPiPo) mode = Delay::PingPong;
     mix->setVisible(audioProcessor.delayTab == 0);
     feedback->setVisible(audioProcessor.delayTab == 0);
     haasWidth->setVisible(audioProcessor.delayTab == 0 && mode != Delay::PingPong);
@@ -379,7 +380,6 @@ void QDelayAudioProcessorEditor::setEQTab(bool feedbackOrInput)
 
 void QDelayAudioProcessorEditor::showSettings()
 {
-    bool classicPipo = (bool)audioProcessor.params.getRawParameterValue("classic_pipo")->load();
     int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
     int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
@@ -394,7 +394,6 @@ void QDelayAudioProcessorEditor::showSettings()
 
     PopupMenu delayMenu;
     delayMenu.addItem(30, "Reverse", true, reverse);
-    delayMenu.addItem(31, "Classic Ping-Pong (Decay one channel only)", true, classicPipo);
 
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
@@ -437,11 +436,6 @@ void QDelayAudioProcessorEditor::showSettings()
             else if (result == 30)
             {
                 auto param = audioProcessor.params.getParameter("reverse");
-                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
-            }
-            else if (result == 31)
-            {
-                auto param = audioProcessor.params.getParameter("classic_pipo");
                 param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
             else if (result == 40) 

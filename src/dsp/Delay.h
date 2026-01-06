@@ -16,7 +16,8 @@ public:
 	{
 		Normal,
 		PingPong,
-		Tap
+		Tap,
+		ClassicPiPo
 	};
 
 	enum SyncMode
