@@ -149,6 +149,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 {
     constexpr float ISQRT2 = 0.7071067811865475f;
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
+    auto classicPipo = (bool)audioProcessor.params.getRawParameterValue("classic_pipo")->load();
     auto time = getTimeSamples();
 
     int distPath = (int)audioProcessor.params.getRawParameterValue("dist_pre_path")->load();
@@ -192,6 +193,14 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         e = 1.f / e;
         feedbackL = feedback;
         feedbackR = std::pow(feedback, e);
+    }
+
+    if (mode == PingPong && classicPipo)
+    {
+        if (pipoWidth >= 0.f)
+            feedbackL = 1.f;
+        else
+            feedbackR = 1.f;
     }
 
     // resize buffers if they are too short for the delay time just in case

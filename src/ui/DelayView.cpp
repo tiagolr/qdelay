@@ -5,6 +5,7 @@
 DelayView::DelayView(QDelayAudioProcessorEditor& e)
 	:editor(e)
 {
+	editor.audioProcessor.params.addParameterListener("classic_pipo", this);
 	editor.audioProcessor.params.addParameterListener("reverse", this);
 	editor.audioProcessor.params.addParameterListener("mode", this);
 	editor.audioProcessor.params.addParameterListener("feedback", this);
@@ -26,6 +27,7 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 
 DelayView::~DelayView()
 {
+	editor.audioProcessor.params.removeParameterListener("classic_pipo", this);
 	editor.audioProcessor.params.removeParameterListener("reverse", this);
 	editor.audioProcessor.params.removeParameterListener("mode", this);
 	editor.audioProcessor.params.removeParameterListener("feedback", this);
@@ -85,6 +87,7 @@ void DelayView::paint(Graphics& g)
 	UIUtils::drawBevel(g, b.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
 	b = b.reduced(8.f);
 
+	bool classicPipo = (bool)editor.audioProcessor.params.getRawParameterValue("classic_pipo")->load();
 	bool reverse = (bool)editor.audioProcessor.params.getRawParameterValue("reverse")->load();
 	auto mode = (Delay::DelayMode)editor.audioProcessor.params.getRawParameterValue("mode")->load();
 	auto feedback = editor.audioProcessor.params.getRawParameterValue("feedback")->load();
@@ -127,7 +130,15 @@ void DelayView::paint(Graphics& g)
 		feedbackL = feedback;
 		feedbackR = std::pow(feedback, e);
 	}
-	
+
+	if (mode == Delay::PingPong && classicPipo)
+	{
+		if (pipo_width >= 0.f)
+			feedbackL = 1.f;
+		else
+			feedbackR = 1.f;
+	}
+
 	VirtualDelay delayL(timeL - timeL * swing * 0.5f, feedbackL); // swing is inverted because first tap is the dry signal
 	VirtualDelay delayR(timeR - timeR * swing * 0.5f, feedbackR);
 	VirtualDelay swingL(timeL + timeL * swing * 0.5f, feedbackL);
