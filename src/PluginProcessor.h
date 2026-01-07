@@ -49,6 +49,7 @@ public:
     int pitcherPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
     Follower follower;
+    int eqPath = 0; // Input or output eq
     std::vector<SVF::EQBand> eqBands;
     std::vector<SVF> eqL;
     std::vector<SVF> eqR;

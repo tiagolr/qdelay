@@ -253,8 +253,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         // a full measure of reversed signal has been written
         float tl = (time[0] - std::fabs(swing) * 0.5f * time[0]) * 2;
         float tr = (time[1] - std::fabs(swing) * 0.5f * time[1]) * 2;
-        revL.resize((int)std::ceil(mode == Tap ? tr : tl));
-        revR.resize((int)std::ceil(tr));
+        revL.resize((int)std::ceil(mode == Tap ? tr : tl), 0.f);
+        revR.resize((int)std::ceil(tr), 0.f);
         revsizeL = (int)revL.size();
         revsizeR = (int)revR.size();
         fadetotalL = (int)std::ceil(revsizeL * 0.05f);

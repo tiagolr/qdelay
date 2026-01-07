@@ -86,6 +86,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<juce::AudioParameterFloat>("duck_hld", "Duck Hold", NormalisableRange<float>(0.0f, 1000.0f), 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("duck_rel", "Duck Release", NormalisableRange<float>(10.f, 5000.0f, 1.f, 0.5f), 500.f));
 
+
+    layout.add(std::make_unique<AudioParameterChoice>("eq_path", "EQ Path", StringArray{ "Input", "Output" }, 0));
     auto getEQBandFreq = [](int band)
         {
             return 20.f * 2.f * std::pow(10000.f / 20.f / 2.f, band / (float)(EQ_BANDS - 1));
@@ -382,6 +384,7 @@ void QDelayAudioProcessor::onSlider()
     follower.prepare((float)srate, thresh, false, attack, hold, release, true);
 
     // prepare input EQ
+    eqPath = (int)params.getRawParameterValue("eq_path")->load();
     eqBands = getEqualizer(SVF::EQType::ParamEQ);
     for (int i = 0; i < EQ_BANDS; ++i)
     {
@@ -539,13 +542,16 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process input EQ
-    for (int i = 0; i < EQ_BANDS; ++i)
+    if (eqPath == 0) 
     {
-        auto& svfL = eqL[i];
-        auto& svfR = eqR[i];
-        auto& band = eqBands[i];
-        svfL.processBlock(wetBuffer.getWritePointer(0), numSamples, 0, numSamples, band.freq, band.q, band.gain);
-        svfR.processBlock(wetBuffer.getWritePointer(1), numSamples, 1, numSamples, band.freq, band.q, band.gain);
+        for (int i = 0; i < EQ_BANDS; ++i)
+        {
+            auto& svfL = eqL[i];
+            auto& svfR = eqR[i];
+            auto& band = eqBands[i];
+            svfL.processBlock(wetBuffer.getWritePointer(0), numSamples, 0, numSamples, band.freq, band.q, band.gain);
+            svfR.processBlock(wetBuffer.getWritePointer(1), numSamples, 1, numSamples, band.freq, band.q, band.gain);
+        }
     }
 
     // process pre distortion
@@ -669,6 +675,19 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             wetBuffer.getWritePointer(1),
             numSamples, diffdry, diffwet
         );
+    }
+
+    // process output EQ
+    if (eqPath == 1)
+    {
+        for (int i = 0; i < EQ_BANDS; ++i)
+        {
+            auto& svfL = eqL[i];
+            auto& svfR = eqR[i];
+            auto& band = eqBands[i];
+            svfL.processBlock(wetBuffer.getWritePointer(0), numSamples, 0, numSamples, band.freq, band.q, band.gain);
+            svfR.processBlock(wetBuffer.getWritePointer(1), numSamples, 1, numSamples, band.freq, band.q, band.gain);
+        }
     }
 
     auto mix = params.getRawParameterValue("mix")->load();

@@ -8,6 +8,7 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	, type(_type)
 	, prel(_type == SVF::ParamEQ ? "input" : "decay")
 {
+	editor.audioProcessor.params.addParameterListener("eq_path", this);
 	eq = std::make_unique<EQDisplay>(editor, type);
 	addAndMakeVisible(eq.get());
 	eq->onMouseDownBand = [this](int band)
@@ -76,6 +77,7 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 
 EQWidget::~EQWidget()
 {
+	editor.audioProcessor.params.removeParameterListener("eq_path", this);
 	for (int i = 0; i < EQ_BANDS; ++i) {
 		auto pre = prel + String("eq_band") + String(i + 1);
 		if (i == 0 || i == EQ_BANDS - 1) {
@@ -88,7 +90,7 @@ void EQWidget::parameterChanged(const juce::String& parameterID, float newValue)
 {
 	(void)parameterID;
 	(void)newValue;
-	MessageManager::callAsync([this] { repaint(); });
+	MessageManager::callAsync([this] { toggleUIComponents(); });
 }
 
 void EQWidget::resized()
@@ -146,6 +148,9 @@ void EQWidget::paint(Graphics& g)
 
 void EQWidget::toggleUIComponents()
 {
+	auto eqPath = editor.audioProcessor.params.getRawParameterValue("eq_path")->load();
+	inputBtn.setButtonText(eqPath > 0.f ? "Output" : "Input");
+
 	for (int i = 0; i < EQ_BANDS; ++i) {
 		freqknobs[i]->setVisible(selband == i);
 		qknobs[i]->setVisible(selband == i);

@@ -397,6 +397,7 @@ void QDelayAudioProcessorEditor::showSettings()
 
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
+    eqMenu.addItem(61, "EQ on Output", true, audioProcessor.eqPath == 1);
 
     PopupMenu satMenu;
     satMenu.addItem(40, "Pre Sat on Feedback Path (Caution)", true, audioProcessor.distPrePath == 1);
@@ -456,6 +457,11 @@ void QDelayAudioProcessorEditor::showSettings()
             {
                 audioProcessor.drawWaveform = !audioProcessor.drawWaveform;
                 audioProcessor.saveSettings();
+            }
+            else if (result == 61)
+            {
+                auto param = audioProcessor.params.getParameter("eq_path");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
             else if (result >= 80 && result <= 82)
             {
