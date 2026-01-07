@@ -164,6 +164,7 @@ void EQWidget::showBandModeMenu()
 {
 	auto mode = SVF::PK;
 	auto m = (int)editor.audioProcessor.params.getRawParameterValue(prel + "eq_band" + String(selband + 1) + "_mode")->load();
+	auto bypass = (bool)editor.audioProcessor.params.getRawParameterValue(prel + "eq_band" + String(selband + 1) + "_bypass")->load();
 	if (selband == 0 && m == 0) mode = SVF::HP;
 	else if (selband == 0 && m == 1) mode = SVF::LS;
 	else if (selband == 0 && m == 2) mode = SVF::HP6;
@@ -189,6 +190,7 @@ void EQWidget::showBandModeMenu()
 		menu.addItem(6, "Peak", true, mode == SVF::PK);
 		menu.addItem(5, "Band Pass", true, mode == SVF::BP);
 	}
+	menu.addItem(999, "Bypass", true, bypass);
 
 	auto menuPos = localPointToGlobal(bandBtn.getBounds().getBottomLeft());
 	menu.showMenuAsync(PopupMenu::Options()
@@ -196,27 +198,38 @@ void EQWidget::showBandModeMenu()
 		.withTargetScreenArea({ menuPos.getX(), menuPos.getY(), 1, 1 }),
 		[this](int result) {
 			if (result == 0) return;
-			if (result == 1 || result == 2) {
+			if (result == 1 || result == 2) 
+			{
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band1_mode");
 				param->setValueNotifyingHost(param->convertTo0to1((float)result - 1));
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}
-			if (result == 3 || result == 4) {
+			if (result == 3 || result == 4) 
+			{
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(EQ_BANDS) + "_mode");
 				param->setValueNotifyingHost(param->convertTo0to1((float)result - 3));
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}
-			else if (result == 5 || result == 6) {
+			else if (result == 5 || result == 6) 
+			{
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband+1) + "_mode");
 				param->setValueNotifyingHost(param->convertTo0to1((float)result - 5));
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}
-			else if (result == 7 || result == 8) {
+			else if (result == 7 || result == 8) 
+			{
 				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband+1) + "_mode");
 				param->setValueNotifyingHost(1.f);
+				eq->updateEQCurve();
+				toggleUIComponents();
+			}
+			else if (result == 999)
+			{
+				auto param = editor.audioProcessor.params.getParameter(prel + "eq_band" + String(selband + 1) + "_bypass");
+				param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
 				eq->updateEQCurve();
 				toggleUIComponents();
 			}
