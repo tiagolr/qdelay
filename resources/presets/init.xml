@@ -41,7 +41,7 @@
     <PARAM id="duck_thres" value="0.9990000128746033"/>
     <PARAM id="feedback" value="0.5"/>
     <PARAM id="feel" value="0.0"/>
-    <PARAM id="flutter_depth" value="0.199999988079071"/>
+    <PARAM id="flutter_depth" value="0.1"/>
     <PARAM id="flutter_rate" value="9.999999046325684"/>
     <PARAM id="haas_width" value="0.0"/>
     <PARAM id="inputeq_band1_bypass" value="0.0"/>

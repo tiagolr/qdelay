@@ -69,7 +69,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("flutter_rate", "Flutter Rate", NormalisableRange<float>(0.01f, 50.f, 0.0001f, 0.3f), 10.f));
-    layout.add(std::make_unique<AudioParameterFloat>("flutter_depth", "Flutter Depth", 0.0f, 1.f, .2f));
+    layout.add(std::make_unique<AudioParameterFloat>("flutter_depth", "Flutter Depth", 0.0f, 1.f, .1f));
     layout.add(std::make_unique<AudioParameterFloat>("wow_rate", "Wow Rate", NormalisableRange<float>(0.01f, 6.f, 0.0001f, 0.5f), .5f));
     layout.add(std::make_unique<AudioParameterFloat>("wow_depth", "Wow Depth", 0.0f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("wow_drift", "Wow Drift", 0.0f, 1.f, 0.25f));
