@@ -736,14 +736,13 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     if (stereo != 1.f) {
         auto lchan = wetBuffer.getWritePointer(0);
         auto rchan = wetBuffer.getWritePointer(1);
-        float norm = 1.0f / (1.0f + stereo);
         for (int sample = 0; sample < numSamples; ++sample) {
             auto lsamp = lchan[sample];
             auto rsamp = rchan[sample];
             auto mid = (lsamp + rsamp) * 0.5f;
             auto side = (lsamp - rsamp) * 0.5f;
-            lchan[sample] = (mid + side * stereo) * norm;
-            rchan[sample] = (mid - side * stereo) * norm;
+            lchan[sample] = (mid + side * stereo);
+            rchan[sample] = (mid - side * stereo);
         }
     }
 
