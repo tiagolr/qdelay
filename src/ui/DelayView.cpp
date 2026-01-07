@@ -90,6 +90,7 @@ void DelayView::paint(Graphics& g)
 	bool classicPipo = mode == Delay::ClassicPiPo;
 	if (classicPipo) mode = Delay::PingPong;
 	auto feedback = editor.audioProcessor.params.getRawParameterValue("feedback")->load();
+	feedback = std::fabs(feedback);
 	auto sync_l = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_l")->load();
 	auto sync_r = (Delay::SyncMode)editor.audioProcessor.params.getRawParameterValue("sync_r")->load();
 	auto rate_l = editor.audioProcessor.params.getRawParameterValue("rate_l")->load();

@@ -161,6 +161,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     auto pitchWet = Utils::sinHalfPi()(pitchMix);
 
     auto feedback = audioProcessor.params.getRawParameterValue("feedback")->load();
+    float feedbackSign = feedback < 0.f ? -1.f : 1.f;
+    feedback = std::fabs(feedback);
     auto pipoWidth = audioProcessor.params.getRawParameterValue("pipo_width")->load();
     float lfactor = pipoWidth > 0.f ? 1.f - pipoWidth : 1.f;
     float rfactor = pipoWidth < 0.f ? 1.f + pipoWidth : 1.f;
@@ -195,6 +197,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         feedbackL = feedback;
         feedbackR = std::pow(feedback, e);
     }
+    feedbackL *= feedbackSign;
+    feedbackR *= feedbackSign;
 
     if (mode == PingPong && classicPipo)
     {
