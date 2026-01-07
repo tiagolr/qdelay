@@ -501,7 +501,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
                 secondsPerBar = beatsPerSecond * 4;
             }
             auto play = pos->getIsPlaying();
-            if (!playing && play) // onplay()
+            if (playing != play) // onplay() | onstop()
             {
                 delay->clear();
                 distPre->clear();
