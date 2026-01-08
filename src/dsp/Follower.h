@@ -15,9 +15,7 @@ public:
 	void prepare(float srate, float thresh_, bool autorel_, float attack_, float hold, float release, bool detectorOnly);
 	float process(float lsamp, float rsamp);
 	void clear();
-
-	float outl = 0.0f;
-	float outr = 0.0f;
+	float envelope = 0.0f;
 
 private:
 	int rmswindow = 100;
@@ -30,7 +28,6 @@ private:
 	float attackcoeff = .1f;
 	float releasecoeff = .1f;
 	float minreleasecoeff = .1f;
-	float envelope = 0.0f;
 	float amount = 0.f;
 	bool detectorOnly = false;
 };

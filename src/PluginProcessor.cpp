@@ -713,6 +713,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     {
         follower.clear();
     }
+    duckEnv.store(follower.envelope * duck);
 
     // mix and pan
 

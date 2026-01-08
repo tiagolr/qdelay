@@ -233,6 +233,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(duckRel.get());
     duckRel->setBounds(col + KNOB_WIDTH * 3, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
 
+    duckMeter = std::make_unique<DuckMeter>(audioProcessor);
+    addAndMakeVisible(duckMeter.get());
+    duckMeter->setBounds(col + KNOB_WIDTH, row + KNOB_HEIGHT * 2 + 15, KNOB_WIDTH, VSEPARATOR);
+
     addAndMakeVisible(pitchMix);
     pitchMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "pitch_mix", pitchMix);
     pitchMix.setComponentID("pitch_mix");

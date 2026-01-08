@@ -21,6 +21,7 @@
 #include "ui/Meter.h"
 #include "ui/DistWidget.h"
 #include "ui/TapeWidget.h"
+#include "ui/DuckMeter.h"
 #include "dsp/Delay.h"
 #include "PresetMgr.h"
 
@@ -89,6 +90,7 @@ private:
     std::unique_ptr<Rotary> duckAmt;
     std::unique_ptr<Rotary> duckAtk;
     std::unique_ptr<Rotary> duckRel;
+    std::unique_ptr<DuckMeter> duckMeter;
     Slider pitchMix;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> pitchMixAttachment;
 
