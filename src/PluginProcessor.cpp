@@ -738,8 +738,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             {
                 float l = left[i];
                 float r = right[i];
-                left[i] = l * keepGain * wetmix;
-                right[i] = r * wetmix + l * sendGain * wetmix;
+                left[i] = l * keepGain * drymix;
+                right[i] = r * drymix + l * sendGain * drymix;
             }
         }
         else
@@ -748,8 +748,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             {
                 float l = left[i];
                 float r = right[i];
-                right[i] = r * keepGain * wetmix;
-                left[i] = l * wetmix + r * sendGain * wetmix;
+                right[i] = r * keepGain * drymix;
+                left[i] = l * drymix + r * sendGain * drymix;
             }
         }
     }
@@ -757,7 +757,6 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     {
         auto panDryL = Utils::cosHalfPi()(panDry) * SQRT2; // +0db at center, +3dB when hard panned
         auto panDryR = Utils::sinHalfPi()(panDry) * SQRT2;
-        // apply dry mix + pan
         buffer.applyGain(0, 0, numSamples, drymix * panDryL);
         if (numChannels > 1)
             buffer.applyGain(1, 0, numSamples, drymix * panDryR);
