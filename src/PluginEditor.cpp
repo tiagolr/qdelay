@@ -99,7 +99,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(patTabBtn);
     patTabBtn.setComponentID("button-noborder");
     patTabBtn.setButtonText("Pattern");
-    patTabBtn.setBounds(col + KNOB_WIDTH, row, KNOB_WIDTH, VSEPARATOR);
+    patTabBtn.setBounds(col + KNOB_WIDTH*2, row, KNOB_WIDTH, VSEPARATOR);
     patTabBtn.onClick = [this]
         {
             audioProcessor.delayTab = 2;
@@ -109,7 +109,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(panTabBtn);
     panTabBtn.setComponentID("button-noborder");
     panTabBtn.setButtonText("Pan");
-    panTabBtn.setBounds(col + KNOB_WIDTH*2, row, KNOB_WIDTH, VSEPARATOR);
+    panTabBtn.setBounds(col + KNOB_WIDTH, row, KNOB_WIDTH, VSEPARATOR);
     panTabBtn.onClick = [this]
         {
             audioProcessor.delayTab = 1;
@@ -403,13 +403,13 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
 
         g.setColour(Colour(panDrySum ? COLOR_ACTIVE : COLOR_NEUTRAL));
         g.drawEllipse(cx - r*1.5f, cy - r, r * 2, r * 2, 1.f);
-        g.fillEllipse((float)cx, cy - r, r * 2, r * 2);
+        g.fillEllipse((float)cx - r*0.5f, cy - r, r * 2, r * 2);
 
         cx = panWetSumBtn.getBounds().getCentreX();
         cy = panWetSumBtn.getBounds().getCentreY();
         g.setColour(Colour(panWetSum ? COLOR_ACTIVE : COLOR_NEUTRAL));
         g.drawEllipse(cx - r * 1.5f, cy - r, r * 2, r * 2, 1.f);
-        g.fillEllipse((float)cx, cy - r, r * 2, r * 2);
+        g.fillEllipse((float)cx - r*0.5f, cy - r, r * 2, r * 2);
     }
 
 }
