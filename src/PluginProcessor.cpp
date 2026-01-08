@@ -43,7 +43,10 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", NormalisableRange<float>(-1.f, 1.f, 0.0001f, 0.3f, true), 0.f));
 
     layout.add(std::make_unique<AudioParameterFloat>("pan_dry", "Pan Dry", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterBool>("pan_dry_sum", "Pan Dry Sum", false));
+
     layout.add(std::make_unique<AudioParameterFloat>("pan_wet", "Pan Wet", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterBool>("pan_wet_sum", "Pan Dry Sum", false));
     layout.add(std::make_unique<AudioParameterFloat>("stereo", "Stereo Width", 0.f, 2.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("swing", "Swing", -1.f, 1.f, 0.0f));
@@ -690,19 +693,6 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         }
     }
 
-    auto mix = params.getRawParameterValue("mix")->load();
-    auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;
-    auto wetmix = mix <= 0.5f ? mix * 2.f : 1.f;
-
-    float panCompensation = std::sqrt(2.f); // keep amplitude at 0db when centered, +3dB when hard panned
-    auto panDry = params.getRawParameterValue("pan_dry")->load();
-    auto panDryL = Utils::cosHalfPi()(panDry) * panCompensation;
-    auto panDryR = Utils::sinHalfPi()(panDry) * panCompensation;
-
-    auto panWet = params.getRawParameterValue("pan_wet")->load();
-    auto panWetL = Utils::cosHalfPi()(panWet) * panCompensation;
-    auto panWetR = Utils::sinHalfPi()(panWet) * panCompensation;
-
     // apply ducking
     float duck = params.getRawParameterValue("duck_amt")->load();
     if (duck > 0.f)
@@ -724,12 +714,98 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         follower.clear();
     }
 
-    // apply mix + pan
-    buffer.applyGain(0, 0, numSamples, drymix * panDryL);
-    if (numChannels > 1)
-        buffer.applyGain(1, 0, numSamples, drymix * panDryR);
-    wetBuffer.applyGain(0, 0, numSamples, wetmix * panWetL);
-    wetBuffer.applyGain(1, 0, numSamples, wetmix * panWetR);
+    // mix and pan
+
+    auto mix = params.getRawParameterValue("mix")->load();
+    auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;
+    auto wetmix = mix <= 0.5f ? mix * 2.f : 1.f;
+
+    bool panDrySum = (bool)params.getRawParameterValue("pan_dry_sum")->load();
+    auto panDry = params.getRawParameterValue("pan_dry")->load();
+    if (panDrySum) // crossfeed into one of the channels when panning
+    {
+        float theta = panDry > 0.5f
+            ? (panDry - 0.5f) * 2.0f
+            : (0.5f - panDry) * 2.0f;
+
+        auto* left = buffer.getWritePointer(0);
+        auto* right = buffer.getWritePointer(numChannels > 1 ? 1 : 0);
+        float keepGain = Utils::cosHalfPi()(theta);
+        float sendGain = Utils::sinHalfPi()(theta);
+        if (panDry > 0.5f) // pan to right
+        {
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float l = left[i];
+                float r = right[i];
+                left[i] = l * keepGain * wetmix;
+                right[i] = r * wetmix + l * sendGain * wetmix;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float l = left[i];
+                float r = right[i];
+                right[i] = r * keepGain * wetmix;
+                left[i] = l * wetmix + r * sendGain * wetmix;
+            }
+        }
+    }
+    else // collapse one of the channels when panning (default)
+    {
+        auto panDryL = Utils::cosHalfPi()(panDry) * SQRT2; // +0db at center, +3dB when hard panned
+        auto panDryR = Utils::sinHalfPi()(panDry) * SQRT2;
+        // apply dry mix + pan
+        buffer.applyGain(0, 0, numSamples, drymix * panDryL);
+        if (numChannels > 1)
+            buffer.applyGain(1, 0, numSamples, drymix * panDryR);
+    }
+
+    bool panWetSum = params.getRawParameterValue("pan_wet_sum")->load();
+    float panWet = params.getRawParameterValue("pan_wet")->load();
+    if (panWetSum) // crossfeed into one of the channels when panning
+    {
+        auto* left = wetBuffer.getWritePointer(0);
+        auto* right = wetBuffer.getWritePointer(1);
+
+        // pan to right
+        float theta = panWet > 0.5f
+            ? (panWet - 0.5f) * 2.0f
+            : (0.5f - panWet) * 2.0f; // 0..1
+
+        float keepGain = Utils::cosHalfPi()(theta);
+        float sendGain = Utils::sinHalfPi()(theta);
+
+        if (panWet > 0.5f) // pan to right
+        {
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float l = left[i];
+                float r = right[i];
+                left[i] = l * keepGain * wetmix;
+                right[i] = r * wetmix + l * sendGain * wetmix;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < numSamples; ++i)
+            {
+                float l = left[i];
+                float r = right[i];
+                right[i] = r * keepGain * wetmix;
+                left[i] = l * wetmix + r * sendGain * wetmix;
+            }
+        }
+    }
+    else // collapse one of the channels when panning (default)
+    {
+        auto panWetL = Utils::cosHalfPi()(panWet) * SQRT2;
+        auto panWetR = Utils::sinHalfPi()(panWet) * SQRT2;
+        wetBuffer.applyGain(0, 0, numSamples, wetmix * panWetL);
+        wetBuffer.applyGain(1, 0, numSamples, wetmix * panWetR);
+    }
 
     // apply stereo width
     auto stereo = params.getRawParameterValue("stereo")->load();

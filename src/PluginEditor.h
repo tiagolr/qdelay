@@ -64,6 +64,8 @@ private:
     TextButton mixTabBtn;
     TextButton panTabBtn;
     TextButton patTabBtn;
+    TextButton panDrySumBtn;
+    TextButton panWetSumBtn;
     std::unique_ptr<Rotary> mix;
     std::unique_ptr<Rotary> feedback;
     std::unique_ptr<Rotary> haasWidth;

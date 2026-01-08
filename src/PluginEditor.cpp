@@ -15,6 +15,8 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     audioProcessor.addChangeListener(this);
     audioProcessor.params.addParameterListener("mode", this);
     audioProcessor.params.addParameterListener("reverse", this);
+    audioProcessor.params.addParameterListener("pan_dry_sum", this);
+    audioProcessor.params.addParameterListener("pan_wet_sum", this);
 
     // NAVBAR
     int col = PLUG_PADDING;
@@ -156,6 +158,27 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(accent.get());
     accent->setBounds(haasWidth->getBounds());
 
+    addChildComponent(panDrySumBtn);
+    panDrySumBtn.setBounds(Rectangle<int>(20, 20).withY(panDry->getY()).withRightX(panDry->getRight() + 5));
+    panDrySumBtn.setTooltip("Sum channels or collapse when panning.");
+    panDrySumBtn.setAlpha(0.f);
+    panDrySumBtn.onClick = [this]
+        {
+            auto param = audioProcessor.params.getParameter("pan_dry_sum");
+            param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+        };
+
+    addChildComponent(panWetSumBtn);
+    panWetSumBtn.setBounds(Rectangle<int>(20, 20).withY(panWet->getY()).withRightX(panWet->getRight() + 5));
+    panWetSumBtn.setAlpha(0.f);
+    panWetSumBtn.setTooltip("Sum channels or collapse when panning.");
+    panWetSumBtn.onClick = [this]
+        {
+            auto param = audioProcessor.params.getParameter("pan_wet_sum");
+            param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+        };
+
+
     // MID SECTION
     row = PLUG_PADDING + NAV_HEIGHT;
     col = PLUG_PADDING + KNOB_WIDTH * 3 + HSEPARATOR;
@@ -292,6 +315,9 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     panTabBtn.setToggleState(audioProcessor.delayTab == 1, dontSendNotification);
     patTabBtn.setToggleState(audioProcessor.delayTab == 2, dontSendNotification);
 
+    panWetSumBtn.setVisible(audioProcessor.delayTab == 1);
+    panDrySumBtn.setVisible(audioProcessor.delayTab == 1);
+
     auto mode = (Delay::DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     if (mode == Delay::ClassicPiPo) mode = Delay::PingPong;
     mix->setVisible(audioProcessor.delayTab == 0);
@@ -365,6 +391,27 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     int tab = audioProcessor.rightTab;
     g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : "TAPE", rightTabBtn.getBounds()
         .toFloat().withTrimmedLeft(25.f), Justification::centredLeft);
+
+    if (audioProcessor.delayTab == 1)
+    {
+        // paint pan sum buttons
+        bool panDrySum = (bool)audioProcessor.params.getRawParameterValue("pan_dry_sum")->load();
+        bool panWetSum = (bool)audioProcessor.params.getRawParameterValue("pan_wet_sum")->load();
+        float r = 5;
+        int cx = panDrySumBtn.getBounds().getCentreX();
+        int cy = panDrySumBtn.getBounds().getCentreY();
+
+        g.setColour(Colour(panDrySum ? COLOR_ACTIVE : COLOR_NEUTRAL));
+        g.drawEllipse(cx - r*1.5f, cy - r, r * 2, r * 2, 1.f);
+        g.fillEllipse((float)cx, cy - r, r * 2, r * 2);
+
+        cx = panWetSumBtn.getBounds().getCentreX();
+        cy = panWetSumBtn.getBounds().getCentreY();
+        g.setColour(Colour(panWetSum ? COLOR_ACTIVE : COLOR_NEUTRAL));
+        g.drawEllipse(cx - r * 1.5f, cy - r, r * 2, r * 2, 1.f);
+        g.fillEllipse((float)cx, cy - r, r * 2, r * 2);
+    }
+
 }
 
 void QDelayAudioProcessorEditor::resized()

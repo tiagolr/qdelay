@@ -16,7 +16,9 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 	editor.audioProcessor.params.addParameterListener("rate_sync_r", this);
 	editor.audioProcessor.params.addParameterListener("mix", this);
 	editor.audioProcessor.params.addParameterListener("pan_dry", this);
+	editor.audioProcessor.params.addParameterListener("pan_dry_sum", this);
 	editor.audioProcessor.params.addParameterListener("pan_wet", this);
+	editor.audioProcessor.params.addParameterListener("pan_wet_sum", this);
 	editor.audioProcessor.params.addParameterListener("swing", this);
 	editor.audioProcessor.params.addParameterListener("feel", this);
 	editor.audioProcessor.params.addParameterListener("accent", this);
@@ -37,7 +39,9 @@ DelayView::~DelayView()
 	editor.audioProcessor.params.removeParameterListener("rate_sync_r", this);
 	editor.audioProcessor.params.removeParameterListener("mix", this);
 	editor.audioProcessor.params.removeParameterListener("pan_dry", this);
+	editor.audioProcessor.params.removeParameterListener("pan_dry_sum", this);
 	editor.audioProcessor.params.removeParameterListener("pan_wet", this);
+	editor.audioProcessor.params.removeParameterListener("pan_wet_sum", this);
 	editor.audioProcessor.params.removeParameterListener("swing", this);
 	editor.audioProcessor.params.removeParameterListener("feel", this);
 	editor.audioProcessor.params.removeParameterListener("accent", this);
@@ -236,7 +240,7 @@ void DelayView::paint(Graphics& g)
 			i++;
 		}
 
-		for (auto& tap : leftTaps) 
+		for (auto& tap : leftTaps)
 			if (tap.time > 0.f)
 				tap.time += timeL;
 		for (auto& tap : rightTaps)
@@ -283,8 +287,18 @@ void DelayView::paint(Graphics& g)
 	float wetMix = mix > 0.5 ? 1.f : mix * 2.f;
 	float rightPan = (pan_wet > 0.5 ? 1.f : pan_wet * 2.f);
 	float leftPan = (pan_wet < 0.5 ? 1.f : 1.f - (pan_wet - 0.5f) * 2.f);
+
+	bool panWetSum = (bool)editor.audioProcessor.params.getRawParameterValue("pan_wet_sum")->load();
+	std::vector<VirtualDelay::Tap> panTapsLeft;
+	std::vector<VirtualDelay::Tap> panTapsRight;
+
 	for (auto& tap : leftTaps)
 	{
+		if (!tap.dry && panWetSum)
+		{
+			panTapsRight.push_back(tap.withAccent(wetMix * (1 - leftPan)));
+		}
+
 		if (tap.dry)
 			tap.gain *= dryMix * (pan_dry < 0.5 ? 1.f : 1.f - (pan_dry - 0.5f) * 2.f);
 		else
@@ -292,10 +306,23 @@ void DelayView::paint(Graphics& g)
 	}
 	for (auto& tap : rightTaps)
 	{
+		if (!tap.dry && panWetSum)
+		{
+			panTapsLeft.push_back(tap.withAccent(wetMix * (1 - rightPan)));
+		}
+
 		if (tap.dry)
 			tap.gain *= dryMix * (pan_dry > 0.5 ? 1.f : pan_dry * 2.f);
 		else
 			tap.gain *= wetMix * rightPan;
+	}
+
+	if (panWetSum)
+	{
+		for (auto& tap : panTapsLeft)
+			leftTaps.push_back(tap);
+		for (auto& tap : panTapsRight)
+			rightTaps.push_back(tap);
 	}
 
 	// paint

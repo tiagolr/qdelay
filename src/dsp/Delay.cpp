@@ -147,7 +147,6 @@ int Delay::getFeelOffset(int tl, int tr, float swing)
 
 void Delay::processBlock(float* left, float* right, int nsamps)
 {
-    constexpr float ISQRT2 = 0.7071067811865475f;
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     bool classicPipo = mode == Delay::ClassicPiPo;
     if (classicPipo) mode = Delay::PingPong;

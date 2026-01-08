@@ -2,6 +2,8 @@
 
 namespace globals {
 	constexpr float DB2LOG = 0.11512925464970228420089957273422f;
+	constexpr float SQRT2 = 1.4142135623730951f;
+	constexpr float ISQRT2 = 0.7071067811865475f;
 
 	// filter consts
 	constexpr float F_MIN_FREQ = 20.0f;
