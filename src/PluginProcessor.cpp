@@ -38,7 +38,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<MetaParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<MetaParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>("out_gain", "Mix", -24.f, 24.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("out_gain", "Mix", -18.f, 18.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("feedback", "Feedback", -1.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
     layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", NormalisableRange<float>(-1.f, 1.f, 0.0001f, 0.3f, true), 0.f));
