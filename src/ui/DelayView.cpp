@@ -6,6 +6,8 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 	:editor(e)
 {
 	editor.audioProcessor.params.addParameterListener("reverse", this);
+	editor.audioProcessor.params.addParameterListener("wet_mix", this);
+	editor.audioProcessor.params.addParameterListener("dry_mix", this);
 	editor.audioProcessor.params.addParameterListener("mode", this);
 	editor.audioProcessor.params.addParameterListener("feedback", this);
 	editor.audioProcessor.params.addParameterListener("sync_l", this);
@@ -29,6 +31,8 @@ DelayView::DelayView(QDelayAudioProcessorEditor& e)
 DelayView::~DelayView()
 {
 	editor.audioProcessor.params.removeParameterListener("reverse", this);
+	editor.audioProcessor.params.removeParameterListener("wet_mix", this);
+	editor.audioProcessor.params.removeParameterListener("dry_mix", this);
 	editor.audioProcessor.params.removeParameterListener("mode", this);
 	editor.audioProcessor.params.removeParameterListener("feedback", this);
 	editor.audioProcessor.params.removeParameterListener("sync_l", this);
@@ -101,7 +105,6 @@ void DelayView::paint(Graphics& g)
 	auto rate_r = editor.audioProcessor.params.getRawParameterValue("rate_r")->load();
 	auto rate_sync_l = (int)editor.audioProcessor.params.getRawParameterValue("rate_sync_l")->load();
 	auto rate_sync_r = (int)editor.audioProcessor.params.getRawParameterValue("rate_sync_r")->load();
-	auto mix = editor.audioProcessor.params.getRawParameterValue("mix")->load();
 	auto pan_dry = editor.audioProcessor.params.getRawParameterValue("pan_dry")->load();
 	auto pan_wet = editor.audioProcessor.params.getRawParameterValue("pan_wet")->load();
 	auto swing = editor.audioProcessor.params.getRawParameterValue("swing")->load();
@@ -283,8 +286,8 @@ void DelayView::paint(Graphics& g)
 	}
 
 	// apply mix and pan
-	float dryMix = mix < 0.5 ? 1.f : 1.f - (mix - 0.5f) * 2.f;
-	float wetMix = mix > 0.5 ? 1.f : mix * 2.f;
+	float dryMix = editor.audioProcessor.params.getRawParameterValue("dry_mix")->load();
+	float wetMix = editor.audioProcessor.params.getRawParameterValue("wet_mix")->load();
 	float rightPan = (pan_wet > 0.5 ? 1.f : pan_wet * 2.f);
 	float leftPan = (pan_wet < 0.5 ? 1.f : 1.f - (pan_wet - 0.5f) * 2.f);
 

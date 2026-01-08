@@ -39,7 +39,7 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
     const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
     auto tag = slider.getComponentID();
-    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix") {
+    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix" && tag != "dry_mix" && tag != "wet_mix") {
         LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
         return;
     }
@@ -65,6 +65,24 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
             g.setFont(15.0f);
             g.drawFittedText(text, x, y, width, height , juce::Justification::centred, 1);
         }
+        return;
+    }
+
+    if (tag == "dry_mix" || tag == "wet_mix")
+    {
+        auto bounds = Rectangle<int>(x, y, width, height).reduced(3, 0).toFloat();
+
+        g.setColour(Colour(COLOR_BEVEL));
+        g.fillRoundedRectangle(bounds, 0.f); // background
+
+        g.setColour(Colour(COLOR_ACTIVE).withAlpha(0.3f));
+        g.fillRoundedRectangle(bounds.reduced(1.f), 0.f); // background
+
+        g.setColour(Colour(COLOR_ACTIVE));
+        g.fillRoundedRectangle(bounds
+            .withHeight(static_cast<float>(height - sliderPos))
+            .withBottomY(bounds.getBottom())
+            .reduced(3), 0.f);
         return;
     }
 

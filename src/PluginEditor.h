@@ -48,6 +48,7 @@ public:
     void showRightTabMenu();
     void showPresetsMenu();
     void savePreset();
+    void updateDryWetMixLabels();
 
     QDelayAudioProcessor& audioProcessor;
 private:
@@ -67,7 +68,14 @@ private:
     TextButton patTabBtn;
     TextButton panDrySumBtn;
     TextButton panWetSumBtn;
-    std::unique_ptr<Rotary> mix;
+    Slider dryMix;
+    Label dryMixLabel;
+    bool draggingDryMix = false;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> dryMixAttachment;
+    Slider wetMix;
+    Label wetMixLabel;
+    bool draggingWetMix = false;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> wetMixAttachment;
     std::unique_ptr<Rotary> feedback;
     std::unique_ptr<Rotary> haasWidth;
     std::unique_ptr<Rotary> pipoWidth;

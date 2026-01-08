@@ -37,7 +37,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<MetaParameterFloat>("rate_r", "Rate R", NormalisableRange<float>(0.0f, 5.f, 0.001f, 0.3f), .5f));
     layout.add(std::make_unique<MetaParameterChoice>("rate_sync_l", "Rate Sync L", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
     layout.add(std::make_unique<MetaParameterChoice>("rate_sync_r", "Rate Sync R", StringArray{"1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1"}, 3));
-    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>("dry_mix", "Dry Mix", 0.f, 1.f, 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("wet_mix", "Wet Mix", 0.f, 1.f, 1.f));
     layout.add(std::make_unique<AudioParameterFloat>("feedback", "Feedback", -1.f, 1.f, 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>("pipo_width", "Pipo Width", -1.f, 1.f, 1.f));
     layout.add(std::make_unique<AudioParameterFloat>("haas_width", "Haas Width", NormalisableRange<float>(-1.f, 1.f, 0.0001f, 0.3f, true), 0.f));
@@ -717,9 +718,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
     // mix and pan
 
-    auto mix = params.getRawParameterValue("mix")->load();
-    auto drymix = mix <= 0.5f ? 1.f : 1.f - (mix - 0.5f) * 2.f;
-    auto wetmix = mix <= 0.5f ? mix * 2.f : 1.f;
+    auto drymix = params.getRawParameterValue("dry_mix")->load();
+    auto wetmix = params.getRawParameterValue("wet_mix")->load();
 
     bool panDrySum = (bool)params.getRawParameterValue("pan_dry_sum")->load();
     auto panDry = params.getRawParameterValue("pan_dry")->load();

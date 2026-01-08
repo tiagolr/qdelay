@@ -118,10 +118,43 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     row += VSEPARATOR + 5;
 
-    mix = std::make_unique<Rotary>(audioProcessor, "mix", "Mix", Rotary::percx100, true);
-    addChildComponent(mix.get());
-    mix->setBounds(col, row, KNOB_WIDTH, KNOB_HEIGHT);
 
+    addAndMakeVisible(dryMix);
+    dryMix.setComponentID("dry_mix");
+    dryMix.setSliderStyle(Slider::LinearBarVertical);
+    dryMix.setBounds(col, row, KNOB_WIDTH / 2, KNOB_HEIGHT - 23);
+    dryMix.setBounds(dryMix.getBounds().withTrimmedRight(2).withTrimmedTop(2));
+    dryMix.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    dryMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
+    dryMix.onValueChange = [this] { updateDryWetMixLabels(); };
+    dryMix.onDragStart = [this] { draggingDryMix = true; updateDryWetMixLabels(); };
+    dryMix.onDragEnd = [this] { draggingDryMix = false; updateDryWetMixLabels(); };
+    dryMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "dry_mix", dryMix);
+
+    addAndMakeVisible(dryMixLabel);
+    dryMixLabel.setFont(FontOptions(16.f));
+    dryMixLabel.setJustificationType(Justification::centredBottom);
+    dryMixLabel.setBounds(col, row + KNOB_HEIGHT - 20, KNOB_WIDTH / 2, 21);
+    dryMixLabel.setBounds(dryMixLabel.getBounds().expanded(5, 0));
+
+    addAndMakeVisible(wetMix);
+    wetMix.setComponentID("wet_mix");
+    wetMix.setSliderStyle(Slider::LinearBarVertical);
+    wetMix.setBounds(col + KNOB_WIDTH / 2, row, KNOB_WIDTH / 2, KNOB_HEIGHT - 23);
+    wetMix.setBounds(wetMix.getBounds().withTrimmedLeft(2).withTrimmedTop(2));
+    wetMix.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    wetMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
+    wetMix.onValueChange = [this] { updateDryWetMixLabels(); };
+    wetMix.onDragStart = [this] { draggingWetMix = true; updateDryWetMixLabels(); };
+    wetMix.onDragEnd = [this] { draggingWetMix = false; updateDryWetMixLabels(); };
+    wetMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "wet_mix", wetMix);
+
+    addAndMakeVisible(wetMixLabel);
+    wetMixLabel.setFont(FontOptions(16.f));
+    wetMixLabel.setJustificationType(Justification::centredBottom);
+    wetMixLabel.setBounds(col + KNOB_WIDTH / 2, row + KNOB_HEIGHT - 20, KNOB_WIDTH / 2, 21);
+    wetMixLabel.setBounds(wetMixLabel.getBounds().expanded(5, 0));
+    
     feedback = std::make_unique<Rotary>(audioProcessor, "feedback", "Feedbk", Rotary::percx100, true);
     addChildComponent(feedback.get());
     feedback->setBounds(col+KNOB_WIDTH, row, KNOB_WIDTH, KNOB_HEIGHT);
@@ -136,7 +169,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     panDry = std::make_unique<Rotary>(audioProcessor, "pan_dry", "Dry", Rotary::pan, true);
     addChildComponent(panDry.get());
-    panDry->setBounds(mix->getBounds());
+    panDry->setBounds(col, row, KNOB_WIDTH, KNOB_HEIGHT);
 
     panWet = std::make_unique<Rotary>(audioProcessor, "pan_wet", "Wet", Rotary::pan, true);
     addChildComponent(panWet.get());
@@ -148,7 +181,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     swing = std::make_unique<Rotary>(audioProcessor, "swing", "Swing", Rotary::percx100, true);
     addChildComponent(swing.get());
-    swing->setBounds(mix->getBounds());
+    swing->setBounds(col, row, KNOB_WIDTH, KNOB_HEIGHT);
 
     feel = std::make_unique<Rotary>(audioProcessor, "feel", "Feel", Rotary::percx100, true);
     addChildComponent(feel.get());
@@ -290,6 +323,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     init = true;
     resized();
     toggleUIComponents();
+    updateDryWetMixLabels();
 }
 
 QDelayAudioProcessorEditor::~QDelayAudioProcessorEditor()
@@ -324,7 +358,10 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
 
     auto mode = (Delay::DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     if (mode == Delay::ClassicPiPo) mode = Delay::PingPong;
-    mix->setVisible(audioProcessor.delayTab == 0);
+    dryMix.setVisible(audioProcessor.delayTab == 0);
+    wetMix.setVisible(audioProcessor.delayTab == 0);
+    dryMixLabel.setVisible(audioProcessor.delayTab == 0);
+    wetMixLabel.setVisible(audioProcessor.delayTab == 0);
     feedback->setVisible(audioProcessor.delayTab == 0);
     haasWidth->setVisible(audioProcessor.delayTab == 0 && mode != Delay::PingPong);
     pipoWidth->setVisible(audioProcessor.delayTab == 0 && mode == Delay::PingPong);
@@ -552,6 +589,22 @@ void QDelayAudioProcessorEditor::showRightTabMenu()
             toggleUIComponents();
         }
     );
+}
+
+void QDelayAudioProcessorEditor::updateDryWetMixLabels()
+{
+    dryMixLabel.setText("Dry", dontSendNotification);
+    wetMixLabel.setText("Wet", dontSendNotification);
+    if (draggingDryMix)
+    {
+        auto drymix = audioProcessor.params.getRawParameterValue("dry_mix")->load();
+        dryMixLabel.setText(String(std::round(drymix * 100)) + "%", dontSendNotification);
+    }
+    if (draggingWetMix)
+    {
+        auto wetmix = audioProcessor.params.getRawParameterValue("wet_mix")->load();
+        wetMixLabel.setText(String(std::round(wetmix * 100)) + "%", dontSendNotification);
+    }
 }
 
 void QDelayAudioProcessorEditor::showPresetsMenu()
