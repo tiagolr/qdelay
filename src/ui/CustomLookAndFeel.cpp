@@ -39,8 +39,64 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
     const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
     auto tag = slider.getComponentID();
-    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix") {
+    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix" && tag != "out_gain") {
         LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
+        return;
+    }
+
+    if (tag == "out_gain")
+    {
+        auto bounds = Rectangle<int>(x, y, width, height).toFloat();
+        UIUtils::drawBevel(g, bounds.reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
+        bounds = bounds.reduced(4.f);
+        bounds = bounds.withHeight(bounds.getHeight() + 1);
+
+        g.setColour(Colour(COLOR_ACTIVE));
+        Path p;
+        p.addRoundedRectangle(bounds, BEVEL_CORNER);
+        g.saveState();
+        g.reduceClipRegion(p);
+
+        const float valuePos = juce::jmap((float)slider.getValue(),
+            (float)slider.getMinimum(),
+            (float)slider.getMaximum(),
+            bounds.getX(),
+            bounds.getRight());
+
+        const float zeroPos = juce::jmap(0.0f,
+            (float)slider.getMinimum(),
+            (float)slider.getMaximum(),
+            bounds.getX(),
+            bounds.getRight());
+
+        const float snappedValuePos = std::round(valuePos);
+        const float snappedZeroPos = std::round(zeroPos);
+
+        if (snappedValuePos >= snappedZeroPos)
+        {
+            g.fillRect(juce::Rectangle<float>(
+                snappedZeroPos,
+                bounds.getY(),
+                snappedValuePos - snappedZeroPos,
+                bounds.getHeight()));
+        }
+        else
+        {
+            g.fillRect(juce::Rectangle<float>(
+                snappedValuePos,
+                bounds.getY(),
+                snappedZeroPos - snappedValuePos,
+                bounds.getHeight()));
+        }
+
+        // Center line
+        g.drawLine(snappedZeroPos,
+            bounds.getY(),
+            snappedZeroPos,
+            bounds.getBottom(),
+            2.0f);
+
+        g.restoreState();
         return;
     }
 

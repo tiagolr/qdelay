@@ -70,6 +70,25 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
             savePreset();
         };
 
+    addAndMakeVisible(outGain);
+    outGainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "out_gain", outGain);
+    outGain.setComponentID("out_gain");
+    outGain.setSliderStyle(Slider::LinearBar);
+    outGain.setBounds(Rectangle<int>(75, 25).withY(NAV_HEIGHT / 2 - 25/2 + 1).withRightX(getWidth() - PLUG_PADDING));
+    outGain.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    outGain.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
+    outGain.setVelocityBasedMode(true);
+    outGain.onDragStart = [this] { draggingOutGain = true; refreshOutGainLabel(); };
+    outGain.onDragEnd = [this] { draggingOutGain = false; refreshOutGainLabel(); };
+    outGain.onValueChange = [this] { refreshOutGainLabel(); };
+
+    addAndMakeVisible(outGainLabel);
+    outGainLabel.setFont(FontOptions(16.f));
+    outGainLabel.setText("Out", dontSendNotification);
+    outGainLabel.setJustificationType(Justification::centredRight);
+    outGainLabel.setColour(Label::ColourIds::textColourId, Colours::white);
+    outGainLabel.setBounds(Rectangle<int>(60, 20).withY(NAV_HEIGHT / 2 - 20 / 2 + 1).withRightX(outGain.getX() - 5));
+
     // LEFT SECTION
     col = PLUG_PADDING;
     row = PLUG_PADDING + NAV_HEIGHT + HEADER_HEIGHT + 10;
@@ -625,4 +644,13 @@ void QDelayAudioProcessorEditor::savePreset()
             file.replaceWithText(filestr);
             MessageManager::callAsync([this] { repaint(); });
         });
+}
+
+void QDelayAudioProcessorEditor::refreshOutGainLabel()
+{
+    float gain = audioProcessor.params.getRawParameterValue("out_gain")->load();
+    String text = draggingOutGain
+        ? String(gain, 1) + " dB"
+        : "Out";
+    outGainLabel.setText(text, dontSendNotification);
 }

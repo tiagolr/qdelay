@@ -48,6 +48,7 @@ public:
     void showRightTabMenu();
     void showPresetsMenu();
     void savePreset();
+    void refreshOutGainLabel();
 
     QDelayAudioProcessor& audioProcessor;
 private:
@@ -59,6 +60,10 @@ private:
     TextButton prevPresetBtn;
     TextButton nextPresetBtn;
     TextButton saveBtn;
+    Slider outGain;
+    Label outGainLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> outGainAttachment;
+    bool draggingOutGain;
 
     std::unique_ptr<DelayView> delayView;
     std::unique_ptr<DelayWidget> delayWidget;

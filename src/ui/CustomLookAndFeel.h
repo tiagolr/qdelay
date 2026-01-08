@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "../Globals.h"
+#include "UIUtils.h"
 
 using namespace globals;
 
