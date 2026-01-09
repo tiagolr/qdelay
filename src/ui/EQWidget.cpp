@@ -35,9 +35,7 @@ EQWidget::EQWidget(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 
 	for (int i = 0; i < EQ_BANDS; ++i) {
 		auto pre = prel + String("eq_band") + String(i + 1);
-		if (i == 0 || i == EQ_BANDS - 1) {
-			editor.audioProcessor.params.addParameterListener(pre + "_mode", this);
-		}
+		editor.audioProcessor.params.addParameterListener(pre + "_mode", this);
 		auto freq = std::make_unique<Rotary>(editor.audioProcessor, pre + "_freq", "Freq", Rotary::hz);
 		auto q = std::make_unique<Rotary>(editor.audioProcessor, pre + "_q", "Q", Rotary::float1);
 		auto gain = std::make_unique<Rotary>(editor.audioProcessor, pre + "_gain", "Gain", Rotary::dBfloat1, true);
@@ -80,9 +78,7 @@ EQWidget::~EQWidget()
 	editor.audioProcessor.params.removeParameterListener("eq_path", this);
 	for (int i = 0; i < EQ_BANDS; ++i) {
 		auto pre = prel + String("eq_band") + String(i + 1);
-		if (i == 0 || i == EQ_BANDS - 1) {
-			editor.audioProcessor.params.removeParameterListener(pre + "_mode", this);
-		}
+		editor.audioProcessor.params.removeParameterListener(pre + "_mode", this);
 	}
 }
 

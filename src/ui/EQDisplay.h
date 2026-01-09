@@ -11,6 +11,7 @@ class QDelayAudioProcessorEditor;
 class EQDisplay
 	: public juce::Component
 	, private juce::Timer
+	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
 
@@ -18,6 +19,7 @@ public:
 	~EQDisplay();
 
 	void timerCallback();
+	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void mouseDown(const MouseEvent& e) override;
 	void mouseDrag(const MouseEvent& e) override;
 	void mouseUp(const MouseEvent& e) override;

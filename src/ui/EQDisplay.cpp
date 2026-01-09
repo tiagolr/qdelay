@@ -7,11 +7,37 @@ EQDisplay::EQDisplay(QDelayAudioProcessorEditor& e, SVF::EQType _type)
 	, prel(type == SVF::ParamEQ ? "input" : "decay")
 {
 	startTimerHz(30);
-	updateEQCurve();
+
+	for (int i = 0; i < EQ_BANDS; ++i) {
+		auto pre = prel + String("eq_band") + String(i + 1);
+		editor.audioProcessor.params.addParameterListener(pre + "_mode", this);
+		editor.audioProcessor.params.addParameterListener(pre + "_freq", this);
+		editor.audioProcessor.params.addParameterListener(pre + "_q", this);
+		editor.audioProcessor.params.addParameterListener(pre + "_gain", this);
+		editor.audioProcessor.params.addParameterListener(pre + "_bypass", this);
+	}
 }
 
 EQDisplay::~EQDisplay()
 {
+	for (int i = 0; i < EQ_BANDS; ++i) {
+		auto pre = prel + String("eq_band") + String(i + 1);
+		editor.audioProcessor.params.removeParameterListener(pre + "_mode", this);
+		editor.audioProcessor.params.removeParameterListener(pre + "_freq", this);
+		editor.audioProcessor.params.removeParameterListener(pre + "_q", this);
+		editor.audioProcessor.params.removeParameterListener(pre + "_gain", this);
+		editor.audioProcessor.params.removeParameterListener(pre + "_bypass", this);
+	}
+}
+
+void EQDisplay::parameterChanged(const juce::String& parameterID, float newValue)
+{
+	(void)parameterID;
+	(void)newValue;
+	MessageManager::callAsync([this] 
+		{ 
+			updateEQCurve();
+		});
 }
 
 void EQDisplay::timerCallback()
@@ -243,7 +269,6 @@ void EQDisplay::paint(juce::Graphics& g)
 
 	// draw eq
 	g.setColour(Colours::white);
-	updateEQCurve();
 	Path p;
 	auto pixels = viewBounds.getWidth();
 	for (int i = 0; i < pixels; ++i) {
@@ -352,6 +377,7 @@ void EQDisplay::resized()
 {
 	auto b = getLocalBounds();
 	viewBounds = b.reduced(5).toFloat();
+	updateEQCurve();
 	toggleUIComponents();
 }
 
@@ -363,12 +389,10 @@ void EQDisplay::toggleUIComponents()
 void EQDisplay::updateEQCurve()
 {
 	int numPoints = (int)viewBounds.getWidth();
-	if (numPoints == 0) numPoints = 1; // Allow EQ curve to compute on init before resize
 	const float minFreq = 20.0f;
 	const float maxFreq = 20000.0f;
 
 	magPoints.clear();
-
 
 	for (int i = 0; i < numPoints; ++i) {
 		float norm = (float)i / (numPoints - 1);
