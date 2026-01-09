@@ -82,6 +82,7 @@ void Rotary::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWhee
 
 void Rotary::mouseUp(const juce::MouseEvent& e) 
 {
+    if (!mouse_down) return;
     mouse_down = false;
     setMouseCursor(MouseCursor::NormalCursor);
     e.source.enableUnboundedMouseMovement(false);

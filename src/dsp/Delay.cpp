@@ -296,6 +296,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             // override the input offset to write the reversed right at the read head
             if (revsizeL > 1) inputOffsetL = -revsizeL / 2 + 1;
             if (revsizeR > 1) inputOffsetR = -revsizeR / 2 + 1;
+            mod = 0; // modulation does not play well with reverse, disable it
         }
 
         auto tap1L = mode == Tap ? timeRight : timeLeft;
