@@ -317,6 +317,9 @@ QDelayAudioProcessorEditor::~QDelayAudioProcessorEditor()
     delete customLookAndFeel;
     audioProcessor.removeChangeListener(this);
     audioProcessor.params.removeParameterListener("mode", this);
+    audioProcessor.params.removeParameterListener("reverse", this);
+    audioProcessor.params.removeParameterListener("pan_dry_sum", this);
+    audioProcessor.params.removeParameterListener("pan_wet_sum", this);
 }
 
 void QDelayAudioProcessorEditor::changeListenerCallback(ChangeBroadcaster* source)

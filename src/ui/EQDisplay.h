@@ -43,8 +43,8 @@ public:
 private:
 	juce::dsp::FFT fft{ EQ_FFT_ORDER };
 	juce::dsp::WindowingFunction<float> window{ 1 << EQ_FFT_ORDER, juce::dsp::WindowingFunction<float>::blackmanHarris };
-	std::array<float, (1 << EQ_FFT_ORDER) * 2> fftData;
-	std::array<float, (1 << EQ_FFT_ORDER) / 2> fftMagnitudes;
+	std::array<float, (1 << EQ_FFT_ORDER) * 2> fftData{};
+	std::array<float, (1 << EQ_FFT_ORDER) / 2> fftMagnitudes{};
 
 	SVF::EQType type;
 	String prel;
