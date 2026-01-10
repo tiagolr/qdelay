@@ -5,6 +5,7 @@ DistWidget::DistWidget(QDelayAudioProcessorEditor& e)
 	: editor(e)
 {
 	editor.audioProcessor.params.addParameterListener("dist_mode", this);
+	editor.audioProcessor.params.addParameterListener("crush_upsample", this);
 
 	addAndMakeVisible(modeBtn);
 	modeBtn.setAlpha(0.f);
@@ -29,17 +30,42 @@ DistWidget::DistWidget(QDelayAudioProcessorEditor& e)
 	dynamics = std::make_unique<Rotary>(editor.audioProcessor, "dist_dyn", "Dynam", Rotary::percx100);
 	dynamics->setTooltip("Dynamics makes distortion react to signal level - louder hits harder, quieter less.");
 	addAndMakeVisible(dynamics.get());
+
+	srate = std::make_unique<Rotary>(editor.audioProcessor, "crush_srate", "Srate", Rotary::percx100);
+	addAndMakeVisible(srate.get());
+
+	bits = std::make_unique<Rotary>(editor.audioProcessor, "crush_bits", "Bits", Rotary::percx100);
+	addAndMakeVisible(bits.get());
+
+	addAndMakeVisible(crushBtn);
+	crushBtn.setAlpha(0.f);
+	crushBtn.onClick = [this]
+		{
+			showModeMenu();
+		};
+
+	addAndMakeVisible(upsampleBtn);
+	upsampleBtn.setComponentID("button-noborder");
+	upsampleBtn.setButtonText("Upsamp");
+	bool upsample = editor.audioProcessor.params.getRawParameterValue("crush_upsample")->load();
+	upsampleBtn.setToggleState(upsample, dontSendNotification);
+	upsampleBtn.onClick = [this]
+		{
+			auto param = editor.audioProcessor.params.getParameter("crush_upsample");
+			param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+		};
 }
 
 DistWidget::~DistWidget()
 {
 	editor.audioProcessor.params.removeParameterListener("dist_mode", this);
+	editor.audioProcessor.params.removeParameterListener("crush_upsample", this);
 }
 
 void DistWidget::parameterChanged(const juce::String& parameterID, float newValue)
 {
-	(void)parameterID;
-	(void)newValue;
+	if (parameterID  == "crush_upsample")
+		upsampleBtn.setToggleState((bool)newValue, dontSendNotification);
 	MessageManager::callAsync([this] { repaint(); });
 }
 
@@ -51,7 +77,14 @@ void DistWidget::paint(Graphics& g)
 	g.setFont(FontOptions(16.f));
 	g.setColour(Colours::white);
 	g.drawText(mode == 0 ? "Tape" : "Tanh", modeBtn.getBounds().toFloat(), Justification::centred);
-	
+
+	g.setColour(Colour(COLOR_NEUTRAL));
+	g.drawText("LOFI", 0, KNOB_HEIGHT * 2 + 15, KNOB_WIDTH, 20, Justification::centred);
+
+	UIUtils::drawBevel(g, crushBtn.getBounds().toFloat().reduced(0.5f), BEVEL_CORNER, Colour(COLOR_BEVEL));
+	g.setFont(FontOptions(16.f));
+	g.setColour(Colours::white);
+	g.drawText("Both", crushBtn.getBounds().toFloat(), Justification::centred);
 }
 
 void DistWidget::resized()
@@ -65,6 +98,11 @@ void DistWidget::resized()
 	color->setBounds(b.getX(), b.getY() + KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
 	bias->setBounds(b.getX() + KNOB_WIDTH, b.getY() + KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
 	dynamics->setBounds(b.getX() + KNOB_WIDTH * 2, b.getY() + KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
+
+	upsampleBtn.setBounds(b.getX() + KNOB_WIDTH, b.getY() + KNOB_HEIGHT * 2 + 15, KNOB_WIDTH, 20);
+	crushBtn.setBounds(Rectangle<int>(b.getX(), b.getY() + KNOB_HEIGHT / 2 - 25 / 2 + KNOB_HEIGHT * 2 + HSEPARATOR + 30, KNOB_WIDTH, 25));
+	srate->setBounds(b.getX() + KNOB_WIDTH, b.getY() + KNOB_HEIGHT * 2 + HSEPARATOR + 30, KNOB_WIDTH, KNOB_HEIGHT);
+	bits->setBounds(srate->getBounds().translated(KNOB_WIDTH, 0));
 }
 
 void DistWidget::showModeMenu()

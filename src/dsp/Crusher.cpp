@@ -4,6 +4,11 @@
 Crusher::Crusher(QDelayAudioProcessor& p) : audioProcessor(p) {}
 Crusher::~Crusher() {}
 
+static float linearInterpolation(float y1, float y2, float mu)
+{
+	return y1 * (1.0f - mu) + y2 * mu;
+};
+
 void Crusher::prepare(float _srate)
 {
 	srate = _srate;
@@ -19,16 +24,32 @@ void Crusher::clear()
 	upFilterR.clear();
 	dc_inL = dc_outL = 0.f;
 	dc_inR = dc_outR = 0.f;
+	counterDS = 0;
+	counterUS = 0;
+	stateDS_L = stateUS_L = 0.f;
+	stateDS_R = stateUS_R = 0.f;
+	lastStateDS_L = lastStateUS_L = 0.f;
+	lastStateDS_R = lastStateUS_R = 0.f;
 }
 
 void Crusher::onSlider()
 {
-	upsample = (bool)audioProcessor.params.getRawParameterValue("crusher_upsample")->load();
+	upsample = (bool)audioProcessor.params.getRawParameterValue("crush_upsample")->load();
 
-	float dnsample = audioProcessor.params.getRawParameterValue("crusher_dnsample")->load();
-	ratio = MIN_CRATIO + (int)std::round(dnsample * (MAX_CRATIO - MIN_CRATIO));
+	float dnsample = audioProcessor.params.getRawParameterValue("crush_srate")->load();
+	int newratio = MIN_CRATIO + (int)std::round(dnsample * (MAX_CRATIO - MIN_CRATIO));
+	if (ratio != newratio)
+	{
+		counterUS = 0;
+		counterDS = 0;
+		stateDS_L = stateUS_L = 0.f;
+		stateDS_R = stateUS_R = 0.f;
+		lastStateDS_L = lastStateUS_L = 0.f;
+		lastStateDS_R = lastStateUS_R = 0.f;
+		ratio = newratio;
+	}
 
-	float crusherBits = audioProcessor.params.getRawParameterValue("crusher_bits")->load();
+	float crusherBits = audioProcessor.params.getRawParameterValue("crush_bits")->load();
 	bits = MAX_CBITS - (crusherBits * (MAX_CBITS - MIN_CBITS));
 	bitsLevel = 1.f / std::pow(2.f, bits);
 
@@ -108,11 +129,6 @@ void Crusher::dcBlock(float& left, float& right)
 	right = dc_outR;
 }
 
-static float linearInterpolation (float y1, float y2, float mu)
-{
-    return y1 * (1.0 - mu) + y2 * mu;
-};
-
 float Crusher::bitReduce(float x) const
 {
 	return std::fabs(x) < bitsLevel ? 0.f : x;
@@ -120,6 +136,9 @@ float Crusher::bitReduce(float x) const
 
 void Crusher::processBlock(float* left, float* right, int nsamps)
 {
+	if (ratio <= 1.f && bits == MAX_CBITS)
+		return;
+
 	for (int i = 0; i < nsamps; ++i)
 	{
 		process(left[i], right[i]);

@@ -15,11 +15,15 @@ class DistWidget
 public:
 
 	TextButton modeBtn;
+	TextButton upsampleBtn;
+	TextButton crushBtn;
 	std::unique_ptr<Rotary> drive;
 	std::unique_ptr<Rotary> trim;
 	std::unique_ptr<Rotary> color;
 	std::unique_ptr<Rotary> bias;
 	std::unique_ptr<Rotary> dynamics;
+	std::unique_ptr<Rotary> srate;
+	std::unique_ptr<Rotary> bits;
 
 	DistWidget(QDelayAudioProcessorEditor& e);
 	~DistWidget();

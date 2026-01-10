@@ -15,6 +15,7 @@
 #include "dsp/SVF.h"
 #include "dsp/Follower.h"
 #include "dsp/Distortion.h"
+#include "dsp/Crusher.h"
 #include "dsp/Diffusor.h"
 #include "dsp/Pitcher.h"
 #include "dsp/Flutter.h"
@@ -35,8 +36,10 @@ class QDelayAudioProcessor
 public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> distPre;
+    std::unique_ptr<Crusher> crushPre;
     int distPrePath = 0; // Pre or feedback distortion/saturation
     std::unique_ptr<Distortion> distPost;
+    std::unique_ptr<Crusher> crushPost;
     std::unique_ptr<PresetMgr> presetmgr;
     float dist_pre = 0.f;
     float dist_post = 0.f;
@@ -48,6 +51,7 @@ public:
     float pitcherSpeed = 0.f;
     int pitcherPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
+    AudioBuffer<float> distBuffer;
     Follower follower;
     int eqPath = 0; // Input or output eq
     std::vector<SVF::EQBand> eqBands;
@@ -113,6 +117,7 @@ public:
     void saveSettings();
     void setScale(float scl);
     void onSlider ();
+    void clearAll();
     std::vector<SVF::EQBand> getEqualizer(SVF::EQType type) const;
 
     //==============================================================================

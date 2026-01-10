@@ -96,7 +96,7 @@ float Distortion::saturate(float x, float& dc) const
 	return y;
 }
 
-void Distortion::processBlock(float* left, float* right, int nsamps, float drygain, float wetgain)
+void Distortion::processBlock(float* left, float* right, int nsamps)
 {
 	for (int i = 0; i < nsamps; ++i)
 	{
@@ -115,7 +115,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		float y2_satl = saturate(y2l, dc_y2l);
 		float y = (y3l * g3 + y1_satl + y2_satl) * trimGain;
 		y = y * (1.f + dynamics * (dyn_l.env - 1.f));
-		left[i] = left[i] * drygain + y * wetgain;
+		left[i] = y;
 
 		// filter right
 		y1r += y2r * k2;
@@ -127,7 +127,7 @@ void Distortion::processBlock(float* left, float* right, int nsamps, float dryga
 		float y2_satr = saturate(y2r, dc_y2r);
 		y = (y3r * g3 + y1_satr + y2_satr) * trimGain;
 		y = y * (1.f + dynamics * (dyn_r.env - 1.f));
-		right[i] = right[i] * drygain + y * wetgain;
+		right[i] = y;
 	}
 }
 

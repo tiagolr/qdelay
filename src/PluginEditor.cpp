@@ -279,7 +279,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
 
     distWidget = std::make_unique<DistWidget>(*this);
     addChildComponent(distWidget.get());
-    distWidget->setBounds(col, row + HEADER_HEIGHT + 10 + 5, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 20);
+    distWidget->setBounds(col, row + HEADER_HEIGHT + 10 + 5, KNOB_WIDTH * 3, KNOB_HEIGHT * 3 + HSEPARATOR + 30);
 
     tapeWidget = std::make_unique<TapeWidget>(*this);
     addChildComponent(tapeWidget.get());

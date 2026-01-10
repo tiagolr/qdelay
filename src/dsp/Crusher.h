@@ -28,7 +28,6 @@ struct LPFilter // high order cascaded butterworth LP filter
 		if (order == _order && cutoff == Hz && srate == _srate)
 			return;
 
-		clear();
 		cutoff = Hz;
 		order = _order;
 		srate = _srate;
@@ -42,10 +41,10 @@ struct LPFilter // high order cascaded butterworth LP filter
 		{
 			float r = std::sin(MathConstants<float>::pi * (2.f * step + 1.f) * ro4); 
 			float ar2 = 2.f * a1 * r;
-			float s2 = a2 + ar2 + 1.0; 
-			float rs2 = 1.0 / s2; 
+			float s2 = a2 + ar2 + 1.0f; 
+			float rs2 = 1.0f / s2; 
 			a[step] = a2 * rs2;
-			d1[step] = 2.0 * (1.0 - a2) * rs2; d2[step] = -(a2 - ar2 + 1.0) * rs2;
+			d1[step] = 2.0f * (1.0f - a2) * rs2; d2[step] = -(a2 - ar2 + 1.0f) * rs2;
 			step += 1;
 		}
 	}
