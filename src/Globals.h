@@ -14,6 +14,12 @@ namespace globals {
 	constexpr float MAX_ACCENT = 0.5f;
 	constexpr float MAX_FEEL_QN_OFFSET = 0.25f; // quarter note max offset
 
+	// BIT CRUSHER
+	constexpr float MIN_CBITS = 1.f;
+	constexpr float MAX_CBITS = 24.f;
+	constexpr int MIN_CRATIO = 1;
+	constexpr int MAX_CRATIO = 32;
+
 	// UI
 	constexpr int NAV_HEIGHT = 35; // top header
 	constexpr int HEADER_HEIGHT = 20; // old header, now the row below nav
