@@ -72,7 +72,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("dist_dyn", "Saturation Dynamics", 0.f, 1.f, 0.0f));
 
 
-    layout.add(std::make_unique<AudioParameterChoice>("crush_path", "Crusher Path", StringArray{"Both", "Pre", "Post"}, 0));
+    layout.add(std::make_unique<AudioParameterChoice>("crush_path", "Crusher Path", StringArray{"Pre", "Post", "Feedback"}, 0));
     layout.add(std::make_unique<AudioParameterBool>("crush_upsample", "Crusher Upsample", true));
     layout.add(std::make_unique<AudioParameterFloat>("crush_srate", "Crusher Samplerate", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("crush_bits", "Crusher Bitrate", 0.f, 1.f, 0.0f));
@@ -334,7 +334,6 @@ void QDelayAudioProcessor::changeProgramName (int index, const juce::String& new
 void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     wetBuffer.setSize (2, samplesPerBlock);
-    distBuffer.setSize (2, samplesPerBlock);
     srate = sampleRate;
     distPreOversampler->initProcessing(samplesPerBlock);
     distPreOversampler->reset();
@@ -347,6 +346,8 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     crushPre->prepare((float)srate * (float)distPreOversampler->getOversamplingFactor());
     crushPost->prepare((float)srate * (float)distPostOversampler->getOversamplingFactor());
     diffusor->prepare((float)srate);
+    distPreBuffer.setSize(2, samplesPerBlock * (int)distPreOversampler->getOversamplingFactor());
+    distPostBuffer.setSize(2, samplesPerBlock * (int)distPostOversampler->getOversamplingFactor());
     pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
     flutter->prepare((float)sampleRate);
     wow->prepare((float)sampleRate);
@@ -580,23 +581,34 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         }
     }
 
-    // process pre distortion
-    if (dist_pre > 0.f && distPrePath == 0)
+    // process pre distortion and bitcrushing
+    int crushPath = (int)params.getRawParameterValue("crush_path")->load();
+    float crushSrate = params.getRawParameterValue("crush_srate")->load();
+    float crushBits = params.getRawParameterValue("crush_bits")->load();
+
+    if ((dist_pre > 0.f && distPrePath == 0) || 
+        (crushPath == 0 && (crushSrate > 0.f || crushBits > 0.f)))
     {
-        distBuffer.copyFrom(0, 0, wetBuffer, 0, 0, numSamples);
-        distBuffer.copyFrom(1, 0, wetBuffer, 1, 0, numSamples);
-        float* channels[2] = { distBuffer.getWritePointer(0), distBuffer.getWritePointer(1) };
-        juce::dsp::AudioBlock<float> block(channels, 2, (size_t)numSamples);
-        auto oversampledBlock = distPreOversampler->processSamplesUp(block);
-        float* osleft = oversampledBlock.getChannelPointer(0);
-        float* osright = oversampledBlock.getChannelPointer(1);
+        juce::dsp::AudioBlock<float> block(wetBuffer);
+        auto osblock = distPreOversampler->processSamplesUp(block);
+        float* osleft = osblock.getChannelPointer(0);
+        float* osright = osblock.getChannelPointer(1);
         int os = (int)distPreOversampler->getOversamplingFactor();
-        crushPre->processBlock(osleft, osright, numSamples * os);
-        distPre->processBlock(osleft, osright, numSamples * os);
+
+        if (crushPath == 0 && (crushSrate > 0.f || crushBits > 0.f)) {
+            crushPre->processBlock(osleft, osright, numSamples * os);
+        }
+        juce::dsp::AudioBlock<float> crushBlock(distPreBuffer);
+        crushBlock.copyFrom(osblock);
+
+        if (dist_pre > 0.f && distPrePath == 0) {
+            distPre->processBlock(osleft, osright, numSamples * os);
+        }
+        
+        osblock.multiplyBy(dist_pre);
+        crushBlock.multiplyBy(1.f - dist_pre);
+        osblock.add(crushBlock);
         distPreOversampler->processSamplesDown(block);
-        wetBuffer.applyGain(1.f - dist_pre);
-        wetBuffer.addFrom(0, 0, distBuffer.getReadPointer(0), numSamples, dist_pre);
-        wetBuffer.addFrom(1, 0, distBuffer.getReadPointer(1), numSamples, dist_pre);
     }
 
     // process pre diffusion
@@ -685,23 +697,30 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         wow->boundPhase();
     }
 
-    // process post distortion
-    if (dist_post > 0.f)
+    // process post distortion and post bitcrush
+    if ((dist_post > 0.f) ||
+        (crushPath == 1 && (crushSrate > 0.f || crushBits > 0.f)))
     {
-        distBuffer.copyFrom(0, 0, wetBuffer, 0, 0, numSamples);
-        distBuffer.copyFrom(1, 0, wetBuffer, 1, 0, numSamples);
-        float* channels[2] = { distBuffer.getWritePointer(0), distBuffer.getWritePointer(1) };
-        juce::dsp::AudioBlock<float> block(channels, 2, (size_t)numSamples);
-        auto oversampledBlock = distPostOversampler->processSamplesUp(block);
-        float* osleft = oversampledBlock.getChannelPointer(0);
-        float* osright = oversampledBlock.getChannelPointer(1);
+        juce::dsp::AudioBlock<float> block(wetBuffer);
+        auto osblock = distPostOversampler->processSamplesUp(block);
+        float* osleft = osblock.getChannelPointer(0);
+        float* osright = osblock.getChannelPointer(1);
         int os = (int)distPostOversampler->getOversamplingFactor();
-        crushPost->processBlock(osleft, osright, numSamples * os);
-        distPost->processBlock(osleft, osright, numSamples * os);
+
+        if (crushPath == 1) {
+            crushPost->processBlock(osleft, osright, numSamples * os);
+        }
+        juce::dsp::AudioBlock<float> crushBlock(distPostBuffer);
+        crushBlock.copyFrom(osblock);
+
+        if (dist_post > 0.f && (crushSrate > 0.f || crushBits > 0.f)) {
+            distPost->processBlock(osleft, osright, numSamples * os);
+        }
+
+        osblock.multiplyBy(dist_post);
+        crushBlock.multiplyBy(1.f - dist_post);
+        osblock.add(crushBlock);
         distPostOversampler->processSamplesDown(block);
-        wetBuffer.applyGain(1.f - dist_post);
-        wetBuffer.addFrom(0, 0, distBuffer.getReadPointer(0), numSamples, dist_post);
-        wetBuffer.addFrom(1, 0, distBuffer.getReadPointer(1), numSamples, dist_post);
     }
 
     // process post diffusion

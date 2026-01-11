@@ -51,7 +51,8 @@ public:
     float pitcherSpeed = 0.f;
     int pitcherPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
-    AudioBuffer<float> distBuffer;
+    AudioBuffer<float> distPreBuffer;
+    AudioBuffer<float> distPostBuffer;
     Follower follower;
     int eqPath = 0; // Input or output eq
     std::vector<SVF::EQBand> eqBands;
