@@ -34,6 +34,14 @@ class QDelayAudioProcessor
     , public ChangeBroadcaster
 {
 public:
+    enum RightTab
+    {
+		EQ,
+		Saturation,
+		Tape,
+		LoFi,
+    };
+
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> distPre;
     std::unique_ptr<Crusher> crushPre;
@@ -87,7 +95,7 @@ public:
     String presetName = "-- Init --";
     int delayTab = 0; // mix, pan, pattern
     int eqTab = 0; // input, feedback
-    int rightTab = 0; // EQ, Dist, Pitch
+    RightTab rightTab = RightTab::EQ;
     size_t eqFFTWriteIndex = 0;
     std::array<float, (1 << EQ_FFT_ORDER) * 2> eqFFTBuffer;
     std::atomic<bool> eqFFTReady = false;

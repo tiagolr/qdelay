@@ -20,6 +20,7 @@
 #include "ui/EQWidget.h"
 #include "ui/Meter.h"
 #include "ui/DistWidget.h"
+#include "ui/LofiWidget.h"
 #include "ui/TapeWidget.h"
 #include "ui/DuckMeter.h"
 #include "dsp/Delay.h"
@@ -104,6 +105,7 @@ private:
     std::unique_ptr<EQWidget> eqFeedbk;
     std::unique_ptr<DistWidget> distWidget;
     std::unique_ptr<TapeWidget> tapeWidget;
+    std::unique_ptr<LofiWidget> lofiWidget;
     std::unique_ptr<Meter> meter;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;

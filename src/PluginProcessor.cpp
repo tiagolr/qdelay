@@ -74,8 +74,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
     layout.add(std::make_unique<AudioParameterChoice>("crush_path", "Crusher Path", StringArray{"Pre", "Post", "Feedback"}, 0));
     layout.add(std::make_unique<AudioParameterBool>("crush_upsample", "Crusher Upsample", true));
-    layout.add(std::make_unique<AudioParameterFloat>("crush_srate", "Crusher Samplerate", 0.f, 1.f, 0.0f));
-    layout.add(std::make_unique<AudioParameterFloat>("crush_bits", "Crusher Bitrate", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("crush_srate", "Crusher Samplerate", 0.f, 1.f, 1.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("crush_bits", "Crusher Bitrate", 0.f, 1.f, 1.0f));
 
     layout.add(std::make_unique<AudioParameterFloat>("tape_amt", "Tape Amount", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("flutter_rate", "Flutter Rate", NormalisableRange<float>(0.01f, 50.f, 0.0001f, 0.3f), 10.f));
@@ -583,8 +583,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
     // process pre distortion and bitcrushing
     int crushPath = (int)params.getRawParameterValue("crush_path")->load();
-    float crushSrate = params.getRawParameterValue("crush_srate")->load();
-    float crushBits = params.getRawParameterValue("crush_bits")->load();
+    float crushSrate = 1.f - params.getRawParameterValue("crush_srate")->load();
+    float crushBits = 1.f - params.getRawParameterValue("crush_bits")->load();
 
     if ((dist_pre > 0.f && distPrePath == 0) || 
         (crushPath == 0 && (crushSrate > 0.f || crushBits > 0.f)))

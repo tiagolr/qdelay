@@ -36,7 +36,7 @@ void Crusher::onSlider()
 {
 	upsample = (bool)audioProcessor.params.getRawParameterValue("crush_upsample")->load();
 
-	float dnsample = audioProcessor.params.getRawParameterValue("crush_srate")->load();
+	float dnsample = 1.f - audioProcessor.params.getRawParameterValue("crush_srate")->load();
 	int newratio = MIN_CRATIO + (int)std::round(dnsample * (MAX_CRATIO - MIN_CRATIO));
 	if (ratio != newratio)
 	{
@@ -49,7 +49,7 @@ void Crusher::onSlider()
 		ratio = newratio;
 	}
 
-	float crusherBits = audioProcessor.params.getRawParameterValue("crush_bits")->load();
+	float crusherBits = 1.f - audioProcessor.params.getRawParameterValue("crush_bits")->load();
 	bits = MAX_CBITS - (crusherBits * (MAX_CBITS - MIN_CBITS));
 	bitsLevel = 1.f / std::pow(2.f, bits);
 

@@ -285,6 +285,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(tapeWidget.get());
     tapeWidget->setBounds(distWidget->getBounds());
 
+    lofiWidget = std::make_unique<LofiWidget>(*this);
+    addChildComponent(lofiWidget.get());
+    lofiWidget->setBounds(eqInput->getBounds());
+
     addAndMakeVisible(rightTabBtn);
     rightTabBtn.setAlpha(0.0f);
     rightTabBtn.setBounds(col, row + 4, 100, 25);
@@ -361,6 +365,7 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     eqFeedbk->setVisible(audioProcessor.eqTab == 1 && audioProcessor.rightTab == 0);
     distWidget->setVisible(audioProcessor.rightTab == 1);
     tapeWidget->setVisible(audioProcessor.rightTab == 2);
+    lofiWidget->setVisible(audioProcessor.rightTab == 3);
 
     bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     feel->setAlpha(reverse ? 0.5f : 1.f);
@@ -415,7 +420,7 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     UIUtils::drawTriangle(g, rightTabBtn.getBounds().toFloat().withWidth(25.f).reduced(8.f), 2, Colour(COLOR_ACTIVE));
     g.setColour(Colour(COLOR_ACTIVE));
     int tab = audioProcessor.rightTab;
-    g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : "TAPE", rightTabBtn.getBounds()
+    g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : tab == 2 ? "TAPE" : "LOFI", rightTabBtn.getBounds()
         .toFloat().withTrimmedLeft(25.f), Justification::centredLeft);
 
     if (audioProcessor.delayTab == 1)
@@ -505,14 +510,14 @@ void QDelayAudioProcessorEditor::showSettings()
         [this](int result)
         {
             if (result == 0) return;
-            else if (result == 9999) 
+            else if (result == 9999)
                 about->setVisible(true);
             else if (result == 30)
             {
                 auto param = audioProcessor.params.getParameter("reverse");
                 param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
-            else if (result == 40) 
+            else if (result == 40)
             {
                 auto param = audioProcessor.params.getParameter("dist_pre_path");
                 param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
@@ -556,12 +561,13 @@ void QDelayAudioProcessorEditor::showSettings()
 
 void QDelayAudioProcessorEditor::showRightTabMenu()
 {
-    auto tab = audioProcessor.rightTab;
+    auto tab = (int)audioProcessor.rightTab;
 
     PopupMenu menu;
     menu.addItem(1, "Equalizer", true, tab == 0);
     menu.addItem(2, "Saturation", true, tab == 1);
     menu.addItem(3, "Tape", true, tab == 2);
+    menu.addItem(4, "LoFi", true, tab == 3);
 
     auto menuPos = localPointToGlobal(rightTabBtn.getBounds().getBottomLeft());
     menu.showMenuAsync(PopupMenu::Options()
@@ -570,7 +576,7 @@ void QDelayAudioProcessorEditor::showRightTabMenu()
         [this](int result)
         {
             if (result == 0) return;
-            audioProcessor.rightTab = result - 1;
+            audioProcessor.rightTab = (QDelayAudioProcessor::RightTab)( result - 1);
             toggleUIComponents();
         }
     );

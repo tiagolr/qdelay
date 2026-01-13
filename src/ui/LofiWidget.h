@@ -8,26 +8,24 @@
 using namespace globals;
 class QDelayAudioProcessorEditor;
 
-class DistWidget
+class LofiWidget
 	: public juce::Component
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
 
-	TextButton modeBtn;
-	std::unique_ptr<Rotary> drive;
-	std::unique_ptr<Rotary> trim;
-	std::unique_ptr<Rotary> color;
-	std::unique_ptr<Rotary> bias;
-	std::unique_ptr<Rotary> dynamics;
+	TextButton upsampleBtn;
+	TextButton pathBtn;
+	std::unique_ptr<Rotary> srate;
+	std::unique_ptr<Rotary> bits;
 
-	DistWidget(QDelayAudioProcessorEditor& e);
-	~DistWidget();
+	LofiWidget(QDelayAudioProcessorEditor& e);
+	~LofiWidget();
 
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void paint(Graphics& g) override;
 	void resized() override;
-	void showModeMenu();
+	void showPathMenu();
 
 private:
 	QDelayAudioProcessorEditor& editor;
