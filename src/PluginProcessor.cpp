@@ -707,13 +707,13 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         float* osright = osblock.getChannelPointer(1);
         int os = (int)distPostOversampler->getOversamplingFactor();
 
-        if (crushPath == 1) {
+        if (crushPath == 1 && (crushSrate > 0.f || crushBits > 0.f)) {
             crushPost->processBlock(osleft, osright, numSamples * os);
         }
         juce::dsp::AudioBlock<float> crushBlock(distPostBuffer);
         crushBlock.copyFrom(osblock);
 
-        if (dist_post > 0.f && (crushSrate > 0.f || crushBits > 0.f)) {
+        if (dist_post > 0.f) {
             distPost->processBlock(osleft, osright, numSamples * os);
         }
 
