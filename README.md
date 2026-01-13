@@ -71,9 +71,9 @@ Feel free to explore the repository for snippets on parametric EQs, envelope fol
 Current signal routing:
 
 ```
-Input > EQ Input > Saturation Pre > Diffusion Pre >
+Input > EQ Input > LoFi pre > Saturation Pre > Diffusion Pre >
 [Delay <-> Modulation <-> EQ Feedback <-> Pitch Feedback <-> Saturation Feedback] >
-Pitch Post > Tape Wow/Flutter > Saturation Post > Diffusion Post > Output
+Pitch Post > Tape Wow/Flutter > Lofi Post > Saturation Post > Diffusion Post > EQ Output > Output
 ```
 
 * Diffusion and Pitch shift can be configured to be Pre|Post or Feedback|Post in the settings menu.
