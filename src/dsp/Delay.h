@@ -81,6 +81,7 @@ private:
 	float modPhase = 0.f;
 	float distWet = 0.f;
 	float distDry = 1.f;
+	bool disableClipping = false;
 
 	// reverse delay
 	bool reverse = false;

@@ -30,6 +30,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
     layout.add(std::make_unique<AudioParameterChoice>("mode", "Mode", StringArray{ "Normal", "Ping-Pong", "Tap", "Classic Ping-Pong"}, 0));
     layout.add(std::make_unique<AudioParameterBool>("reverse", "Reverse", false));
+    layout.add(std::make_unique<AudioParameterBool>("disable_clipping", "Disable Clipping", false));
     layout.add(std::make_unique<MetaParameterBool>("link", "Link", true));
     layout.add(std::make_unique<MetaParameterChoice>("sync_l", "Sync L", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
     layout.add(std::make_unique<MetaParameterChoice>("sync_r", "Sync R", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));

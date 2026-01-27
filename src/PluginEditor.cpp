@@ -462,6 +462,7 @@ void QDelayAudioProcessorEditor::showSettings()
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
     int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
     bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
+    bool disableClipping = (bool)audioProcessor.params.getRawParameterValue("disable_clipping")->load();
 
     PopupMenu scaleMenu;
     scaleMenu.addItem(50, "100%", true, std::fabs(audioProcessor.scale - 1.0f) < 1e-5);
@@ -472,6 +473,7 @@ void QDelayAudioProcessorEditor::showSettings()
 
     PopupMenu delayMenu;
     delayMenu.addItem(30, "Reverse", true, reverse);
+    delayMenu.addItem(31, "Clip Feedback", true, !disableClipping);
 
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
@@ -515,6 +517,11 @@ void QDelayAudioProcessorEditor::showSettings()
             else if (result == 30)
             {
                 auto param = audioProcessor.params.getParameter("reverse");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+            }
+            else if (result == 31)
+            {
+                auto param = audioProcessor.params.getParameter("disable_clipping");
                 param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
             else if (result == 40)

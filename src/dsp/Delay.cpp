@@ -345,10 +345,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         // EQ on the feedback path can be quite dangerous
         // clamp the feedback
-        v0 = std::clamp(v0, -1.f, 1.f);
-        v1 = std::clamp(v1, -1.f, 1.f);
-        s0 = std::clamp(s0, -1.f, 1.f);
-        s1 = std::clamp(s1, -1.f, 1.f);
+        if (!disableClipping) 
+        {
+            v0 = std::clamp(v0, -1.f, 1.f);
+            v1 = std::clamp(v1, -1.f, 1.f);
+            s0 = std::clamp(s0, -1.f, 1.f);
+            s1 = std::clamp(s1, -1.f, 1.f);
+        }
 
         if (mode == Normal)
         {
@@ -490,6 +493,7 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 
 void Delay::onSlider()
 {   
+    disableClipping = audioProcessor.params.getRawParameterValue("disable_clipping")->load();
     bool rev = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     if (rev != reverse) clear();
     reverse = rev;
