@@ -80,6 +80,8 @@ private:
 	float lfo_depth = 200.f;
 	float lfo_stereo = 0.f; // 0..1 normal stereo separation offset
 	float res = 0.f;
-
+	int lfo_sync = 0;
 	Lerp mix = 0.f;
+
+	float getLfoRate(int sync);
 };

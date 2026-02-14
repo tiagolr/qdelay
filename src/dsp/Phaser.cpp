@@ -22,6 +22,37 @@ void Phaser::prepare(float _srate)
 	mix.reset();
 }
 
+float Phaser::getLfoRate(int sync)
+{
+	if (sync == 0)
+		return audioProcessor.params.getRawParameterValue("phaser_rate")->load();
+
+	auto rateSync = audioProcessor.params.getRawParameterValue("phaser_rate_sync")->load();
+
+	auto secondsPerBeat = audioProcessor.secondsPerBeat;
+	if (secondsPerBeat == 0.f)
+		secondsPerBeat = 0.25f;
+
+	float qn = 1.f;
+	if (rateSync == 0) qn = 1.f / 16.f; // 1/64
+	if (rateSync == 1) qn = 1.f / 8.f; // 1/32
+	if (rateSync == 2) qn = 1.f / 4.f; // 1/16
+	if (rateSync == 3) qn = 1.f / 2.f; // 1/8
+	if (rateSync == 4) qn = 1.f / 1.f; // 1/4
+	if (rateSync == 5) qn = 1.f * 2.f; // 1/2
+	if (rateSync == 6) qn = 1.f * 4.f; // 1/1
+	if (rateSync == 7) qn = 2.f * 4.f; // 2/1
+	if (rateSync == 8) qn = 4.f * 4.f; // 4/1
+	if (rateSync == 9) qn = 8.f * 4.f; // 8/1
+	if (rateSync == 10) qn = 16.f * 4.f; // 16/1
+	if (rateSync == 11) qn = 32.f * 4.f; // 32/1
+	if (sync == 2) qn *= 2 / 3.f; // tripplet
+	if (sync == 3) qn *= 1.5f; // dotted
+
+	float seconds = (float)(qn * secondsPerBeat);
+	return 1.f / seconds;
+}
+
 void Phaser::onSlider()
 {
 	float mx = audioProcessor.params.getRawParameterValue("phaser_mix")->load();
@@ -31,8 +62,9 @@ void Phaser::onSlider()
 	res = audioProcessor.params.getRawParameterValue("phaser_res")->load();
 	lfo_center.set(audioProcessor.params.getRawParameterValue("phaser_center")->load());
 	lfo_depth = audioProcessor.params.getRawParameterValue("phaser_depth")->load() / 12.f;
-	lfo_rate = audioProcessor.params.getRawParameterValue("phaser_rate")->load();
 	lfo_stereo = audioProcessor.params.getRawParameterValue("phaser_stereo")->load() * 0.5f;
+	lfo_sync = (int)audioProcessor.params.getRawParameterValue("phaser_sync")->load();
+	lfo_rate = getLfoRate(lfo_sync);
 	lphaser.setMorph(morph);
 	rphaser.setMorph(morph);
 	lfoL.setRate(lfo_rate);

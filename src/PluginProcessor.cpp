@@ -100,7 +100,9 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterChoice>("phaser_path", "Phaser Path", StringArray{ "Feedback", "Post" }, 1));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_center", "Phaser LFO Center", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), 2000.0f));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_depth", "Phaser LFO Depth", 0.f, 48.f, 12.0f));
+    layout.add(std::make_unique<AudioParameterChoice>("phaser_sync", "Phaser Sync", StringArray{ "RateHz", "Straight", "Triplet", "Dotted" }, 1));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_rate", "Phaser LFO Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 1.f));
+    layout.add(std::make_unique<AudioParameterChoice>("phaser_rate_sync", "Phaser Rate Sync", StringArray{ "1/64", "1/32", "1/16", "1/8", "1/4", "1/2", "1/1", "2/1", "4/1", "8/1", "16/1", "32/1" }, 3));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_res", "Phaser Resonance", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_morph", "Phaser Morph", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("phaser_stereo", "Phaser Stereo", 0.f, 1.f, 0.0f));

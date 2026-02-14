@@ -13,6 +13,7 @@ class PhaserWidget
 	, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
+	TextButton syncBtn;
 	TextButton pathBtn;
 	std::unique_ptr<Rotary> mix;
 	std::unique_ptr<Rotary> stereo;
@@ -20,6 +21,7 @@ public:
 	std::unique_ptr<Rotary> res;
 	std::unique_ptr<Rotary> center;
 	std::unique_ptr<Rotary> rate;
+	std::unique_ptr<Rotary> rateSync;
 	std::unique_ptr<Rotary> depth;
 
 	PhaserWidget(QDelayAudioProcessorEditor& e);
@@ -28,7 +30,9 @@ public:
 	void parameterChanged(const juce::String& parameterID, float newValue) override;
 	void paint(Graphics& g) override;
 	void resized() override;
+	void toggleUIComponents();
 	void showPathMenu();
+	void showSyncMenu();
 
 private:
 	QDelayAudioProcessorEditor& editor;
