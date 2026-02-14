@@ -289,6 +289,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addChildComponent(lofiWidget.get());
     lofiWidget->setBounds(eqInput->getBounds());
 
+    phaserWidget = std::make_unique<PhaserWidget>(*this);
+    addChildComponent(phaserWidget.get());
+    phaserWidget->setBounds(tapeWidget->getBounds());
+
     addAndMakeVisible(rightTabBtn);
     rightTabBtn.setAlpha(0.0f);
     rightTabBtn.setBounds(col, row + 4, 100, 25);
@@ -366,6 +370,7 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
     distWidget->setVisible(audioProcessor.rightTab == 1);
     tapeWidget->setVisible(audioProcessor.rightTab == 2);
     lofiWidget->setVisible(audioProcessor.rightTab == 3);
+    phaserWidget->setVisible(audioProcessor.rightTab == 4);
 
     bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     feel->setAlpha(reverse ? 0.5f : 1.f);
@@ -420,7 +425,7 @@ void QDelayAudioProcessorEditor::paint (Graphics& g)
     UIUtils::drawTriangle(g, rightTabBtn.getBounds().toFloat().withWidth(25.f).reduced(8.f), 2, Colour(COLOR_ACTIVE));
     g.setColour(Colour(COLOR_ACTIVE));
     int tab = audioProcessor.rightTab;
-    g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : tab == 2 ? "TAPE" : "LOFI", rightTabBtn.getBounds()
+    g.drawText(tab == 0 ? "EQ" : tab == 1 ? "SAT" : tab == 2 ? "TAPE" : tab == 3 ? "LOFI" : "PHASER", rightTabBtn.getBounds()
         .toFloat().withTrimmedLeft(25.f), Justification::centredLeft);
 
     if (audioProcessor.delayTab == 1)
@@ -575,6 +580,7 @@ void QDelayAudioProcessorEditor::showRightTabMenu()
     menu.addItem(2, "Saturation", true, tab == 1);
     menu.addItem(3, "Tape", true, tab == 2);
     menu.addItem(4, "LoFi", true, tab == 3);
+    menu.addItem(5, "Phaser", true, tab == 4);
 
     auto menuPos = localPointToGlobal(rightTabBtn.getBounds().getBottomLeft());
     menu.showMenuAsync(PopupMenu::Options()

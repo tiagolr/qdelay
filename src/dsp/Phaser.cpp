@@ -32,7 +32,7 @@ void Phaser::onSlider()
 	lfo_center.set(audioProcessor.params.getRawParameterValue("phaser_center")->load());
 	lfo_depth = audioProcessor.params.getRawParameterValue("phaser_depth")->load() / 12.f;
 	lfo_rate = audioProcessor.params.getRawParameterValue("phaser_rate")->load();
-	lfo_stereo = audioProcessor.params.getRawParameterValue("phaser_stereo")->load();
+	lfo_stereo = audioProcessor.params.getRawParameterValue("phaser_stereo")->load() * 0.5f;
 	lphaser.setMorph(morph);
 	rphaser.setMorph(morph);
 	lfoL.setRate(lfo_rate);
@@ -55,7 +55,7 @@ void Phaser::resetPhase(float elapsed)
 void Phaser::process(float& left, float& right)
 {
 	float leftLFO  = lfoL.tick(0.0f);
-	float rightLFO = lfoR.tick(0.0f);
+	float rightLFO = lfoR.tick(lfo_stereo);
 	float freqL = std::clamp(lfo_center.get() * pow(2.0f, lfo_depth * leftLFO), 1.f, srate * 0.48f);
 	float freqR = std::clamp(lfo_center.get() * pow(2.0f, lfo_depth * rightLFO), 1.f, srate * 0.48f);
 	lphaser.init(srate, freqL, res);

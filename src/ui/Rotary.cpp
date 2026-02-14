@@ -295,7 +295,7 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
         else if (format == eqDecayGain) {
             text = String(std::round(slider_val / EQ_MAX_GAIN * 100.f)) + " %";
         }
-        else if (format == pitchSemis) {
+        else if (format == pitchSemis || format == semis2f) {
             text = String(std::round(slider_val * 100) / 100) + " Sem";
         }
     }

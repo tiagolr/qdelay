@@ -14,7 +14,7 @@ public:
 		[] (float ratio) {
 			constexpr float kMaxRads = 0.499f * juce::MathConstants<float>::pi;
 			float scaled = ratio * juce::MathConstants<float>::pi;
-			return std::tan(juce::jmin(kMaxRads, scaled));
+			return std::tan(juce::jmin(kMaxRads, (scaled / (scaled + 1.f))));
 		},
 		0.0f, 0.5f, 2048
 	);

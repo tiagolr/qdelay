@@ -29,20 +29,18 @@ public:
 		phase = 0.f;
 	}
 
-    float tick(float offset = 0.f)
+	float tick(float offset = 0.f)
 	{
-        float increment = rate / srate * 2.0f;
-        phase += increment * direction;
-        if (phase >= 1.0f) { phase = 1.0f; direction = -1; }
-        if (phase <= -1.0f){ phase = -1.0f; direction = 1; }
+		phase += rate / srate;
+		if (phase >= 1.f)
+			phase -= 1.f;
 
-        // Apply phase offset
-        float phasedValue = phase + offset * 2.0f;
-        if (phasedValue > 1.0f) phasedValue -= 2.0f;
-        if (phasedValue < -1.0f) phasedValue += 2.0f;
+		float p = phase + offset;
+		p -= std::floor(p);
 
-        return phasedValue;
-    }
+		float tri = 4.f * fabsf(p - 0.5f) - 1.f;
+		return tri;
+	}
 };
 
 class Phaser

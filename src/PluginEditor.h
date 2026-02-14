@@ -22,6 +22,7 @@
 #include "ui/DistWidget.h"
 #include "ui/LofiWidget.h"
 #include "ui/TapeWidget.h"
+#include "ui/PhaserWidget.h"
 #include "ui/DuckMeter.h"
 #include "dsp/Delay.h"
 #include "PresetMgr.h"
@@ -106,6 +107,7 @@ private:
     std::unique_ptr<DistWidget> distWidget;
     std::unique_ptr<TapeWidget> tapeWidget;
     std::unique_ptr<LofiWidget> lofiWidget;
+    std::unique_ptr<PhaserWidget> phaserWidget;
     std::unique_ptr<Meter> meter;
 
     CustomLookAndFeel* customLookAndFeel = nullptr;
