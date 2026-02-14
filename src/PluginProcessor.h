@@ -21,6 +21,7 @@
 #include "dsp/Flutter.h"
 #include "dsp/Wow.h"
 #include "dsp/DelayLine.h"
+#include "dsp/Phaser.h"
 #include "PresetMgr.h"
 
 using namespace globals;
@@ -45,6 +46,7 @@ public:
     std::unique_ptr<Delay> delay;
     std::unique_ptr<Distortion> distPre;
     std::unique_ptr<Crusher> crushPre;
+    std::unique_ptr<Phaser> phaser;
     int distPrePath = 0; // Pre or feedback distortion/saturation
     std::unique_ptr<Distortion> distPost;
     std::unique_ptr<Crusher> crushPost;
@@ -58,6 +60,7 @@ public:
     std::unique_ptr<Pitcher> pitcher;
     float pitcherSpeed = 0.f;
     int pitcherPath = 0; // feedback or post delay signal
+    int phaserPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
     AudioBuffer<float> distPreBuffer;
     AudioBuffer<float> distPostBuffer;

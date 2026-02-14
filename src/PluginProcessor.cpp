@@ -97,6 +97,14 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<juce::AudioParameterFloat>("duck_hld", "Duck Hold", NormalisableRange<float>(0.0f, 1000.0f), 0.f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("duck_rel", "Duck Release", NormalisableRange<float>(10.f, 5000.0f, 1.f, 0.5f), 500.f));
 
+    layout.add(std::make_unique<AudioParameterChoice>("phaser_path", "Phaser Path", StringArray{ "Feedback", "Post" }, 1));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_center", "Phaser LFO Center", NormalisableRange<float>(20.f, 20000.f, 1.f, 0.3f), 2000.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_depth", "Phaser LFO Depth", 0.f, 48.f, 12.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_rate", "Phaser LFO Rate", NormalisableRange<float>(0.01f, 10.f, 0.0001f, 0.5f), 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_res", "Phaser Resonance", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_morph", "Phaser Morph", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_stereo", "Phaser Stereo", 0.f, 1.f, 0.0f));
+    layout.add(std::make_unique<AudioParameterFloat>("phaser_mix", "Phaser Mix", 0.f, 1.f, 0.0f));
 
     layout.add(std::make_unique<AudioParameterChoice>("eq_path", "EQ Path", StringArray{ "Input", "Output" }, 0));
     auto getEQBandFreq = [](int band)
@@ -173,6 +181,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
     flutter = std::make_unique<Flutter>(*this);
+    phaser = std::make_unique<Phaser>(*this);
     wow = std::make_unique<Wow>(*this);
     wowflut_l = std::make_unique<DelayLine>();
     wowflut_r = std::make_unique<DelayLine>();
@@ -356,6 +365,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     wowflut_r->resize((int)std::ceil(srate / 10));
     wowflut_l->clear();
     wowflut_r->clear();
+    phaser->prepare((float)srate);
     onSlider();
     sendChangeMessage();
 }
@@ -475,6 +485,10 @@ void QDelayAudioProcessor::onSlider()
     float pitchSemis = params.getRawParameterValue("pitch_shift")->load();
     pitcherSpeed = pitcher->getSpeedFromSemis(pitchSemis);
 
+    // phaser
+    phaserPath = (int)params.getRawParameterValue("phaser_path")->load();
+    phaser->onSlider();
+
     // wow and flutter
     float tape = params.getRawParameterValue("tape_amt")->load();
     if (tape > 0.f && tapeAmt == 0.f) { // turning tape ON
@@ -557,20 +571,20 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // prepare wet buffer by copying the dry signal into it
-    wetBuffer.setSize (2, numSamples, false, false, true);
+    wetBuffer.setSize(2, numSamples, false, false, true);
     if (numChannels == 1)
     {
-        wetBuffer.copyFrom (0, 0, buffer, 0, 0, numSamples);
-        wetBuffer.copyFrom (1, 0, buffer, 0, 0, numSamples);
+        wetBuffer.copyFrom(0, 0, buffer, 0, 0, numSamples);
+        wetBuffer.copyFrom(1, 0, buffer, 0, 0, numSamples);
     }
     else
     {
-        wetBuffer.copyFrom (0, 0, buffer, 0, 0, numSamples);
-        wetBuffer.copyFrom (1, 0, buffer, 1, 0, numSamples);
+        wetBuffer.copyFrom(0, 0, buffer, 0, 0, numSamples);
+        wetBuffer.copyFrom(1, 0, buffer, 1, 0, numSamples);
     }
 
     // process input EQ
-    if (eqPath == 0) 
+    if (eqPath == 0)
     {
         for (int i = 0; i < EQ_BANDS; ++i)
         {
@@ -587,7 +601,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     float crushSrate = params.getRawParameterValue("crush_srate")->load();
     float crushBits = params.getRawParameterValue("crush_bits")->load();
 
-    if ((dist_pre > 0.f && distPrePath == 0) || 
+    if ((dist_pre > 0.f && distPrePath == 0) ||
         (crushPath == 0 && (crushSrate > 0.f || crushBits > 0.f)))
     {
         juce::dsp::AudioBlock<float> block(wetBuffer);
@@ -605,7 +619,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         if (dist_pre > 0.f && distPrePath == 0) {
             distPre->processBlock(osleft, osright, numSamples * os);
         }
-        
+
         osblock.multiplyBy(dist_pre);
         crushBlock.multiplyBy(1.f - dist_pre);
         osblock.add(crushBlock);
@@ -625,7 +639,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process delay
-    if (distPrePath == 0) 
+    if (distPrePath == 0)
     {
         delay->processBlock(
             wetBuffer.getWritePointer(0),
@@ -643,7 +657,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         float* osleft = oversampledBlock.getChannelPointer(0);
         float* osright = oversampledBlock.getChannelPointer(1);
         int os = (int)distPreOversampler->getOversamplingFactor();
-        delay->processBlock(osleft,osright, numSamples * os);
+        delay->processBlock(osleft, osright, numSamples * os);
         distPreOversampler->processSamplesDown(block);
     }
 
@@ -686,8 +700,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
             // compute crossfade
             float fade = !fading ? 1.f : tapeFadeIn
-                    ? 1.0f - (float)tapeFadeSamps / (float)tapeFadeSize
-                    : (float)tapeFadeSamps / (float)tapeFadeSize;
+                ? 1.0f - (float)tapeFadeSamps / (float)tapeFadeSize
+                : (float)tapeFadeSamps / (float)tapeFadeSize;
             if (tapeFadeSamps > 0) tapeFadeSamps--;
 
             wetl[i] = fade * wetSampleL + (1.0f - fade) * wetl[i];
@@ -724,8 +738,20 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         distPostOversampler->processSamplesDown(block);
     }
 
+    // process phaser
+    if (phaserPath == 1 && phaser->isOn)
+    {
+        float* wetl = wetBuffer.getWritePointer(0);
+        float* wetr = wetBuffer.getWritePointer(1);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            phaser->process(wetl[i], wetr[i]);
+        }
+    }
+
     // process post diffusion
-    if (diffamt > 0.f && diffPath == 1) {
+    if (diffamt > 0.f && diffPath == 1) 
+    {
         float diffdry = Utils::cosHalfPi()(diffamt);
         float diffwet = Utils::sinHalfPi()(diffamt);
         diffusor->processBlock(

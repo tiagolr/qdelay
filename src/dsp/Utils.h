@@ -96,6 +96,50 @@ private:
     size_t size = 0;
 };
 
+class Lerp {
+	float value, target;
+	float step = 0.0f;
+	int samplesLeft = 0;
+	int duration = 0;
+	bool isReset = true;
+
+public:
+	Lerp(float start = 0.0) : value(start), target(start) {}
+
+	void setDuration(int duration_) {
+		duration = duration_;
+	}
+
+	void set(float target_) {
+		target = target_;
+		if (duration > 0 && !isReset) {
+			samplesLeft = duration;
+			step = (target - value) / samplesLeft;
+		} else {
+			value = target;
+			step = 0.0;
+			samplesLeft = 0;
+			isReset = false;
+		}
+	}
+
+	void tick() {
+		if (samplesLeft > 0) {
+			value += step;
+			--samplesLeft;
+		}
+	}
+
+	void reset() {
+		isReset = true;
+		value = target;
+		samplesLeft = 0;
+		step = 0.0;
+	}
+	inline float get() const { return value; }
+	bool isDone() const { return samplesLeft == 0; }
+};
+
 class Utils
 {
 public:

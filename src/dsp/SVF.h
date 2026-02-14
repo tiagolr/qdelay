@@ -1,7 +1,7 @@
 // Copyright 2025 tilr
 // Port of Theo Niessink <theo@taletn.com> zdf filters
 #pragma once
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include <complex>
 
 class SVF

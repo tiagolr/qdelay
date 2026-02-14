@@ -1,7 +1,7 @@
 // Copyright 2025 tilr
 // Envelope Follower
 #pragma once
-#include "JuceHeader.h"
+#include <JuceHeader.h>
 #include "../Globals.h"
 
 using namespace globals;

@@ -20,6 +20,9 @@ namespace globals {
 	constexpr int MIN_CRATIO = 1;
 	constexpr int MAX_CRATIO = 32;
 
+	// Phaser
+	constexpr float PHASER_LERP_MILLIS = 25;
+
 	// UI
 	constexpr int NAV_HEIGHT = 35; // top header
 	constexpr int HEADER_HEIGHT = 20; // old header, now the row below nav
