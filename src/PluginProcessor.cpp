@@ -554,6 +554,10 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
                 clearAll();
             }
             playing = play;
+            if (auto ts = pos->getTimeInSeconds())
+            {
+                timeInSeconds = *ts;
+            }
         }
     }
 
@@ -741,6 +745,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // process phaser
     if (phaserPath == 1 && phaser->isOn)
     {
+        if (playing) phaser->syncToSongTime((float)timeInSeconds);
         float* wetl = wetBuffer.getWritePointer(0);
         float* wetr = wetBuffer.getWritePointer(1);
         for (int i = 0; i < numSamples; ++i)

@@ -93,6 +93,7 @@ public:
     double secondsPerBeat = 0.1;
     double srate = 44100.0;
     double secondsPerBar = 1.0;
+    double timeInSeconds = 0.f;
 
     // UI State
     String presetName = "-- Init --";

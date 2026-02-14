@@ -15,6 +15,7 @@ public:
     float rate = 0.5f;
     float srate = 44100.0f;
     int direction = 1;
+	float offset = 0.f;
 
 	void prepare(float _srate)
 	{
@@ -29,8 +30,9 @@ public:
 		phase = 0.f;
 	}
 
-	float tick(float offset = 0.f)
+	float tick(float _offset = 0.f)
 	{
+		offset = _offset;
 		phase += rate / srate;
 		if (phase >= 1.f)
 			phase -= 1.f;
@@ -40,6 +42,14 @@ public:
 
 		float tri = 4.f * fabsf(p - 0.5f) - 1.f;
 		return tri;
+	}
+
+	void syncToSongTime(double seconds)
+	{
+		double cycles = seconds * rate;
+		phase = (float)(cycles - std::floor(cycles));
+		phase += offset;
+		phase -= std::floor(phase);
 	}
 };
 
@@ -54,7 +64,7 @@ public:
 	void prepare(float srate);
 	void onSlider();
 	void clear();
-	void resetPhase(float elapsed);
+	void syncToSongTime(float elapsed);
 	void process(float& left, float& right);
 
 private:

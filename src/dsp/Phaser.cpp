@@ -45,11 +45,10 @@ void Phaser::clear()
 	rphaser.reset(0.f);
 }
 
-void Phaser::resetPhase(float elapsed)
+void Phaser::syncToSongTime(float elapsed)
 {
-	(void)elapsed;
-	lfoL.clear();
-	lfoR.clear();
+	lfoL.syncToSongTime(elapsed);
+	lfoR.syncToSongTime(elapsed);
 }
 
 void Phaser::process(float& left, float& right)
