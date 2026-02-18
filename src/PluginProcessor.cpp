@@ -488,8 +488,11 @@ void QDelayAudioProcessor::onSlider()
     pitcherSpeed = pitcher->getSpeedFromSemis(pitchSemis);
 
     // phaser
+    bool isPhaserOn = phaser->isOn;
     phaserPath = (int)params.getRawParameterValue("phaser_path")->load();
     phaser->onSlider();
+    if (!isPhaserOn && phaser->isOn)
+        phaser->clear();
 
     // wow and flutter
     float tape = params.getRawParameterValue("tape_amt")->load();
@@ -747,7 +750,9 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // process phaser
     if (phaserPath == 1 && phaser->isOn)
     {
-        if (playing) phaser->syncToSongTime((float)timeInSeconds);
+        if (playing) 
+            phaser->syncToSongTime((float)timeInSeconds);
+
         float* wetl = wetBuffer.getWritePointer(0);
         float* wetr = wetBuffer.getWritePointer(1);
         for (int i = 0; i < numSamples; ++i)

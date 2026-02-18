@@ -6,6 +6,7 @@
 #include "SVF.h"
 #include "Pitcher.h"
 #include "Distortion.h"
+#include "Phaser.h"
 
 class QDelayAudioProcessor;
 
@@ -52,6 +53,8 @@ public:
 	void parameterChanged(const String& paramId, float value) override;
 
 private:
+	std::unique_ptr<Phaser> phaser;
+	std::unique_ptr<Phaser> phaserSwing;
 	std::unique_ptr<Distortion> dist;
 	std::unique_ptr<Distortion> distSwing;
 	std::vector<SVF::EQBand> eqBands;

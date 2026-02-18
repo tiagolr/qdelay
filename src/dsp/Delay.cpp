@@ -16,6 +16,8 @@ Delay::Delay(QDelayAudioProcessor& p)
     pitcherSwing = std::make_unique<Pitcher>();
     dist = std::make_unique<Distortion>(audioProcessor);
     distSwing = std::make_unique<Distortion>(audioProcessor);
+    phaser = std::make_unique<Phaser>(audioProcessor);
+    phaserSwing = std::make_unique<Phaser>(audioProcessor);
     timeL.eps = 0.1f; // FIX delay not snapping to correct value
     timeR.eps = 0.1f;
 }
@@ -48,6 +50,8 @@ void Delay::clear()
     std::fill(revR.begin(), revR.end(), 0.f);
     revposL = 0;
     revposR = 0;
+    phaser->clear();
+    phaserSwing->clear();
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -84,6 +88,9 @@ void Delay::prepare(float _srate)
     Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     pitcher->init(pitchMode);
     pitcherSwing->init(pitchMode);
+
+    phaser->prepare(srate);
+    phaserSwing->prepare(srate);
 
     clear();
 }
@@ -172,6 +179,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
     float accentSwing = accent > 0 ? 1.f - accent * MAX_ACCENT : 1.f;
 
     float feelOffset = (float)getFeelOffset(time[0], time[1], swing);
+
+    auto phaserPath = (int)audioProcessor.params.getRawParameterValue("phaser_path")->load();
+    if (phaserPath == 0 && phaser->isOn && audioProcessor.playing)
+    {
+        phaser->syncToSongTime((float)audioProcessor.timeInSeconds);
+        phaserSwing->syncToSongTime((float)audioProcessor.timeInSeconds);
+    }
 
     if (mode != PingPong) {
         float haasWidth = audioProcessor.params.getRawParameterValue("haas_width")->load();
@@ -273,8 +287,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         // modulation
         float mdepth = modDepthSmooth.process(modDepth);
         float mod = 0.f;
-        if (mdepth > 1e-6f) 
-        { 
+        if (mdepth > 1e-6f)
+        {
             modPhase += modRate * israte;
             if (modPhase > 1.f) modPhase -= 1.f;
             mod = std::sin(modPhase * MathConstants<float>::twoPi);
@@ -341,6 +355,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         {
             dist->process(v0, v1, 1.f - distAmt, distAmt);
             distSwing->process(s0, s1, 1.f - distAmt, distAmt);
+        }
+
+        // process phaser
+        if (phaserPath == 0 && phaser->isOn)
+        {
+            phaser->process(v0, v1);
+            phaserSwing->process(s0, s1);
         }
 
         // EQ on the feedback path can be quite dangerous
@@ -502,6 +523,14 @@ void Delay::onSlider()
     distWet = Utils::sinHalfPi()(distfbk);
     dist->onSlider();
     distSwing->onSlider();
+    bool isPhaserOn = phaser->isOn;
+    phaser->onSlider();
+    phaserSwing->onSlider();
+    if (!isPhaserOn && phaser->isOn)
+    {
+        phaser->clear();
+        phaserSwing->clear();
+    }
 }
 
 void Delay::parameterChanged(const String& paramId, float value)
