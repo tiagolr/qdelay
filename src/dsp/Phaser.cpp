@@ -88,8 +88,8 @@ void Phaser::process(float& left, float& right)
 {
 	float leftLFO  = lfoL.tick(0.0f);
 	float rightLFO = lfoR.tick(lfo_stereo);
-	float freqL = std::clamp(lfo_center.get() * pow(2.0f, lfo_depth * leftLFO), 1.f, srate * 0.48f);
-	float freqR = std::clamp(lfo_center.get() * pow(2.0f, lfo_depth * rightLFO), 1.f, srate * 0.48f);
+	float freqL = std::clamp(lfo_center.get() * std::powf(2.0f, lfo_depth * leftLFO), 1.f, srate * 0.48f);
+	float freqR = std::clamp(lfo_center.get() * std::powf(2.0f, lfo_depth * rightLFO), 1.f, srate * 0.48f);
 	lphaser.init(srate, freqL, res);
 	rphaser.init(srate, freqR, res);
 
