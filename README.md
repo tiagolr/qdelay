@@ -1,6 +1,6 @@
 <h1 align="center">
   <!-- <img src="doc/logo.png" width="200" style="padding: 5px;" /> -->
-  QDelay
+  QDelay 
   <br>
 </h1>
 <div align="center">
