@@ -17,6 +17,7 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     audioProcessor.params.addParameterListener("reverse", this);
     audioProcessor.params.addParameterListener("pan_dry_sum", this);
     audioProcessor.params.addParameterListener("pan_wet_sum", this);
+    audioProcessor.params.addParameterListener("shifter_mode", this);
 
     // NAVBAR
     int col = PLUG_PADDING;
@@ -236,6 +237,10 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     addAndMakeVisible(pitchShift.get());
     pitchShift->setBounds(col + KNOB_WIDTH * 3, row + KNOB_HEIGHT, KNOB_WIDTH, KNOB_HEIGHT);
 
+    freqShift = std::make_unique<Rotary>(audioProcessor, "freq_shift", "Freq", Rotary::hz1f, true);
+    addAndMakeVisible(freqShift.get());
+    freqShift->setBounds(pitchShift->getBounds());
+
     duckThres = std::make_unique<Rotary>(audioProcessor, "duck_thres", "Thresh", Rotary::gainTodB1fInv);
     addAndMakeVisible(duckThres.get());
     duckThres->setBounds(col, row + KNOB_HEIGHT * 2 + 20 + VSEPARATOR, KNOB_WIDTH, KNOB_HEIGHT);
@@ -264,6 +269,15 @@ QDelayAudioProcessorEditor::QDelayAudioProcessorEditor (QDelayAudioProcessor& p)
     pitchMix.setBounds(col + KNOB_WIDTH * 3 + (KNOB_WIDTH - 60) / 2, row + KNOB_HEIGHT * 2 + 15 - 1, 60, 22);
     pitchMix.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     pitchMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
+
+    addAndMakeVisible(freqMix);
+    freqMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "pitch_mix", freqMix);
+    freqMix.setComponentID("freq_mix");
+    freqMix.setSliderStyle(Slider::LinearBar);
+    freqMix.setTooltip("Set the frequency shifter mix amount");
+    freqMix.setBounds(pitchMix.getBounds());
+    freqMix.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    freqMix.setTextBoxStyle(Slider::NoTextBox, true, 10, 10);
 
     // RIGHT SECTION
     row = PLUG_PADDING + NAV_HEIGHT - 5;
@@ -325,6 +339,7 @@ QDelayAudioProcessorEditor::~QDelayAudioProcessorEditor()
     delete customLookAndFeel;
     audioProcessor.removeChangeListener(this);
     audioProcessor.params.removeParameterListener("mode", this);
+    audioProcessor.params.removeParameterListener("shifter_mode", this);
     audioProcessor.params.removeParameterListener("reverse", this);
     audioProcessor.params.removeParameterListener("pan_dry_sum", this);
     audioProcessor.params.removeParameterListener("pan_wet_sum", this);
@@ -374,6 +389,12 @@ void QDelayAudioProcessorEditor::toggleUIComponents()
 
     bool reverse = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     feel->setAlpha(reverse ? 0.5f : 1.f);
+
+    int shifterMode = (int)audioProcessor.params.getRawParameterValue("shifter_mode")->load();
+    pitchShift->setVisible(shifterMode == 0);
+    freqShift->setVisible(shifterMode == 1);
+    pitchMix.setVisible(shifterMode == 0);
+    freqMix.setVisible(shifterMode == 1);
 
     MessageManager::callAsync([this] { repaint(); });
 }

@@ -5,6 +5,7 @@
 #include "Utils.h"
 #include "SVF.h"
 #include "Pitcher.h"
+#include "Shifter.h"
 #include "Distortion.h"
 #include "Phaser.h"
 
@@ -31,6 +32,8 @@ public:
 
 	std::unique_ptr<Pitcher> pitcher;
 	std::unique_ptr<Pitcher> pitcherSwing;
+	std::unique_ptr<Shifter> shifter;
+	std::unique_ptr<Shifter> shifterSwing;
 
 	// exposed variables for UI draw
 	float feedbackL = 1.f;

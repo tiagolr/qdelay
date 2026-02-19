@@ -18,6 +18,7 @@
 #include "dsp/Crusher.h"
 #include "dsp/Diffusor.h"
 #include "dsp/Pitcher.h"
+#include "dsp/Shifter.h"
 #include "dsp/Flutter.h"
 #include "dsp/Wow.h"
 #include "dsp/DelayLine.h"
@@ -58,8 +59,10 @@ public:
     std::unique_ptr<Diffusor> diffusor;
     int diffPath = 0; // pre or post delay diffusion
     std::unique_ptr<Pitcher> pitcher;
+    std::unique_ptr<Shifter> shifter;
     float pitcherSpeed = 0.f;
     int pitcherPath = 0; // feedback or post delay signal
+    int shifterMode = 0; // pitch shiter = 0, freq shifter = 1
     int phaserPath = 0; // feedback or post delay signal
     AudioBuffer<float> wetBuffer;
     AudioBuffer<float> distPreBuffer;

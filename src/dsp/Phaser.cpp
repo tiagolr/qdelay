@@ -20,6 +20,7 @@ void Phaser::prepare(float _srate)
 	mix.setDuration(lerp_samps);
 	mix.set(audioProcessor.params.getRawParameterValue("phaser_mix")->load());
 	mix.reset();
+	clear();
 }
 
 float Phaser::getLfoRate(int sync)

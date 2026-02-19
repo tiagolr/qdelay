@@ -86,6 +86,8 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("wow_drift", "Wow Drift", 0.0f, 1.f, 0.25f));
     layout.add(std::make_unique<AudioParameterFloat>("wow_var", "Wow Variance", 0.0f, 1.f, 0.25f));
 
+    layout.add(std::make_unique<AudioParameterChoice>("shifter_mode", "Shifter Mode", StringArray{ "Pitch", "Frequency" }, 0));
+    layout.add(std::make_unique<AudioParameterFloat>("freq_shift", "Frequency Shift", NormalisableRange<float>(-1000.f, 1000.f, 0.1f, 0.35f, true), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>("pitch_shift", "Pitch Shift", NormalisableRange<float>(-12.f, 12.f, 0.01f), 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("pitch_mode", "Pitch Mode", StringArray{ "Drums", "General", "Smooth" }, 1));
     layout.add(std::make_unique<AudioParameterChoice>("pitch_path", "Pitch Path", StringArray{ "Feedback", "Post" }, 1));
@@ -182,6 +184,7 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     crushPost = std::make_unique<Crusher>(*this);
     diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
+    shifter = std::make_unique<Shifter>(*this);
     flutter = std::make_unique<Flutter>(*this);
     phaser = std::make_unique<Phaser>(*this);
     wow = std::make_unique<Wow>(*this);
@@ -361,6 +364,7 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     distPreBuffer.setSize(2, samplesPerBlock * (int)distPreOversampler->getOversamplingFactor());
     distPostBuffer.setSize(2, samplesPerBlock * (int)distPostOversampler->getOversamplingFactor());
     pitcher->init((Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load());
+    shifter->prepare((float)sampleRate);
     flutter->prepare((float)sampleRate);
     wow->prepare((float)sampleRate);
     wowflut_l->resize((int)std::ceil(srate / 10));
@@ -477,6 +481,7 @@ void QDelayAudioProcessor::onSlider()
     diffusor->setSize(diffsize);
 
     // pitch shifter
+    shifterMode = (int)params.getRawParameterValue("shifter_mode")->load();
     Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load();
     if (pitcher->mode != pitchMode) {
         pitcher->init(pitchMode);
@@ -486,6 +491,7 @@ void QDelayAudioProcessor::onSlider()
     pitcherPath = (int)params.getRawParameterValue("pitch_path")->load();
     float pitchSemis = params.getRawParameterValue("pitch_shift")->load();
     pitcherSpeed = pitcher->getSpeedFromSemis(pitchSemis);
+    shifter->onSlider();
 
     // phaser
     bool isPhaserOn = phaser->isOn;
@@ -671,7 +677,8 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process pitch shift
-    if (std::fabs(pitcherSpeed) > 1e-6 && pitcherPath == 1) {
+    if (shifterMode == 0 && std::fabs(pitcherSpeed) > 1e-6 && pitcherPath == 1)
+    {
         float* wetl = wetBuffer.getWritePointer(0);
         float* wetr = wetBuffer.getWritePointer(1);
         float pitchMix = params.getRawParameterValue("pitch_mix")->load();
@@ -685,6 +692,19 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             wetr[i] = wetr[i] * pitchDry + pitcher->outR * pitchWet;
         }
     }
+
+    // process frequency shift
+    if (shifterMode == 1 && shifter->isOn && pitcherPath == 1)
+    {
+        float* wetl = wetBuffer.getWritePointer(0);
+        float* wetr = wetBuffer.getWritePointer(1);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            shifter->process(wetl[i], wetr[i]);
+        }
+    }
+
+
 
     // process wow and flutter
     if (tapeAmt > 0.f || tapeFadeSamps > 0)
@@ -750,7 +770,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // process phaser
     if (phaserPath == 1 && phaser->isOn)
     {
-        if (playing) 
+        if (playing)
             phaser->syncToSongTime((float)timeInSeconds);
 
         float* wetl = wetBuffer.getWritePointer(0);
@@ -762,7 +782,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process post diffusion
-    if (diffamt > 0.f && diffPath == 1) 
+    if (diffamt > 0.f && diffPath == 1)
     {
         float diffdry = Utils::cosHalfPi()(diffamt);
         float diffwet = Utils::sinHalfPi()(diffamt);

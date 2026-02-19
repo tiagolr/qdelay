@@ -14,6 +14,8 @@ Delay::Delay(QDelayAudioProcessor& p)
 
     pitcher = std::make_unique<Pitcher>();
     pitcherSwing = std::make_unique<Pitcher>();
+    shifter = std::make_unique<Shifter>(audioProcessor);
+    shifterSwing = std::make_unique<Shifter>(audioProcessor);
     dist = std::make_unique<Distortion>(audioProcessor);
     distSwing = std::make_unique<Distortion>(audioProcessor);
     phaser = std::make_unique<Phaser>(audioProcessor);
@@ -52,6 +54,8 @@ void Delay::clear()
     revposR = 0;
     phaser->clear();
     phaserSwing->clear();
+    shifter->clear();
+    shifterSwing->clear();
 
     for (int i = 0; i < eqBands.size(); ++i)
     {
@@ -88,6 +92,8 @@ void Delay::prepare(float _srate)
     Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     pitcher->init(pitchMode);
     pitcherSwing->init(pitchMode);
+    shifter->prepare(srate);
+    shifterSwing->prepare(srate);
 
     phaser->prepare(srate);
     phaserSwing->prepare(srate);
@@ -339,7 +345,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
 
         // process pitch shift
-        if (std::fabs(audioProcessor.pitcherSpeed) > 1e-6 && audioProcessor.pitcherPath == 0) {
+        if (audioProcessor.shifterMode == 0 && std::fabs(audioProcessor.pitcherSpeed) > 1e-6 && audioProcessor.pitcherPath == 0) 
+        {
             pitcher->setSpeed(audioProcessor.pitcherSpeed);
             pitcher->update(v0, v1);
             v0 = v0 * pitchDry + pitcher->outL * pitchWet;
@@ -348,6 +355,13 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             pitcherSwing->update(s0, s1);
             s0 = s0 * pitchDry + pitcherSwing->outL * pitchWet;
             s1 = s1 * pitchDry + pitcherSwing->outR * pitchWet;
+        }
+
+        // process frequency shifter
+        if (audioProcessor.shifterMode == 1 && shifter->isOn && audioProcessor.pitcherPath == 0) 
+        {
+            shifter->process(v0, v1);
+            shifterSwing->process(s0, s1);
         }
 
         // process distortion
@@ -531,6 +545,8 @@ void Delay::onSlider()
         phaser->clear();
         phaserSwing->clear();
     }
+    shifter->onSlider();
+    shifterSwing->onSlider();
 }
 
 void Delay::parameterChanged(const String& paramId, float value)

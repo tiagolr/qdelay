@@ -39,7 +39,7 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
     const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
     auto tag = slider.getComponentID();
-    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix" && tag != "out_gain") {
+    if (tag != "symmetric" && tag != "symmetric_vertical" && tag != "vertical" && tag != "pitch_mix" && tag != "freq_mix" && tag != "out_gain") {
         LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
         return;
     }
@@ -110,12 +110,12 @@ void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wi
         g.setColour(Colour(Colours::lightgrey));
         g.fillRect(bounds.withWidth(static_cast<float>(sliderPos - x))); // filled portion
 
-        if (slider.getComponentID() == "pitch_mix") {
+        if (slider.getComponentID() == "pitch_mix" || slider.getComponentID() == "freq_mix") {
             String text;
             if (slider.isMouseButtonDown())       // mouse is pressed
                 text = String(std::round(slider.getValue() * 100)) + " %";
             else
-                text = "Pitch%";
+                text = slider.getComponentID() == "pitch_mix" ? "Pitch%" : "Freq%";
 
             g.setColour(Colour(globals::COLOR_BACKGROUND).darker(0.7f));
             g.setFont(15.0f);
