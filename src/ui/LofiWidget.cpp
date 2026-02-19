@@ -6,10 +6,10 @@ LofiWidget::LofiWidget(QDelayAudioProcessorEditor& e)
 {
 	editor.audioProcessor.params.addParameterListener("crush_upsample", this);
 
-	srate = std::make_unique<Rotary>(editor.audioProcessor, "crush_srate", "Srate", Rotary::percx100);
+	srate = std::make_unique<Rotary>(editor.audioProcessor, "crush_srate", "Srate", Rotary::lofiSrate);
 	addAndMakeVisible(srate.get());
 
-	bits = std::make_unique<Rotary>(editor.audioProcessor, "crush_bits", "Bits", Rotary::percx100);
+	bits = std::make_unique<Rotary>(editor.audioProcessor, "crush_bits", "Bits", Rotary::lofiBits);
 	addAndMakeVisible(bits.get());
 
 	addAndMakeVisible(pathBtn);

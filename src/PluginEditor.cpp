@@ -484,6 +484,7 @@ void QDelayAudioProcessorEditor::setEQTab(bool feedbackOrInput)
 
 void QDelayAudioProcessorEditor::showSettings()
 {
+    int shifterMode = (int)audioProcessor.params.getRawParameterValue("shifter_mode")->load();
     int pitchMode = (int)audioProcessor.params.getRawParameterValue("pitch_mode")->load();
     int pitchPath = (int)audioProcessor.params.getRawParameterValue("pitch_path")->load();
     int diffPath = (int)audioProcessor.params.getRawParameterValue("diff_path")->load();
@@ -513,12 +514,14 @@ void QDelayAudioProcessorEditor::showSettings()
     diffMenu.addItem(71, "Post Delay", true, diffPath == 1);
 
     PopupMenu pitchMenu;
+    pitchMenu.addItem(85, "Freq Shifter", true, shifterMode == 1);
+    pitchMenu.addSeparator();
     pitchMenu.addItem(83, "Feedback", true, pitchPath == 0);
     pitchMenu.addItem(84, "Post Delay", true, pitchPath == 1);
     pitchMenu.addSeparator();
-    pitchMenu.addItem(80, "Drums", true, pitchMode == 0);
-    pitchMenu.addItem(81, "General", true, pitchMode == 1);
-    pitchMenu.addItem(82, "Smooth", true, pitchMode == 2);
+    pitchMenu.addItem(80, "Drums", shifterMode == 0, pitchMode == 0);
+    pitchMenu.addItem(81, "General", shifterMode == 0, pitchMode == 1);
+    pitchMenu.addItem(82, "Smooth", shifterMode == 0, pitchMode == 2);
 
     PopupMenu menu;
     menu.addSubMenu("UI Scale", scaleMenu);
@@ -583,6 +586,11 @@ void QDelayAudioProcessorEditor::showSettings()
             {
                 auto param = audioProcessor.params.getParameter("pitch_path");
                 param->setValueNotifyingHost(result == 84 ? 1.f : 0.f);
+            }
+            else if (result == 85)
+            {
+                auto param = audioProcessor.params.getParameter("shifter_mode");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
             else if (result == 70 || result == 71) {
                 auto param = audioProcessor.params.getParameter("diff_path");

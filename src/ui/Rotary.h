@@ -39,7 +39,9 @@ public:
         kChoice,
         haasWidth,
         pitchSemis,
-        semis2f
+        semis2f,
+        lofiSrate,
+        lofiBits
     };
 
     Rotary(QDelayAudioProcessor& p, juce::String paramId, juce::String name, RotaryLabel format,

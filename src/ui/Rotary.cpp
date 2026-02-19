@@ -298,6 +298,26 @@ void Rotary::draw_label_value(juce::Graphics& g, float slider_val)
         else if (format == pitchSemis || format == semis2f) {
             text = String(std::round(slider_val * 100) / 100) + " Sem";
         }
+        else if (format == lofiBits) 
+        {
+            if (slider_val < 1e-6) {
+                text = "Off";
+            }
+            else {
+                text = String(std::round(MAX_CBITS - (slider_val * (MAX_CBITS - MIN_CBITS))), 0) + " Bit";
+            }
+        }
+        else if (format == lofiSrate) 
+        {
+            if (slider_val < 1e-6) {
+                text = "Off";
+            }
+            else {
+                float ratio = MIN_CRATIO + std::round(slider_val * (MAX_CRATIO - MIN_CRATIO));
+                float effectiveRate = (float)audioProcessor.srate / ratio;
+                text = String((int)effectiveRate) + " Hz";
+            }
+        }
     }
 
     g.setColour(Colours::white);
