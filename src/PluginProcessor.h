@@ -97,6 +97,8 @@ public:
     double srate = 44100.0;
     double secondsPerBar = 1.0;
     double timeInSeconds = 0.f;
+    int64_t lastSamplePosition = 0;
+    bool clearDelayOnStop = true;
 
     // UI State
     String presetName = "-- Init --";

@@ -501,6 +501,7 @@ void QDelayAudioProcessorEditor::showSettings()
     PopupMenu delayMenu;
     delayMenu.addItem(30, "Reverse", true, reverse);
     delayMenu.addItem(31, "Clip Feedback", true, !disableClipping);
+    delayMenu.addItem(32, "Clear Delay on Stop", true, audioProcessor.clearDelayOnStop);
 
     PopupMenu eqMenu;
     eqMenu.addItem(60, "Draw Spectrum", true, audioProcessor.drawWaveform);
@@ -552,6 +553,10 @@ void QDelayAudioProcessorEditor::showSettings()
             {
                 auto param = audioProcessor.params.getParameter("disable_clipping");
                 param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
+            }
+            else if (result == 32)
+            {
+                audioProcessor.clearDelayOnStop = !audioProcessor.clearDelayOnStop;
             }
             else if (result == 40)
             {

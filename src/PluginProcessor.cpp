@@ -255,6 +255,7 @@ void QDelayAudioProcessor::loadSettings ()
     {
         scale = (float)file->getDoubleValue("scale", 1.0f);
         drawWaveform = file->getBoolValue("drawWaveform", true);
+        clearDelayOnStop = file->getBoolValue("clearDelayOnStop", true);
     }
 }
 
@@ -265,6 +266,7 @@ void QDelayAudioProcessor::saveSettings ()
     {
         file->setValue("scale", scale);
         file->setValue("drawWaveform", drawWaveform);
+        file->setValue("clearDelayOnStop", clearDelayOnStop);
     }
     settings.saveIfNeeded();
 }
@@ -310,7 +312,26 @@ bool QDelayAudioProcessor::isMidiEffect() const
 
 double QDelayAudioProcessor::getTailLengthSeconds() const
 {
-    return 0.0; // TODO
+    auto dsrate = delay->srate;
+    auto maxSizeSamples = delay->maxSizeSamples;
+    auto maxPreSamples = delay->maxPreSamples;
+    auto maxFeedback = delay->maxFeedback;
+
+    if (maxSizeSamples <= 0) 
+        return 0.0;
+
+    double maxPreDelSeconds = (double)maxPreSamples / dsrate;
+    double maxDelaySeconds = (double)(maxSizeSamples) / dsrate;
+
+    if (maxFeedback <= 0.f)
+        return maxDelaySeconds;
+
+    const double thresh = 0.0001; // -80dB
+    double repeats = std::log(thresh) / std::log((double)maxFeedback);
+    if (repeats < 1.0) repeats = 1.0;
+
+    double tail = maxPreDelSeconds + maxDelaySeconds * repeats * 1.25f;
+    return std::min(tail, 60.0);
 }
 
 int QDelayAudioProcessor::getNumPrograms()
@@ -378,8 +399,6 @@ void QDelayAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 
 void QDelayAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -525,6 +544,7 @@ void QDelayAudioProcessor::clearAll()
     crushPost->clear();
     distPostOversampler->reset();
     distPreOversampler->reset();
+    phaser->clear();
 }
 
 bool QDelayAudioProcessor::supportsDoublePrecisionProcessing() const
@@ -562,12 +582,21 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             auto play = pos->getIsPlaying();
             if (playing != play) // onplay() | onstop()
             {
-                clearAll();
+                if (play || clearDelayOnStop)
+                    clearAll();
             }
             playing = play;
             if (auto ts = pos->getTimeInSeconds())
             {
                 timeInSeconds = *ts;
+            }
+            if (auto ts = pos->getTimeInSamples())
+            {
+                int64_t currentSample = *ts;
+                if (currentSample < lastSamplePosition)
+                    clearAll();
+
+                lastSamplePosition = currentSample;
             }
         }
     }

@@ -55,6 +55,12 @@ public:
 
 	void parameterChanged(const String& paramId, float value) override;
 
+	// used to calculate host plugin tail
+	int maxPreSamples = 0;
+	int maxSizeSamples = 0;
+	float maxFeedback = 0.f;
+	float srate = 44100.f;
+
 private:
 	std::unique_ptr<Phaser> phaser;
 	std::unique_ptr<Phaser> phaserSwing;
@@ -82,7 +88,6 @@ private:
 	DelayLine haasSwingL{};
 	DelayLine haasSwingR{};
 
-	float srate = 44100.f;
 	float israte = 1.f / 44100.f;
 	float modPhase = 0.f;
 	float distWet = 0.f;

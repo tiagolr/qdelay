@@ -226,6 +226,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         else
             feedbackR = 1.f;
     }
+    maxFeedback = std::max(feedbackL, feedbackR);
 
     // resize buffers if they are too short for the delay time just in case
     int sizeL = (int)std::ceil(time[0]);
@@ -241,6 +242,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         if (delayR.size < maxSizeR) delayR.resize(maxSizeR);
         if (swingL.size < maxSizeR) swingL.resize(maxSizeR);
         if (swingR.size < maxSizeR) swingR.resize(maxSizeR);
+        maxPreSamples = maxSizeL;
+        maxSizeSamples = maxSizeR;
     }
     else
     {
@@ -248,6 +251,8 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         if (delayR.size < maxSizeR) delayR.resize(maxSizeR);
         if (swingL.size < maxSizeL) swingL.resize(maxSizeL);
         if (swingR.size < maxSizeR) swingR.resize(maxSizeR);
+        maxPreSamples = 0;
+        maxSizeSamples = std::max(maxSizeL, maxSizeR);
     }
 
     // modulation
