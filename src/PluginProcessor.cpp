@@ -214,6 +214,11 @@ void QDelayAudioProcessor::parameterGestureChanged (int parameterIndex, bool ges
     (void)gestureIsStarting;
 }
 
+void QDelayAudioProcessor::reset()
+{
+    clearAll();
+}
+
 std::vector<SVF::EQBand> QDelayAudioProcessor::getEqualizer(SVF::EQType type) const
 {
     std::vector<SVF::EQBand> bands;
@@ -255,7 +260,6 @@ void QDelayAudioProcessor::loadSettings ()
     {
         scale = (float)file->getDoubleValue("scale", 1.0f);
         drawWaveform = file->getBoolValue("drawWaveform", true);
-        clearDelayOnStop = file->getBoolValue("clearDelayOnStop", true);
     }
 }
 
@@ -266,7 +270,6 @@ void QDelayAudioProcessor::saveSettings ()
     {
         file->setValue("scale", scale);
         file->setValue("drawWaveform", drawWaveform);
-        file->setValue("clearDelayOnStop", clearDelayOnStop);
     }
     settings.saveIfNeeded();
 }
@@ -582,21 +585,13 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             auto play = pos->getIsPlaying();
             if (playing != play) // onplay() | onstop()
             {
-                if (play || clearDelayOnStop)
+                if (play)
                     clearAll();
             }
             playing = play;
             if (auto ts = pos->getTimeInSeconds())
             {
                 timeInSeconds = *ts;
-            }
-            if (auto ts = pos->getTimeInSamples())
-            {
-                int64_t currentSample = *ts;
-                if (currentSample < lastSamplePosition)
-                    clearAll();
-
-                lastSamplePosition = currentSample;
             }
         }
     }

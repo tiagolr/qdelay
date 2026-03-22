@@ -97,6 +97,7 @@ void TimePicker::mouseDrag(const juce::MouseEvent& e)
 	auto speed = (e.mods.isShiftDown() ? 40.0f : 4.0f) * pixels_per_percent;
 	if (mode == 0) speed *= 2;
 	auto slider_change = float(change.getX() - change.getY()) / speed;
+	slider_change *= -1.f;
 	cur_normed_value += slider_change;
 	auto param = editor.audioProcessor.params.getParameter(paramId);
 	param->setValueNotifyingHost(cur_normed_value);
