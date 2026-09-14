@@ -53,40 +53,10 @@ file(GLOB_RECURSE src
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-source_group(Source
-    FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PluginProcessor.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PluginProcessor.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PluginEditor.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PluginEditor.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PresetMgr.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/PresetMgr.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/Globals.h
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PREFIX Source
+    FILES ${src}
 )
-
-file(GLOB UI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/*.cpp
-)
-source_group(Source\\ui FILES ${UI_SOURCES})
-
-file(GLOB DSP_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/*.cpp
-)
-source_group(Source\\dsp FILES ${DSP_SOURCES})
-
-file(GLOB FILTER_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/filter/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dsp/filter/*.cpp
-)
-source_group(Source\\dsp\\filter FILES ${FILTER_SOURCES})
-
-file(GLOB UTILS_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/*.cpp
-)
-source_group(Source\\utils FILES ${UTILS_SOURCES})
 
 # Make the SourceFiles buildable
 target_sources(${PROJECT_NAME} PRIVATE ${src})
@@ -101,6 +71,11 @@ target_compile_definitions(${PROJECT_NAME}
 
 # JUCE libraries to bring into our project
 juce_generate_juce_header(${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_artefacts/JuceLibraryCode
+    ${CMAKE_CURRENT_BINARY_DIR}/JuceLibraryCode
+)
+
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
         juce::juce_dsp

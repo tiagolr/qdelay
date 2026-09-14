@@ -1,8 +1,18 @@
 #include "Diffusor.h"
 
+int Diffusor::getNextPrime(int value)
+{
+	const auto primes = get_primes();
+    if (value <= primes.front()) return primes.front();
+    if (value >= primes.back()) return value;
+    auto it = std::lower_bound(primes.begin(), primes.end(), value);
+    return *it;
+}
+
 void Diffusor::clear()
 {
-	for (int i = 0; i < NUM_ALLPASS; i++) {
+	for (int i = 0; i < NUM_ALLPASS; i++)
+	{
 		allpassL[i].clear();
 		allpassR[i].clear();
 	}
@@ -10,47 +20,47 @@ void Diffusor::clear()
 
 void Diffusor::prepare(float _srate)
 {
-	srate = _srate;
-	mps = srate / 343;
-	distance = mps * 3.75f;
-
-	std::array<float, NUM_ALLPASS> apLCoeffs = {12.11f, 10.49f, 8.51f, 7.81f, 6.21f, 5.36f, 3.17f, 2.21f};
-	std::array<float, NUM_ALLPASS> apRCoeffs = {12.08f, 10.47f, 8.49f, 7.77f, 6.23f, 5.33f, 3.71f, 2.12f};
-
-	for (int i = 0; i < NUM_ALLPASS; i++) 
-	{
-		allpassL[i].init(srate, apLCoeffs[i], distance);
-		allpassR[i].init(srate, apRCoeffs[i], distance);
-	}
-
+	srateFactor = _srate / REF_SRATE;
 	clear();
+	setSize(currSize);
 }
 
 void Diffusor::setSize(float size)
 {
-	size = (0.9f - 0.9f * size);
-	for (int i = 0; i < NUM_ALLPASS; ++i) 
+	constexpr int SIZE_L = 180;
+	constexpr int SIZE_R = 132;
+	constexpr float scaleFactorL = 1.5123f; // geometric scale exponent
+	constexpr float scaleFactorR = 1.6132f; // geometric scale exponent
+
+	auto scaleSize = [](float val, int index, float scale)
 	{
-		allpassL[i].setSizeOffsets(size);
-		allpassR[i].setSizeOffsets(size);
+		return val * pow(scale, (float)index);
+	};
+
+	for (int i = 0; i < NUM_ALLPASS; ++i)
+	{
+		int sizeL = getNextPrime(scaleSize((int)(SIZE_L * size * 2), NUM_ALLPASS - 1 - i, scaleFactorL));
+		int sizeR = getNextPrime(scaleSize((int)(SIZE_R * size * 2), NUM_ALLPASS - 1 - i, scaleFactorR));
+		allpassL[i].setSize(sizeL);
+		allpassR[i].setSize(sizeR);
 	}
 }
 
-void Diffusor::process(float& left, float& right, float drymix, float wetmix)
+void Diffusor::process(float& left, float& right)
 {
 	float spl0 = left;
 	float spl1 = right;
 
 	for (int i = 0; i < NUM_ALLPASS; ++i) {
-		spl0 = allpassL[i].allPass(spl0, smear);
-		spl1 = allpassR[i].allPass(spl1, smear);
+		spl0 = allpassL[i].allPass(spl0, i % 2 == 0 ? smear : -smear);
+		spl1 = allpassR[i].allPass(spl1, i % 2 == 0 ? -smear : smear);
 	}
 
-	left = left * drymix + spl0 * wetmix;
-	right = right * drymix + spl1 * wetmix;
+	left = spl0;
+	right = spl1;
 }
 
-void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix, float wetmix)
+void Diffusor::processBlock(float* left, float* right, int nsamps)
 {
 	for (int sample = 0; sample < nsamps; ++sample) {
 
@@ -58,11 +68,11 @@ void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix,
 		float spl1 = right[sample];
 
 		for (int i = 0; i < NUM_ALLPASS; ++i) {
-			spl0 = allpassL[i].allPass(spl0, smear);
-			spl1 = allpassR[i].allPass(spl1, smear);
+			spl0 = allpassL[i].allPass(spl0, i % 2 == 0 ? smear : -smear);
+			spl1 = allpassR[i].allPass(spl1, i % 2 == 0 ? -smear : smear);
 		}
 
-		left[sample] = left[sample] * drymix + spl0 * wetmix;
-		right[sample] = right[sample] * drymix + spl1 * wetmix;
+		left[sample] = spl0;
+		right[sample] = spl1;
 	}
 }

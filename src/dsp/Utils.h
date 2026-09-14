@@ -215,9 +215,11 @@ public:
     float process(float input)
     {
         double targ = (double)input;
-        state += r * (targ - state);
-        if (std::fabs(targ - state) < eps) // snap
+        double diff = targ - state;
+        if (std::fabs(diff) < eps) // snap
             state = targ;
+        else
+            state += r * diff;
 
         return (float)state;
     }

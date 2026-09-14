@@ -1,6 +1,6 @@
 <h1 align="center">
   <!-- <img src="doc/logo.png" width="200" style="padding: 5px;" /> -->
-  QDelay 
+  QDelay
   <br>
 </h1>
 <div align="center">
@@ -102,7 +102,7 @@ The commands above will recursively remove the quarantine flag from the plug-ins
 git clone --recurse-submodules https://github.com/tiagolr/qdelay.git
 
 # windows
-cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
+cmake -G "Visual Studio 18 2026" -DCMAKE_BUILD_TYPE=Release -S . -B ./build
 
 # linux
 sudo apt update

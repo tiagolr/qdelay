@@ -127,12 +127,12 @@ std::array<int, 2> Delay::getTimeSamples()
     auto syncR = (SyncMode)audioProcessor.params.getRawParameterValue("sync_r")->load();
 
 
-    auto tl = syncL == 0
+    int tl = syncL == 0
         ? (int)(std::ceil(audioProcessor.params.getRawParameterValue("rate_l")->load() * srate))
         : getSamplesSync((int)audioProcessor.params.getRawParameterValue("rate_sync_l")->load(), syncL);
     tl = std::max(1, tl);
 
-    auto tr = syncR == 0
+    int tr = syncR == 0
         ? (int)(std::ceil(audioProcessor.params.getRawParameterValue("rate_r")->load() * srate))
         : getSamplesSync((int)audioProcessor.params.getRawParameterValue("rate_sync_r")->load(), syncR);
     tr = std::max(1, tr);

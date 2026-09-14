@@ -86,6 +86,7 @@ public:
 
     // Plugin settings
     float scale = 1.0f; // UI scale factor
+    int deleteme = 0;
 
     // PlayHead state
     bool playing = false;

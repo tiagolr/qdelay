@@ -501,6 +501,8 @@ void QDelayAudioProcessor::onSlider()
     float diffsize = params.getRawParameterValue("diff_size")->load();
     diffPath = (int)params.getRawParameterValue("diff_path")->load();
     diffusor->setSize(diffsize);
+    float diffamt = params.getRawParameterValue("diff_amt")->load();
+    diffusor->setSmear(diffamt * 0.5f);
 
     // pitch shifter
     shifterMode = (int)params.getRawParameterValue("shifter_mode")->load();
@@ -559,6 +561,13 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 {
     (void)midiMessages;
     juce::ScopedNoDenormals disableDenormals;
+
+    //deleteme += getBlockSize();
+    //if (deleteme > getSampleRate() * 2) {
+    //    deleteme = 0;
+    //    buffer.setSample(0, 0, 1.f);
+    //    buffer.setSample(1, 0, 1.f);
+    //}
 
     // Get playhead info
     if (auto* phead = getPlayHead())
@@ -668,12 +677,10 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // process pre diffusion
     float diffamt = params.getRawParameterValue("diff_amt")->load();
     if (diffamt > 0.f && diffPath == 0) {
-        float diffdry = Utils::cosHalfPi()(diffamt);
-        float diffwet = Utils::sinHalfPi()(diffamt);
         diffusor->processBlock(
             wetBuffer.getWritePointer(0),
             wetBuffer.getWritePointer(1),
-            numSamples, diffdry, diffwet
+            numSamples
         );
     }
 
@@ -727,8 +734,6 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
             shifter->process(wetl[i], wetr[i]);
         }
     }
-
-
 
     // process wow and flutter
     if (tapeAmt > 0.f || tapeFadeSamps > 0)
@@ -808,12 +813,10 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // process post diffusion
     if (diffamt > 0.f && diffPath == 1)
     {
-        float diffdry = Utils::cosHalfPi()(diffamt);
-        float diffwet = Utils::sinHalfPi()(diffamt);
         diffusor->processBlock(
             wetBuffer.getWritePointer(0),
             wetBuffer.getWritePointer(1),
-            numSamples, diffdry, diffwet
+            numSamples
         );
     }
 
