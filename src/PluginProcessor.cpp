@@ -503,6 +503,7 @@ void QDelayAudioProcessor::onSlider()
     diffusor->setSize(diffsize);
     float diffamt = params.getRawParameterValue("diff_amt")->load();
     diffusor->setSmear(diffamt * 0.5f);
+    diffOn = diffsize > 0.f && diffamt > 0.f;
 
     // pitch shifter
     shifterMode = (int)params.getRawParameterValue("shifter_mode")->load();
@@ -675,8 +676,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process pre diffusion
-    float diffamt = params.getRawParameterValue("diff_amt")->load();
-    if (diffamt > 0.f && diffPath == 0) {
+    if (diffOn && diffPath == 0) {
         diffusor->processBlock(
             wetBuffer.getWritePointer(0),
             wetBuffer.getWritePointer(1),
@@ -811,7 +811,7 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     }
 
     // process post diffusion
-    if (diffamt > 0.f && diffPath == 1)
+    if (diffOn && diffPath == 1)
     {
         diffusor->processBlock(
             wetBuffer.getWritePointer(0),

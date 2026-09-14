@@ -21,7 +21,9 @@ public:
 
 	void clear()
 	{
-		std::fill(buf.begin(), buf.end(), 0.f);
+		if (size > 0) {
+			std::fill(buf.begin(), buf.end(), 0.f);
+		}
 	}
 
 	// writes to buffer with an offset without advancing the read position
