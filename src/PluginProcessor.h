@@ -58,7 +58,6 @@ public:
     std::unique_ptr<juce::dsp::Oversampling<float>> distPostOversampler;
     std::unique_ptr<Diffusor> diffusor;
     int diffPath = 0; // pre or post delay diffusion
-    bool diffOn = false;
     std::unique_ptr<Pitcher> pitcher;
     std::unique_ptr<Shifter> shifter;
     float pitcherSpeed = 0.f;
@@ -84,10 +83,8 @@ public:
     std::unique_ptr<DelayLine> wowflut_l; // wow + flutter delay
     std::unique_ptr<DelayLine> wowflut_r;
 
-
     // Plugin settings
     float scale = 1.0f; // UI scale factor
-    int deleteme = 0;
 
     // PlayHead state
     bool playing = false;

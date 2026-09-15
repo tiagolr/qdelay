@@ -48,8 +48,8 @@ public:
 		else buf[pos] = s;
 
   		pos += 1;
-  		if (pos >= size) 
-			pos -= size;
+  		if (pos == size)
+			pos = 0;
 	}
 
 	float read(float delay)
@@ -67,6 +67,7 @@ public:
 
 	    float y0 = buf[i0];
 	    float y1 = buf[i1];
+
 	    return y0 + frac * (y1 - y0);
 	}
 

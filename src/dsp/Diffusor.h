@@ -15,12 +15,11 @@ public:
 	struct AllPass {
 		DelayLine delay;
 		RCFilter size;
-		float g = 0.f;
 		float sizeTarg = 0.f;
 
 		AllPass()
 		{
-			delay.resize(1<<15);
+			delay.resize(1 << 15);
 			size.eps = 0.1f;
 		}
 
@@ -28,19 +27,19 @@ public:
 			size.setup(.25f * (REF_SRATE / srate), srate);
 		}
 
-		void setSize(int _size, bool smooth=true)
+		void setSize(int _size, bool smooth = true)
 		{
 			sizeTarg = (float)_size;
 			if (!smooth)
 				size.reset(sizeTarg);
 		}
 
-		inline float allPass(float in, float feedback, float modulation = 0.f) {
+		inline float allPass(float in, float g, float modulation = 0.f) {
 			float offset = size.process(sizeTarg);
-			float fb = delay.read(offset + modulation);
+			float feedbk = delay.read(offset + modulation);
 
-			auto out = fb - in * feedback;
-			delay.write(in + out * feedback);
+			auto out = feedbk - in * g;
+			delay.write(in + out * g);
 
 			return out;
 		}
@@ -51,43 +50,41 @@ public:
 		}
 	};
 
-    static constexpr int MAX_PRIME = 100000;
+	static constexpr int MAX_PRIME = 100000;
 
-    static const std::vector<int>& get_primes() {
-        static const std::vector<int> primes = []() {
-            std::vector<bool> is_prime(MAX_PRIME + 1, true);
-            is_prime[0] = is_prime[1] = false;
+	static const std::vector<int>& get_primes() {
+		static const std::vector<int> primes = []() {
+			std::vector<bool> is_prime(MAX_PRIME + 1, true);
+			is_prime[0] = is_prime[1] = false;
 
-            for (int p = 2; p * p <= MAX_PRIME; ++p) {
-                if (is_prime[p]) {
-                    for (int i = p * p; i <= MAX_PRIME; i += p) {
-                        is_prime[i] = false;
-                    }
-                }
-            }
+			for (int p = 2; p * p <= MAX_PRIME; ++p) {
+				if (is_prime[p]) {
+					for (int i = p * p; i <= MAX_PRIME; i += p) {
+						is_prime[i] = false;
+					}
+				}
+			}
 
-            std::vector<int> list;
-            for (int p = 2; p <= MAX_PRIME; ++p) {
-                if (is_prime[p]) {
-                    list.push_back(p);
-                }
-            }
-            return list;
-        }();
+			std::vector<int> list;
+			for (int p = 2; p <= MAX_PRIME; ++p) {
+				if (is_prime[p]) {
+					list.push_back(p);
+				}
+			}
+			return list;
+			}();
 
-        return primes;
-    }
+		return primes;
+	}
 
-	std::array<float, NUM_ALLPASS> modPhasesL{};
-	std::array<float, NUM_ALLPASS> modPhasesIncL{};
-	std::array<float, NUM_ALLPASS> modPhasesR{};
-	std::array<float, NUM_ALLPASS> modPhasesIncR{};
+	std::array<float, NUM_ALLPASS> modPhases{};
+	std::array<float, NUM_ALLPASS> modPhasesInc{};
 
 	Diffusor()
 	{
 		for (int i = 0; i < NUM_ALLPASS; ++i) {
-			modPhasesL[i] = rand() / (float)RAND_MAX;
-			modPhasesR[i] = rand() / (float)RAND_MAX;
+			modPhases[i] = rand() / (float)RAND_MAX;
+			delays[i].resize(1 << 15);
 		}
 	}
 	~Diffusor() {}
@@ -95,16 +92,21 @@ public:
 	int getNextPrime(int value);
 	void prepare(float _srate);
 	void setSize(float size, bool smooth = true);
-	void processBlock(float* left, float* right, int nsamps);
+	void processBlock(float* left, float* right, int nsamps, float drymix, float wetmix);
 	void setSmear(float _smear) { smear = _smear; }
 	void clear();
 
+
+	std::array<float, 8> hadamard_8x8(std::array<float, 8> x);
+
 private:
 	float srateFactor = 1.f;
-	float currSize = 0.25f;
 	float smear = 0.5f;
-	std::array<AllPass, NUM_ALLPASS> allpassL;
-	std::array<AllPass, NUM_ALLPASS> allpassR;
+	float sizenorm = 0.f;
+	float t60 = 0.f; // decay
+	std::array<AllPass, NUM_ALLPASS> allpass;
+	std::array<DelayLine, NUM_ALLPASS> delays;
+	std::array<float, NUM_ALLPASS> fb = { 0 }; // feedback
 
 	float triangle(float phase);
 };

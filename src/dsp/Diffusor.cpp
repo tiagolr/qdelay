@@ -11,13 +11,10 @@ int Diffusor::getNextPrime(int value)
 
 void Diffusor::clear()
 {
-	setSize(currSize, false);
+	setSize(sizenorm, false);
 
 	for (int i = 0; i < NUM_ALLPASS / 2; i++)
-	{
-		allpassL[i].clear();
-		allpassR[i].clear();
-	}
+		allpass[i].clear();
 }
 
 void Diffusor::prepare(float _srate)
@@ -26,60 +23,106 @@ void Diffusor::prepare(float _srate)
 
 	for (int i = 0; i < NUM_ALLPASS; ++i)
 	{
-		modPhasesIncL[i] = (rand() / (float)RAND_MAX) * MOD_MAX_RATE / srateFactor / _srate;
-		modPhasesIncR[i] = (rand() / (float)RAND_MAX) * MOD_MAX_RATE / srateFactor / _srate;
-		allpassL[i].init(_srate);
-		allpassR[i].init(_srate);
+		modPhasesInc[i] = (rand() / (float)RAND_MAX) * MOD_MAX_RATE / srateFactor / _srate;
+		allpass[i].init(_srate);
 	}
 
 	clear();
 }
 
-void Diffusor::setSize(float size, bool smooth)
+void Diffusor::setSize(float sizenorm_, bool smooth)
 {
-	constexpr int SIZE_L = 180;
-	constexpr int SIZE_R = 132;
-	constexpr float scaleFactorL = 1.5123f; // geometric scale exponent
-	constexpr float scaleFactorR = 1.6132f; // geometric scale exponent
+	sizenorm_ = std::pow(sizenorm_, 0.25f);
+	if (sizenorm == sizenorm_ && smooth)
+		return;
 
-	auto scaleSize = [](float val, int index, float scale)
-	{
-		return val * pow(scale, (float)index);
-	};
+	sizenorm = sizenorm_;
+	t60 = sizenorm * 0.95f;
 
+	float size = 0.25f + sizenorm * (1.f - 0.25f); // 0.25 ... 1
+	smear = 0.3f + sizenorm * (0.6f - 0.3f); // 0.3 0.6
+	const float base = 100.f * (1 + size);
+	const float scale = 1.5f;
+
+	auto scaleSize = [](float val, float index, float scale)
+		{
+			return val * pow(scale, (float)index);
+		};
+
+	// the scaling used is and exponential with base 1.5 and exponent 3.2 3.0 2.8 etc..
 	for (int i = 0; i < NUM_ALLPASS; ++i)
 	{
-		int sizeL = getNextPrime((int)scaleSize(std::floor(SIZE_L * size * 2), NUM_ALLPASS - 1 - i, scaleFactorL));
-		int sizeR = getNextPrime((int)scaleSize(std::floor(SIZE_R * size * 2), NUM_ALLPASS - 1 - i, scaleFactorR));
-		allpassL[i].setSize(sizeL, smooth);
-		allpassR[i].setSize(sizeR, smooth);
+		int apsize = getNextPrime((int)scaleSize(std::floor(base), 3.2f - i * 0.2f, scale));
+		allpass[i].setSize(apsize, smooth);
 	}
 }
 
-void Diffusor::processBlock(float* left, float* right, int nsamps)
+void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix, float wetmix)
 {
+	constexpr float delay_sizes[8] = { 942, 1800, 1500, 1233, 1923, 1223, 809, 601 };
+	const float delay_factor = srateFactor * 3.f * (0.5f + 0.5f * sizenorm);
+
+	std::array<float, NUM_ALLPASS> outs{};
+
 	for (int sample = 0; sample < nsamps; ++sample) {
 
 		float spl0 = left[sample];
 		float spl1 = right[sample];
 
 		for (int i = 0; i < NUM_ALLPASS; ++i) {
-			float mod0 = triangle(modPhasesL[i]) * MOD_MAX_DEPTH;
-			float mod1 = triangle(modPhasesR[i]) * MOD_MAX_DEPTH;
-			spl0 = allpassL[i].allPass(spl0, i % 2 == 0 ? smear : -smear, mod0);
-			spl1 = allpassR[i].allPass(spl1, i % 2 == 0 ? -smear : smear, mod1);
-			modPhasesL[i] += modPhasesIncL[i];
-			modPhasesR[i] += modPhasesIncR[i];
-			if (modPhasesL[i] >= 1.f) modPhasesL[i] -= 1.f;
-			if (modPhasesR[i] >= 1.f) modPhasesR[i] -= 1.f;
+			float mod = triangle(modPhases[i]) * MOD_MAX_DEPTH;
+			float feedback = fb[NUM_ALLPASS - i - 1];
+			outs[i] = allpass[i].allPass((i % 2 == 0 ? spl0 : spl1) + feedback * t60, smear, mod);
 		}
 
-		left[sample] = spl0;
-		right[sample] = spl1;
+		outs = hadamard_8x8(outs);
+
+		// out taps
+		spl0 = 0;
+		spl1 = 0;
+
+		for (int i = 0; i < NUM_ALLPASS; ++i) {
+			if (i % 2 == 0) spl0 += outs[i];
+			else spl1 += outs[i];
+		}
+
+		spl0 *= 0.25f;
+		spl1 *= 0.25f;
+
+		// feedback
+		for (int i = 0; i < NUM_ALLPASS; ++i) {
+			delays[i].write(outs[i]);
+			fb[i] = delays[i].read(delay_sizes[i] * delay_factor);
+		}
+
+		left[sample] = spl0 * wetmix + left[sample] * drymix;
+		right[sample] = spl1 * wetmix + right[sample] * drymix;
 	}
 }
 
 float Diffusor::triangle(float phase)
 {
 	return 2.f - std::abs(2.0f * (phase - std::floor(phase)) - 1.0f) - 1.0f;
+}
+
+std::array<float, 8> Diffusor::hadamard_8x8(std::array<float, 8> x) 
+{
+	constexpr float norm = 0.3535533905932737622f; // 1 / sqrt(8)
+
+	float a0 = x[0] + x[1], a1 = x[0] - x[1];
+	float a2 = x[2] + x[3], a3 = x[2] - x[3];
+	float a4 = x[4] + x[5], a5 = x[4] - x[5];
+	float a6 = x[6] + x[7], a7 = x[6] - x[7];
+
+	float b0 = a0 + a2, b1 = a1 + a3;
+	float b2 = a0 - a2, b3 = a1 - a3;
+	float b4 = a4 + a6, b5 = a5 + a7;
+	float b6 = a4 - a6, b7 = a5 - a7;
+
+	return {
+		(b0 + b4) * norm, (b1 + b5) * norm,
+		(b2 + b6) * norm, (b3 + b7) * norm,
+		(b0 - b4) * norm, (b1 - b5) * norm,
+		(b2 - b6) * norm, (b3 - b7) * norm
+	};
 }
