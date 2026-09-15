@@ -11,10 +11,13 @@ int Diffusor::getNextPrime(int value)
 
 void Diffusor::clear()
 {
-	setSize(sizenorm, false);
+	setSize(std::pow(sizenorm, 4.f), false);
 
-	for (int i = 0; i < NUM_ALLPASS / 2; i++)
+	for (int i = 0; i < NUM_ALLPASS; i++)
+	{
 		allpass[i].clear();
+		delays[i].clear();
+	}
 }
 
 void Diffusor::prepare(float _srate)
@@ -71,6 +74,10 @@ void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix,
 
 		for (int i = 0; i < NUM_ALLPASS; ++i) {
 			float mod = triangle(modPhases[i]) * MOD_MAX_DEPTH;
+			modPhases[i] += modPhasesInc[i];
+			if (modPhases[i] >= 1.f)
+				modPhases[i] -= 1.f;
+
 			float feedback = fb[NUM_ALLPASS - i - 1];
 			outs[i] = allpass[i].allPass((i % 2 == 0 ? spl0 : spl1) + feedback * t60, smear, mod);
 		}
@@ -105,7 +112,7 @@ float Diffusor::triangle(float phase)
 	return 2.f - std::abs(2.0f * (phase - std::floor(phase)) - 1.0f) - 1.0f;
 }
 
-std::array<float, 8> Diffusor::hadamard_8x8(std::array<float, 8> x) 
+std::array<float, 8> Diffusor::hadamard_8x8(std::array<float, 8> x)
 {
 	constexpr float norm = 0.3535533905932737622f; // 1 / sqrt(8)
 
