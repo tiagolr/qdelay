@@ -56,7 +56,7 @@ public:
     float dist_post = 0.f;
     std::unique_ptr<juce::dsp::Oversampling<float>> distPreOversampler;
     std::unique_ptr<juce::dsp::Oversampling<float>> distPostOversampler;
-    std::unique_ptr<Diffusor> diffusor;
+    std::unique_ptr<DiffusorBase> diffusor;
     int diffPath = 0; // pre or post delay diffusion
     std::unique_ptr<Pitcher> pitcher;
     std::unique_ptr<Shifter> shifter;

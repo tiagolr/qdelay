@@ -55,7 +55,7 @@ void Diffusor::setSize(float sizenorm_, bool smooth)
 	// the scaling used is and exponential with base 1.5 and exponent 3.2 3.0 2.8 etc..
 	for (int i = 0; i < NUM_ALLPASS; ++i)
 	{
-		int apsize = getNextPrime((int)scaleSize(std::floor(base), 3.2f - i * 0.2f, scale));
+		int apsize = getNextPrime((int)(scaleSize(std::floor(base), 3.2f - i * 0.2f, scale) * srateFactor));
 		allpass[i].setSize(apsize, smooth);
 	}
 }

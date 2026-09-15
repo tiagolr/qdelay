@@ -4,7 +4,17 @@
 #include "Utils.h"
 #include "DelayLine.h"
 
-class Diffusor
+class DiffusorBase
+{
+public:
+	virtual ~DiffusorBase() = default;
+	virtual void prepare(float _srate) = 0;
+	virtual void setSize(float size, bool smooth = true) = 0;
+	virtual void processBlock(float* left, float* right, int nsamps, float drymix, float wetmix) = 0;
+	virtual void clear() = 0;
+};
+
+class Diffusor : public DiffusorBase
 {
 public:
 	static constexpr int NUM_ALLPASS = 8;
@@ -90,11 +100,11 @@ public:
 	~Diffusor() {}
 
 	int getNextPrime(int value);
-	void prepare(float _srate);
-	void setSize(float size, bool smooth = true);
-	void processBlock(float* left, float* right, int nsamps, float drymix, float wetmix);
+	void prepare(float _srate) override;
+	void setSize(float size, bool smooth = true) override;
+	void processBlock(float* left, float* right, int nsamps, float drymix, float wetmix) override;
 	void setSmear(float _smear) { smear = _smear; }
-	void clear();
+	void clear() override;
 
 
 	std::array<float, 8> hadamard_8x8(std::array<float, 8> x);
