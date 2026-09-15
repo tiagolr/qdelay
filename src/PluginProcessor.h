@@ -72,6 +72,8 @@ public:
     std::vector<SVF::EQBand> eqBands;
     std::vector<SVF> eqL;
     std::vector<SVF> eqR;
+    bool useLegacyDiffusor = false;
+    bool diffusorChanged = false;
 
     // wow and flutter
     float tapeAmt = 0.f;

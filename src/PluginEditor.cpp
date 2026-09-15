@@ -512,6 +512,7 @@ void QDelayAudioProcessorEditor::showSettings()
     PopupMenu diffMenu;
     diffMenu.addItem(70, "Pre Delay", true, diffPath == 0);
     diffMenu.addItem(71, "Post Delay", true, diffPath == 1);
+    diffMenu.addItem(72, "Legacy Mode", true, audioProcessor.useLegacyDiffusor);
 
     PopupMenu pitchMenu;
     pitchMenu.addItem(85, "Freq Shifter", true, shifterMode == 1);
@@ -595,6 +596,10 @@ void QDelayAudioProcessorEditor::showSettings()
             else if (result == 70 || result == 71) {
                 auto param = audioProcessor.params.getParameter("diff_path");
                 param->setValueNotifyingHost(result == 71 ? 1.f : 0.f);
+            }
+            else if (result == 72) {
+                auto param = audioProcessor.params.getParameter("diff_legacy");
+                param->setValueNotifyingHost(param->getValue() > 0.f ? 0.f : 1.f);
             }
         }
     );

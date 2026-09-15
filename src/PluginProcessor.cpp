@@ -55,6 +55,7 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
     layout.add(std::make_unique<AudioParameterFloat>("feel", "Feel", -1.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("accent", "Accent", -1.f, 1.f, 0.0f));
 
+    layout.add(std::make_unique<AudioParameterBool>("diff_legacy", "Legacy Diffusion", false));
     layout.add(std::make_unique<AudioParameterFloat>("diff_amt", "Diffusion Amt", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterFloat>("diff_size", "Diffusion Size", 0.f, 1.f, 0.0f));
     layout.add(std::make_unique<AudioParameterChoice>("diff_path", "Diffusion Path", StringArray{ "Pre", "Post" }, 0));
@@ -143,10 +144,10 @@ AudioProcessorValueTreeState::ParameterLayout QDelayAudioProcessor::createParame
 
 QDelayAudioProcessor::QDelayAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-         .withInput("Input", juce::AudioChannelSet::stereo(), true)
-         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-     )
+    : AudioProcessor(BusesProperties()
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+    )
     , settings{}
     , params(*this, &undoManager, "PARAMETERS", createParameterLayout())
 #endif
@@ -182,7 +183,6 @@ QDelayAudioProcessor::QDelayAudioProcessor()
     distPost = std::make_unique<Distortion>(*this);
     crushPre = std::make_unique<Crusher>(*this);
     crushPost = std::make_unique<Crusher>(*this);
-    diffusor = std::make_unique<Diffusor>();
     pitcher = std::make_unique<Pitcher>();
     shifter = std::make_unique<Shifter>(*this);
     flutter = std::make_unique<Flutter>(*this);
@@ -195,6 +195,12 @@ QDelayAudioProcessor::QDelayAudioProcessor()
         2, 1, juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR, false, true);
     distPostOversampler = std::make_unique<juce::dsp::Oversampling<float>>(
         2, 1, juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR, false, true);
+
+    useLegacyDiffusor = (bool)params.getRawParameterValue("diff_legacy")->load();
+    if (useLegacyDiffusor)
+        diffusor = std::make_unique<DiffusorLegacy>();
+    else
+        diffusor = std::make_unique<Diffusor>();
 }
 
 QDelayAudioProcessor::~QDelayAudioProcessor()
@@ -501,7 +507,12 @@ void QDelayAudioProcessor::onSlider()
     float diffsize = params.getRawParameterValue("diff_size")->load();
     diffPath = (int)params.getRawParameterValue("diff_path")->load();
     diffusor->setSize(diffsize);
-
+    bool legacy = (bool)params.getRawParameterValue("diff_legacy")->load();
+    if (legacy != useLegacyDiffusor) {
+        useLegacyDiffusor = legacy;
+        diffusorChanged = true;
+    }
+    
     // pitch shifter
     shifterMode = (int)params.getRawParameterValue("shifter_mode")->load();
     Pitcher::WindowMode pitchMode = (Pitcher::WindowMode)params.getRawParameterValue("pitch_mode")->load();
@@ -559,6 +570,17 @@ void QDelayAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 {
     (void)midiMessages;
     juce::ScopedNoDenormals disableDenormals;
+
+    if (diffusorChanged) {
+        diffusorChanged = false;
+        if (useLegacyDiffusor)
+            diffusor = std::make_unique<DiffusorLegacy>();
+        else
+            diffusor = std::make_unique<Diffusor>();
+        float diffsize = params.getRawParameterValue("diff_size")->load();
+        diffusor->prepare((float)getSampleRate());
+        diffusor->setSize(diffsize);
+    }
 
     // Get playhead info
     if (auto* phead = getPlayHead())

@@ -133,3 +133,59 @@ std::array<float, 8> Diffusor::hadamard_8x8(std::array<float, 8> x)
 		(b2 - b6) * norm, (b3 - b7) * norm
 	};
 }
+
+
+// ===========================
+
+void DiffusorLegacy::clear()
+{
+	for (int i = 0; i < NUM_ALLPASS; i++) {
+		allpassL[i].clear();
+		allpassR[i].clear();
+	}
+}
+
+void DiffusorLegacy::prepare(float _srate)
+{
+	srate = _srate;
+	mps = srate / 343;
+	distance = mps * 3.75f;
+
+	std::array<float, NUM_ALLPASS> apLCoeffs = { 12.11f, 10.49f, 8.51f, 7.81f, 6.21f, 5.36f, 3.17f, 2.21f };
+	std::array<float, NUM_ALLPASS> apRCoeffs = { 12.08f, 10.47f, 8.49f, 7.77f, 6.23f, 5.33f, 3.71f, 2.12f };
+
+	for (int i = 0; i < NUM_ALLPASS; i++)
+	{
+		allpassL[i].init(srate, apLCoeffs[i], distance);
+		allpassR[i].init(srate, apRCoeffs[i], distance);
+	}
+
+	clear();
+}
+
+void DiffusorLegacy::setSize(float size, bool)
+{
+	size = (0.9f - 0.9f * size);
+	for (int i = 0; i < NUM_ALLPASS; ++i)
+	{
+		allpassL[i].setSizeOffsets(size);
+		allpassR[i].setSizeOffsets(size);
+	}
+}
+
+void DiffusorLegacy::processBlock(float* left, float* right, int nsamps, float drymix, float wetmix)
+{
+	for (int sample = 0; sample < nsamps; ++sample) {
+
+		float spl0 = left[sample];
+		float spl1 = right[sample];
+
+		for (int i = 0; i < NUM_ALLPASS; ++i) {
+			spl0 = allpassL[i].allPass(spl0, smear);
+			spl1 = allpassR[i].allPass(spl1, smear);
+		}
+
+		left[sample] = left[sample] * drymix + spl0 * wetmix;
+		right[sample] = right[sample] * drymix + spl1 * wetmix;
+	}
+}
