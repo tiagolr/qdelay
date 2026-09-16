@@ -147,7 +147,7 @@ int Delay::getFeelOffset(int tl, int tr, float swing)
 {
     auto mode = (DelayMode)audioProcessor.params.getRawParameterValue("mode")->load();
     float feel = audioProcessor.params.getRawParameterValue("feel")->load();
-    
+
     float secsbeat = (float)audioProcessor.secondsPerBeat;
     if (secsbeat == 0.f) secsbeat = 0.25f;
     int feelOffset = (int)std::round(secsbeat * MAX_FEEL_QN_OFFSET * feel * srate); // max 1/16 note offset
@@ -265,14 +265,14 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             time[1] - std::fabs(swing) * 0.5f * time[1] + feelOffset
         );
     maxDepth *= 0.5f;
-    modDepth = modDepth * std::min(srate / 500.f, maxDepth);
+    modDepth = modDepth * std::min(srate / 500.f * (srate / 44100.f), maxDepth);
 
     // reverse
     int revsizeL = 0;
-    int revsizeR = 0; 
+    int revsizeR = 0;
     int fadetotalL = 0;
-    int fadetotalR = 0; 
-    int midL = 0; 
+    int fadetotalR = 0;
+    int midL = 0;
     int midR = 0;
     if (reverse)
     {
@@ -290,7 +290,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         midL = revsizeL / 2;
         midR = revsizeR / 2;
     }
-    
+
 
     // Process samples
     for (int i = 0; i < nsamps; ++i)
@@ -304,7 +304,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             if (modPhase > 1.f) modPhase -= 1.f;
             mod = std::sin(modPhase * MathConstants<float>::twoPi);
         }
-        mod = mod * mdepth - mdepth;
+        mod = mod * mdepth;
 
         // smoothed params
         auto timeLeft = timeL.process((float)time[0]);
@@ -335,10 +335,10 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         tap2R -= swingEff * 0.5f * tap2R;
 
         // two serial delay lines to support swing
-        auto v0 = delayL.read3(tap1L + mod);
-        auto v1 = delayR.read3(tap1R + mod);
-        auto s0 = swingL.read3(tap2L + mod);
-        auto s1 = swingR.read3(tap2R + mod);
+        auto v0 = delayL.read3(std::max(2.f, tap1L + mod)); // cubic interpolation needs two samples of delay otherwise may read old data
+        auto v1 = delayR.read3(std::max(2.f, tap1R + mod));
+        auto s0 = swingL.read3(std::max(2.f, tap2L + mod));
+        auto s1 = swingR.read3(std::max(2.f, tap2R + mod));
 
         // process EQ
         for (int j = 0; j < EQ_BANDS; ++j)
@@ -350,7 +350,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
 
         // process pitch shift
-        if (audioProcessor.shifterMode == 0 && std::fabs(audioProcessor.pitcherSpeed) > 1e-6 && audioProcessor.pitcherPath == 0) 
+        if (audioProcessor.shifterMode == 0 && std::fabs(audioProcessor.pitcherSpeed) > 1e-6 && audioProcessor.pitcherPath == 0)
         {
             pitcher->setSpeed(audioProcessor.pitcherSpeed);
             pitcher->update(v0, v1);
@@ -363,7 +363,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
         }
 
         // process frequency shifter
-        if (audioProcessor.shifterMode == 1 && shifter->isOn && audioProcessor.pitcherPath == 0) 
+        if (audioProcessor.shifterMode == 1 && shifter->isOn && audioProcessor.pitcherPath == 0)
         {
             shifter->process(v0, v1);
             shifterSwing->process(s0, s1);
@@ -385,7 +385,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 
         // EQ on the feedback path can be quite dangerous
         // clamp the feedback
-        if (!disableClipping) 
+        if (!disableClipping)
         {
             v0 = std::clamp(v0, -1.f, 1.f);
             v1 = std::clamp(v1, -1.f, 1.f);
@@ -444,7 +444,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
 }
 
 // replaces left and right input samples with reverse buffer output
-void Delay::processReverse(float& left, float& right, int revsizeL, int revsizeR, int midL, int midR, 
+void Delay::processReverse(float& left, float& right, int revsizeL, int revsizeR, int midL, int midR,
     int fadetotalL, int fadetotalR)
 {
     int playposL = revsizeL - revposL;
@@ -458,7 +458,7 @@ void Delay::processReverse(float& left, float& right, int revsizeL, int revsizeR
     // fade at the middle as well to avoid clicks
     if (playposL < fadetotalL) // fade in
         fadeL = playposL / (float)fadetotalL;
-    if (playposL > revsizeL - fadetotalL) // fade out 
+    if (playposL > revsizeL - fadetotalL) // fade out
         fadeL = (revsizeL - playposL) / (float)fadetotalL;
 
     int midStart = midL - fadetotalL;
@@ -471,7 +471,7 @@ void Delay::processReverse(float& left, float& right, int revsizeL, int revsizeR
     float fadeR = 1.f;
     if (playposR < fadetotalR) // fade in
         fadeR = playposR / (float)fadetotalR;
-    if (playposR > revsizeR - fadetotalR) // fade out 
+    if (playposR > revsizeR - fadetotalR) // fade out
         fadeR = (revsizeR - playposR) / (float)fadetotalR;
 
     midStart = midR - fadetotalR;
@@ -532,7 +532,7 @@ void Delay::setEqualizer(std::vector<SVF::EQBand> bands)
 }
 
 void Delay::onSlider()
-{   
+{
     disableClipping = audioProcessor.params.getRawParameterValue("disable_clipping")->load();
     bool rev = (bool)audioProcessor.params.getRawParameterValue("reverse")->load();
     if (rev != reverse) clear();

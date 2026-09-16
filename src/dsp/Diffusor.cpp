@@ -79,7 +79,7 @@ void Diffusor::processBlock(float* left, float* right, int nsamps, float drymix,
 				modPhases[i] -= 1.f;
 
 			float feedback = fb[NUM_ALLPASS - i - 1];
-			outs[i] = allpass[i].allPass((i % 2 == 0 ? spl0 : spl1) + feedback * t60, smear, mod);
+			outs[i] = allpass[i].allPass((i % 2 == 0 ? spl0 : spl1) * (i % 4 < 2 ? 1 : -1) + feedback * t60, smear, mod);
 		}
 
 		outs = hadamard_8x8(outs);
