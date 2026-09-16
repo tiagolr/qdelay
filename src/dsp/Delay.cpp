@@ -265,7 +265,7 @@ void Delay::processBlock(float* left, float* right, int nsamps)
             time[1] - std::fabs(swing) * 0.5f * time[1] + feelOffset
         );
     maxDepth *= 0.5f;
-    modDepth = modDepth * std::min(srate / 500.f * (srate / 44100.f), maxDepth);
+    modDepth = modDepth * std::min(srate / 500.f, maxDepth);
 
     // reverse
     int revsizeL = 0;
